@@ -23,8 +23,8 @@ app.use(
   `/graphql`,
   cors({
     origin: [
-      `https://j7zkqf80-${process.env.PORT}.inc1.devtunnels.ms`,
-      `http://localhost:${process.env.PORT}`,
+      `https://j7zkqf80-${process.env.FRONTEND_PORT}.inc1.devtunnels.ms`,
+      `http://localhost:${process.env.FRONTEND_PORT}`,
     ],
     credentials: true,
   }),
@@ -35,6 +35,6 @@ app.use(
 
 setupWebSocket(httpServer, schema);
 
-httpServer.listen(3001, () => {
-  console.log("server is listening on port 3001");
+httpServer.listen(process.env.PORT, () => {
+  console.log(`server is listening on port ${process.env.PORT}`);
 });

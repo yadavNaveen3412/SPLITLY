@@ -9,11 +9,10 @@ import { createClient } from "graphql-ws";
 import { getMainDefinition } from "@apollo/client/utilities";
 
 const httpLink = new HttpLink({
-  // uri: ["https://j7zkqf80-3001.inc1.devtunnels.ms/graphql", "http://localhost:3001/graphql"],
   uri:
     window.location.hostname === "localhost"
-      ? "http://localhost:3001/graphql"
-      : "https://j7zkqf80-3001.inc1.devtunnels.ms/graphql",
+      ? `http://localhost:${process.env.BACKEND_PORT}/graphql`
+      : `https://j7zkqf80-${process.env.BACKEND_PORT}.inc1.devtunnels.ms/graphql`,
   credentials: "include",
 });
 
@@ -21,8 +20,8 @@ const wsLink = new GraphQLWsLink(
   createClient({
     url:
       window.location.hostname === "localhost"
-        ? "ws://localhost:3001/graphql"
-        : "wss://j7zkqf80-3001.inc1.devtunnels.ms/graphql",
+        ? `ws://localhost:${process.env.BACKEND_PORT}/graphql`
+        : `wss://j7zkqf80-${process.env.BACKEND_PORT}.inc1.devtunnels.ms/graphql`,
 
     connectionParams: async () => ({}),
   })
