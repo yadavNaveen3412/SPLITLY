@@ -9,8 +9,8 @@
 }
 
 .register form {
-  width: 360px;
-  padding: 32px 28px;
+  width: 400px;
+  padding: 36px 32px;
   background: #ffffff;
   border-radius: 12px;
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
@@ -18,10 +18,102 @@
 }
 
 .register .heading {
-  margin-bottom: 28px;
+  margin-bottom: 24px;
   font-weight: 600;
   color: #225750;
+  font-size: 1.4rem;
 }
 
+.error-message {
+  background: #fee2e2;
+  color: #b91c1c;
+  border: 1px solid #fca5a5;
+  padding: 10px 14px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-size: 0.85rem;
+  text-align: left;
+}
 
+.form-group {
+  margin-bottom: 14px;
+}
 
+.form-input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1.5px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  outline: none;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+}
+
+.form-input:focus {
+  border-color: #225750;
+}
+
+.submit-btn {
+  width: 100%;
+  padding: 12px;
+  background: #225750;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+  margin-top: 4px;
+}
+
+.submit-btn:hover:not(:disabled) {
+  background: #1a4540;
+}
+
+.submit-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.toggle-text {
+  margin-top: 14px;
+  font-size: 0.85rem;
+  color: #6b7280;
+}
+
+.toggle-text a {
+  color: #225750;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.toggle-text a:hover {
+  text-decoration: underline;
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  margin: 20px 0;
+  color: #9ca3af;
+  font-size: 0.85rem;
+}
+
+.divider::before,
+.divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: #e5e7eb;
+}
+
+.divider span {
+  padding: 0 12px;
+}
+
+.google-login-wrapper {
+  display: flex;
+  justify-content: center;
+}

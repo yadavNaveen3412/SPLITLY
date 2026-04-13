@@ -1,12 +1,14 @@
 import apolloClient from "@/apollo";
 import { authService } from "@/services/auth.service";
 import { updateUserDetails, userService } from "@/services/user.service";
+
 const state = () => ({
   user: null,
   checked: false,
   error: null,
   loading: false,
 });
+
 const mutations = {
   SET_ERROR(state, error) {
     state.error = error;
@@ -26,8 +28,9 @@ const mutations = {
     state.loading = val;
   },
 };
+
 const actions = {
-  async login({ commit,dispatch }, {idToken}) {
+  async login({ commit, dispatch }, { idToken }) {
     commit("SET_ERROR", null);
     commit("SET_LOADING", true);
     try {
@@ -37,15 +40,46 @@ const actions = {
       return true;
     } catch (err) {
       commit("SET_ERROR", err);
-
       throw err;
     } finally {
       commit("SET_LOADING", false);
     }
   },
+
+  async loginWithEmail({ commit, dispatch }, { email, password }) {
+    commit("SET_ERROR", null);
+    commit("SET_LOADING", true);
+    try {
+      await authService.loginWithEmail({ email, password });
+      commit("SET_CHECKED", false);
+      await dispatch("fetchUser");
+      return true;
+    } catch (err) {
+      commit("SET_ERROR", err);
+      throw err;
+    } finally {
+      commit("SET_LOADING", false);
+    }
+  },
+
+  async register({ commit, dispatch }, { name, email, password }) {
+    commit("SET_ERROR", null);
+    commit("SET_LOADING", true);
+    try {
+      await authService.register({ name, email, password });
+      commit("SET_CHECKED", false);
+      await dispatch("fetchUser");
+      return true;
+    } catch (err) {
+      commit("SET_ERROR", err);
+      throw err;
+    } finally {
+      commit("SET_LOADING", false);
+    }
+  },
+
   async logout({ commit }) {
     commit("SET_ERROR", null);
-
     try {
       try {
         await authService.logout();
@@ -59,10 +93,9 @@ const actions = {
       throw err;
     }
   },
+
   async fetchUser({ commit, state }) {
     if (state.checked) return;
-
-    //when page refresh user is fetched from here
     try {
       const { getUser } = await userService.getUser();
       if (getUser) {
@@ -88,6 +121,7 @@ const actions = {
     }
   },
 };
+
 const getters = {
   isLoggedIn: (state) => !!state.user,
   getUserId: (state) => state.user?.id,
@@ -96,6 +130,7 @@ const getters = {
   getError: (state) => state.error,
   isLoading: (state) => state.loading,
 };
+
 export default {
   namespaced: true,
   state,
