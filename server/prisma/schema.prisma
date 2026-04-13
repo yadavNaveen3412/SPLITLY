@@ -7,150 +7,146 @@ datasource db {
 }
 
 model User {
-  id                String   @id @default(uuid())
-  name              String
-  email             String   @unique
-  googleSub String @unique @map("google_sub")
-  contact           String?   @map("phone_no")
-
-  createdAt         DateTime @default(now()) @map("created_at")
-  updatedAt         DateTime @updatedAt
-  profilePic        String?
-  profilePicVersion String?
-  shareCode         String   @unique @map("share_code")
-
-  createdGroups     Group[]       @relation("UserToGroup") //since user can create many groups
-  memberOf          GroupMember[] @relation("UserToMembers") //since user can be in more than one group
-  expenseCreated    Expense[]     @relation("UserCreatedExpenses") //one user can create many expenses 
-  expenseUpdated    Expense[]     @relation("UserUpdatedExpenses")
-  payer             Settlement[]  @relation("Payer")
-  receiver          Settlement[]  @relation("Receiver")
-  Chats             Chats[]
-  settlementCreator Settlement[]  @relation("Creator")
+  id                  String               @id @default(uuid())
+  name                String
+  email               String               @unique
+  contact             String?              @map("phone_no")
+  createdAt           DateTime             @default(now()) @map("created_at")
+  updatedAt           DateTime             @updatedAt
+  profilePic          String?
+  profilePicVersion   String?
+  shareCode           String               @unique @map("share_code")
+  googleSub           String?              @unique @map("google_sub")
+  passwordHash        String?              @map("password_hash")
+  Chats               Chats[]
+  expenseCreated      Expense[]            @relation("UserCreatedExpenses")
+  expenseUpdated      Expense[]            @relation("UserUpdatedExpenses")
+  expenseParticipants ExpenseParticipant[] @relation("UserExpenseParticipants")
+  memberOf            GroupMember[]        @relation("UserToMembers")
+  createdGroups       Group[]              @relation("UserToGroup")
+  settlementCreator   Settlement[]         @relation("Creator")
+  payer               Settlement[]         @relation("Payer")
+  receiver            Settlement[]         @relation("Receiver")
 
   @@map("users")
 }
 
 model Group {
-  id             String    @id @default(uuid())
-  title          String
-  type           GroupType
-  currentCycleId Int       @default(1)
-  createdById    String
-  createdBy      User      @relation("UserToGroup", fields: [createdById], references: [id])
+  id                  String               @id @default(uuid())
+  title               String
+  type                GroupType
+  createdById         String
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  currentCycleId      Int                  @default(1)
+  profilePic          String?
+  profilePicVersion   String?
+  Chats               Chats[]
+  expenses            Expense[]            @relation("GroupExpenses")
+  expenseParticipants ExpenseParticipant[]
+  members             GroupMember[]        @relation("GroupToMembers")
+  createdBy           User                 @relation("UserToGroup", fields: [createdById], references: [id])
+  settlements         Settlement[]         @relation("GroupSettlement")
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  profilePic        String?
-  profilePicVersion String?
-
-  members     GroupMember[] @relation("GroupToMembers")
-  expenses    Expense[]     @relation("GroupExpenses")
-  settlements Settlement[]  @relation("GroupSettlement")
-  Chats       Chats[]
-
+  @@index([createdById, type])
   @@map("groups")
+}
+
+model GroupMember {
+  id       String   @id @default(uuid())
+  userId   String
+  groupId  String
+  joinedAt DateTime @default(now())
+  group    Group    @relation("GroupToMembers", fields: [groupId], references: [id], onDelete: Cascade)
+  user     User     @relation("UserToMembers", fields: [userId], references: [id])
+
+  @@unique([groupId, userId])
+  @@map("group_members")
+}
+
+model Category {
+  id       String    @id @default(uuid())
+  name     String    @unique
+  keywords String[]
+  icon     String?
+  expenses Expense[] @relation("CategoryExpenses")
+
+  @@map("category")
+}
+
+model Expense {
+  id            String               @id @default(uuid())
+  title         String
+  description   String?
+  groupId       String?
+  totalAmount   Float
+  categoryId    String
+  created_by    String
+  updated_by    String?
+  is_Settled    Boolean              @default(false)
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+  cycleId       Int
+  category      Category             @relation("CategoryExpenses", fields: [categoryId], references: [id])
+  createdByUser User                 @relation("UserCreatedExpenses", fields: [created_by], references: [id])
+  group         Group?               @relation("GroupExpenses", fields: [groupId], references: [id])
+  updatedByUser User?                @relation("UserUpdatedExpenses", fields: [updated_by], references: [id])
+  participants  ExpenseParticipant[] @relation("ExpenseParticipants")
+
+  @@index([groupId, cycleId])
+  @@map("expense")
+}
+
+model ExpenseParticipant {
+  id         String  @id @default(uuid())
+  expenseId  String  @map("expense_id")
+  userId     String  @map("user_id")
+  paidAmount Float   @default(0) @map("paid_amount")
+  owedAmount Float   @default(0) @map("owed_amount")
+  groupId    String? @map("group_id")
+  expense    Expense @relation("ExpenseParticipants", fields: [expenseId], references: [id], onDelete: Cascade)
+  group      Group?  @relation(fields: [groupId], references: [id])
+  user       User    @relation("UserExpenseParticipants", fields: [userId], references: [id])
+
+  @@unique([expenseId, userId])
+  @@index([userId])
+  @@map("expense_participants")
+}
+
+model Settlement {
+  id                String   @id @default(uuid())
+  group_id          String
+  payer_id          String
+  receiver_id       String
+  amount            Float
+  createdAt         DateTime @default(now()) @map("created_at")
+  created_by        String
+  cycleId           Int
+  settlementCreator User     @relation("Creator", fields: [created_by], references: [id])
+  group             Group    @relation("GroupSettlement", fields: [group_id], references: [id])
+  payer             User     @relation("Payer", fields: [payer_id], references: [id])
+  receiver          User     @relation("Receiver", fields: [receiver_id], references: [id])
+
+  @@index([group_id, cycleId])
+  @@map("settlement")
+}
+
+model Chats {
+  id          String   @id @default(uuid())
+  chatMessage String   @map("chat_message")
+  groupId     String   @map("group_id")
+  senderId    String   @map("sender_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  group       Group    @relation(fields: [groupId], references: [id])
+  sender      User     @relation(fields: [senderId], references: [id])
+
+  @@index([groupId, createdAt])
+  @@map("chats")
 }
 
 enum GroupType {
   PERSONAL
   NON_GROUP
   GROUP
-}
-
-model GroupMember {
-  id String @id @default(uuid())
-
-  user   User   @relation("UserToMembers", fields: [userId], references: [id])
-  userId String
-
-  group   Group  @relation(fields: [groupId], references: [id], name: "GroupToMembers", onDelete: Cascade)
-  groupId String
-
-  joinedAt DateTime @default(now())
-
-  @@map("group_members")
-}
-
-model Category {
-  id       String   @id @default(uuid())
-  name     String   @unique
-  keywords String[]
-  icon     String?
-
-  expenses Expense[] @relation("CategoryExpenses")
-
-  @@index([keywords], type: Gin)
-  @@map("category")
-}
-
-model Expense {
-  id          String  @id @default(uuid())
-  title       String
-  description String?
-  cycleId     Int
-
-  group   Group?  @relation("GroupExpenses", fields: [groupId], references: [id])
-  groupId String?
-
-  totalAmount Float
-
-  category   Category @relation("CategoryExpenses", fields: [categoryId], references: [id])
-  categoryId String
-
-  paid_by        Json[]
-  shared_amounts Json[]
-
-  createdByUser User   @relation("UserCreatedExpenses", fields: [created_by], references: [id])
-  created_by    String
-
-  updatedByUser User?   @relation("UserUpdatedExpenses", fields: [updated_by], references: [id])
-  updated_by    String?
-
-  is_Settled Boolean  @default(false)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-
-  @@map("expense")
-}
-
-model Settlement {
-  id String @id @default(uuid())
-
-  group    Group  @relation("GroupSettlement", fields: [group_id], references: [id])
-  group_id String
-
-  cycleId Int
-
-  payer    User   @relation("Payer", fields: [payer_id], references: [id])
-  payer_id String
-
-  receiver    User   @relation("Receiver", fields: [receiver_id], references: [id])
-  receiver_id String
-
-  amount Float
-
-  settlementCreator User   @relation("Creator", fields: [created_by], references: [id])
-  created_by        String
-
-  createdAt DateTime @default(now()) @map("created_at")
-
-  @@map("settlement")
-}
-
-model Chats {
-  id          String @id @default(uuid())
-  chatMessage String @map("chat_message")
-
-  group   Group  @relation(fields: [groupId], references: [id])
-  groupId String @map("group_id")
-
-  sender   User   @relation(fields: [senderId], references: [id])
-  senderId String @map("sender_id")
-
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  @@map("chats")
 }

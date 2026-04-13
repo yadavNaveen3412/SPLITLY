@@ -1,5 +1,6 @@
 
 import jwt from "jsonwebtoken";
+import bcrypt from "bcrypt";
 import prisma from "../../src/loaders/prisma.js";
 import {
   generateShareCode,
@@ -8,10 +9,26 @@ import {
 import "dotenv/config";
 import { verifyGoogleIdToken } from "../../src/utils/googleAuth.js";
 
+const BCRYPT_ROUNDS = 10;
+
+function issueJwtCookie(res, userId) {
+  const appToken = jwt.sign({ userId }, process.env.JWT_SECRET, {
+    expiresIn: "3d",
+  });
+
+  res.cookie("jwt", appToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+  });
+}
 
 export const userResolvers = {
+  User: {
+    hasPassword: (parent) => !!parent.passwordHash,
+  },
+
   Query: {
-    //to get single user from backend
     getUser(_, __, { user }) {
       return user || null;
     },
@@ -69,39 +86,100 @@ export const userResolvers = {
   },
 
   Mutation: {
+    async register(_, { input }, { prisma, res }) {
+      const { name, email, password } = input;
+
+      if (!name || !email || !password) {
+        throw new Error("Name, email, and password are required.");
+      }
+
+      if (password.length < 6) {
+        throw new Error("Password must be at least 6 characters.");
+      }
+
+      const existing = await prisma.user.findUnique({ where: { email } });
+
+      if (existing) {
+        throw new Error("A user with this email already exists.");
+      }
+
+      const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
+      const shareCode = generateShareCode();
+
+      const user = await prisma.user.create({
+        data: {
+          name,
+          email,
+          passwordHash,
+          shareCode,
+        },
+      });
+
+      issueJwtCookie(res, user.id);
+      return { user };
+    },
+
+    async loginWithEmail(_, { input }, { prisma, res }) {
+      const { email, password } = input;
+
+      const user = await prisma.user.findUnique({ where: { email } });
+
+      if (!user) {
+        throw new Error("Invalid email or password.");
+      }
+
+      if (!user.passwordHash) {
+        throw new Error(
+          "This account uses Google Sign-In. Please log in with Google."
+        );
+      }
+
+      const valid = await bcrypt.compare(password, user.passwordHash);
+
+      if (!valid) {
+        throw new Error("Invalid email or password.");
+      }
+
+      issueJwtCookie(res, user.id);
+      return { user };
+    },
 
     async loginWithGoogle(_, { idToken }, { prisma, res }) {
       const payload = await verifyGoogleIdToken(idToken);
-      const { sub, email, name, picture } = payload;
+      const { sub, email, name } = payload;
 
-      const shareCode = generateShareCode();
-
+      // 1. Check if user already exists by googleSub
       let user = await prisma.user.findUnique({
         where: { googleSub: sub },
       });
 
       if (!user) {
-        
-        user = await prisma.user.create({
-          data: {
-            googleSub: sub,
-            email,
-            name,
-            shareCode,
-          },
+        // 2. Check if a user exists with the same email (registered via email+password)
+        const existingByEmail = await prisma.user.findUnique({
+          where: { email },
         });
+
+        if (existingByEmail) {
+          // Link Google account to existing email user
+          user = await prisma.user.update({
+            where: { id: existingByEmail.id },
+            data: { googleSub: sub },
+          });
+        } else {
+          // 3. Brand new user via Google
+          const shareCode = generateShareCode();
+          user = await prisma.user.create({
+            data: {
+              googleSub: sub,
+              email,
+              name,
+              shareCode,
+            },
+          });
+        }
       }
 
-      const appToken = jwt.sign({ userId: user.id }, process.env.JWT_SECRET, {
-        expiresIn: "3d",
-      });
-
-      res.cookie("jwt", appToken, {
-        httpOnly: true,
-        secure: true,
-        sameSite: "lax",
-      });
-
+      issueJwtCookie(res, user.id);
       return { user };
     },
 
