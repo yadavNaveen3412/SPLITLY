@@ -1,15 +1,15 @@
 export function simplifyExpensesByFriendId(expenses, userId, friendId) {
   return expenses.map((e) => {
-    const uPaid = e.paid_by.find((p) => p.userId === userId)?.amount || 0;
-    const uShare =
-      e.shared_amounts.find((s) => s.userId === userId)?.amount || 0;
+    const userP = e.participants.find((p) => p.userId === userId);
+    const friendP = e.participants.find((p) => p.userId === friendId);
 
-    const fPaid = e.paid_by.find((p) => p.userId === friendId)?.amount || 0;
-    const fShare =
-      e.shared_amounts.find((s) => s.userId === friendId)?.amount || 0;
+    const uPaid = Number(userP?.paidAmount || 0);
+    const uOwed = Number(userP?.owedAmount || 0);
+    const fPaid = Number(friendP?.paidAmount || 0);
+    const fOwed = Number(friendP?.owedAmount || 0);
 
-    const uNet = uPaid - uShare;
-    const fNet = fPaid - fShare;
+    const uNet = uPaid - uOwed;
+    const fNet = fPaid - fOwed;
 
     let amount = 0;
     let type = "no-balance";

@@ -1,9 +1,18 @@
-import { DateTimeResolver, JSONResolver } from "graphql-scalars";
+import { DateTimeResolver } from "graphql-scalars";
 import { simplifyExpensesByFriendId } from "../../src/utils/expenseHelper.js";
 import { settleGroupService } from "../../src/services/expense.service.js";
 
+const PARTICIPANT_INCLUDE = {
+  participants: {
+    include: {
+      user: {
+        select: { id: true, name: true },
+      },
+    },
+  },
+};
+
 export const expensesResolvers = {
-  JSON: JSONResolver,
   DateTime: DateTimeResolver,
 
   Query: {
@@ -15,17 +24,20 @@ export const expensesResolvers = {
           category: true,
           group: true,
           createdByUser: true,
+          ...PARTICIPANT_INCLUDE,
         },
       });
     },
 
     async getExpenseById(_, { id }, { prisma }) {
-      // 1️⃣ Fetch expense (unchanged includes)
       const expense = await prisma.expense.findUnique({
         where: { id },
         include: {
           category: true,
           createdByUser: {
+            select: { id: true, name: true },
+          },
+          updatedByUser: {
             select: { id: true, name: true },
           },
           group: {
@@ -39,38 +51,12 @@ export const expensesResolvers = {
               },
             },
           },
+          ...PARTICIPANT_INCLUDE,
         },
       });
 
       if (!expense) return null;
-
-      // 2️⃣ Collect ALL userIds from JSON + creator
-      const userIds = new Set();
-
-      (expense.paid_by || []).forEach((p) => userIds.add(p.userId));
-      (expense.shared_amounts || []).forEach((s) => userIds.add(s.userId));
-      if (expense.created_by) userIds.add(expense.created_by);
-
-      // 3️⃣ Fetch users in ONE query
-      const users = await prisma.user.findMany({
-        where: { id: { in: [...userIds] } },
-        select: { id: true, name: true },
-      });
-
-      const userMap = Object.fromEntries(users.map((u) => [u.id, u]));
-
-      // 4️⃣ Enrich JSON fields
-      const enrich = (arr = []) =>
-        arr.map((item) => ({
-          ...item,
-          user: userMap[item.userId] || null,
-        }));
-
-      return {
-        ...expense,
-        paid_by: enrich(expense.paid_by),
-        shared_amounts: enrich(expense.shared_amounts),
-      };
+      return expense;
     },
 
     async getExpenseByFriendId(_, { friendId }, { prisma, user }) {
@@ -103,60 +89,60 @@ export const expensesResolvers = {
           category: true,
           group: true,
           createdByUser: true,
+          ...PARTICIPANT_INCLUDE,
         },
         orderBy: {
           createdAt: "desc",
         },
       });
-      // console.log("E:", expenses);
 
       return simplifyExpensesByFriendId(expenses, user.id, friendId);
     },
   },
+
   Mutation: {
     async createExpense(_, { input }, { prisma, user }) {
       if (!user) {
         throw new Error("User not authenticated");
       }
-      const {
-        title,
-        description,
-        groupId,
-        totalAmount,
-        categoryId,
-        paid_by,
-        shared_amounts,
-      } = input;
+      const { title, description, groupId, totalAmount, categoryId, participants } =
+        input;
 
       let cycleId = 1;
-      if (input.groupId) {
+      if (groupId) {
         const group = await prisma.group.findUnique({
           where: { id: groupId },
           select: { currentCycleId: true },
         });
         cycleId = group?.currentCycleId ?? 1;
       }
-      // if(!title || !totalAmount ) throw error
+
       const expense = await prisma.expense.create({
         data: {
           title,
           description: description || null,
           groupId,
-          totalAmount:
-            Number(totalAmount) ??
-            paid_by.reduce((sum, p) => sum + Number(p.amount), 0),
-          categoryId: categoryId,
-          paid_by, // JSON array from frontend
-          shared_amounts, // JSON array from frontend
+          totalAmount: Number(totalAmount),
+          categoryId,
           created_by: user.id,
           cycleId,
+          participants: {
+            create: participants.map((p) => ({
+              userId: p.userId,
+              paidAmount: p.paidAmount,
+              owedAmount: p.owedAmount,
+              groupId,
+            })),
+          },
         },
         include: {
           category: true,
           group: true,
           createdByUser: true,
+          ...PARTICIPANT_INCLUDE,
         },
       });
+
       return expense;
     },
 
@@ -164,63 +150,74 @@ export const expensesResolvers = {
       if (!user) {
         throw new Error("User not authenticated");
       }
-      const expenseId = id;
-      const existing = prisma.expense.findUnique({
-        where: { id: expenseId },
-      });
-      if (!existing) {
-        throw new Error("Expense doesnt exist");
-      }
-      const {
-        title,
-        description,
-        totalAmount,
-        categoryId,
-        paid_by,
-        shared_amounts,
-        is_Settled,
-      } = input;
 
-      const updatedExpense = prisma.expense.update({
-        where: { id: expenseId },
-        data: {
-          title: title ?? existing.title,
-          description: description ?? existing.description,
-          totalAmount:
-            totalAmount ??
-            paid_by.reduce((sum, p) => sum + Number(p.amount), 0),
-          categoryId: categoryId ?? existing.categoryId,
-          paid_by: paid_by ?? existing.paid_by,
-          shared_amounts: shared_amounts ?? existing.shared_amounts,
-          is_Settled: is_Settled ?? existing.is_Settled,
-          updated_by: user.id,
-        },
-        include: {
-          category: true,
-          group: true,
-          createdByUser: true,
-        },
+      const existing = await prisma.expense.findUnique({
+        where: { id },
       });
+
+      if (!existing) {
+        throw new Error("Expense doesn't exist");
+      }
+
+      const { title, description, totalAmount, categoryId, participants, is_settled } =
+        input;
+
+      const updatedExpense = await prisma.$transaction(async (tx) => {
+        // If participants are being updated, replace them atomically
+        if (participants) {
+          await tx.expenseParticipant.deleteMany({
+            where: { expenseId: id },
+          });
+
+          await tx.expenseParticipant.createMany({
+            data: participants.map((p) => ({
+              expenseId: id,
+              userId: p.userId,
+              paidAmount: p.paidAmount,
+              owedAmount: p.owedAmount,
+              groupId: existing.groupId,
+            })),
+          });
+        }
+
+        return tx.expense.update({
+          where: { id },
+          data: {
+            title: title ?? existing.title,
+            description: description ?? existing.description,
+            totalAmount: totalAmount ?? existing.totalAmount,
+            categoryId: categoryId ?? existing.categoryId,
+            is_Settled: is_settled ?? existing.is_Settled,
+            updated_by: user.id,
+          },
+          include: {
+            category: true,
+            group: true,
+            createdByUser: true,
+            ...PARTICIPANT_INCLUDE,
+          },
+        });
+      });
+
       return updatedExpense;
     },
 
     async deleteExpense(_, { id }, { prisma, user }) {
       if (!user) throw new Error("User not authenticated");
-      const expenseId = id;
+
       const existing = await prisma.expense.findUnique({
-        where: { id: expenseId },
+        where: { id },
       });
-      if (!existing) throw new Error("EXpense not found");
-      const res = await prisma.expense.delete({ where: { id: expenseId } });
-      if (res) {
-        return true;
-      }
-      return false;
+
+      if (!existing) throw new Error("Expense not found");
+
+      // ExpenseParticipant rows are cascade-deleted automatically
+      const res = await prisma.expense.delete({ where: { id } });
+      return !!res;
     },
 
     async settleGroup(_, { groupId }, { prisma, user }) {
       if (!user) throw new Error("User not authenticated");
-
       return settleGroupService(groupId, prisma);
     },
   },

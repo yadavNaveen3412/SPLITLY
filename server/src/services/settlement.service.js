@@ -14,12 +14,18 @@ export const settlementService = (prisma) => {
     const owes = [];
 
     for (const [userId, balance] of Object.entries(balances)) {
-      if (balance > 0) owed.push({ userId, amount: balance });
-      else if (balance < 0) owes.push({ userId, amount: -balance });
+      // Round to nearest cent to eliminate floating point inaccuracies entirely
+      const roundedCents = Math.round(Number(balance) * 100);
+
+      if (roundedCents > 0) {
+        owed.push({ userId, cents: roundedCents });
+      } else if (roundedCents < 0) {
+        owes.push({ userId, cents: -roundedCents });
+      }
     }
 
-    owed.sort((a, b) => b.amount - a.amount);
-    owes.sort((a, b) => b.amount - a.amount);
+    owed.sort((a, b) => b.cents - a.cents);
+    owes.sort((a, b) => b.cents - a.cents);
 
     return { owed, owes };
   };
@@ -33,19 +39,20 @@ export const settlementService = (prisma) => {
       const debtor = owes[i];
       const creditor = owed[j];
 
-      const amount = Math.min(debtor.amount, creditor.amount);
+      // Exact integer math to find minimum cent amount to settle
+      const cents = Math.min(debtor.cents, creditor.cents);
 
       transactions.push({
         from: debtor.userId,
         to: creditor.userId,
-        amount,
+        amount: cents / 100, // Return normalized float for db/graphql
       });
 
-      debtor.amount -= amount;
-      creditor.amount -= amount;
+      debtor.cents -= cents;
+      creditor.cents -= cents;
 
-      if (debtor.amount === 0) i++;
-      if (creditor.amount === 0) j++;
+      if (debtor.cents === 0) i++;
+      if (creditor.cents === 0) j++;
     }
 
     return transactions;

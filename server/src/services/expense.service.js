@@ -10,7 +10,10 @@ export const settleGroupService = async (groupId, prisma) => {
     const cycleId = group.currentCycleId;
 
     const [expenses, settlements, groupMembers] = await Promise.all([
-      tx.expense.findMany({ where: { groupId, cycleId } }),
+      tx.expense.findMany({
+        where: { groupId, cycleId },
+        select: { id: true },
+      }),
       tx.settlement.findMany({ where: { group_id: groupId, cycleId } }),
       tx.groupMember.findMany({
         where: { groupId },
@@ -18,32 +21,37 @@ export const settleGroupService = async (groupId, prisma) => {
       }),
     ]);
 
-    // Initialize balances
+    // Fetch all participants for the current cycle's expenses in one query
+    const expenseIds = expenses.map((e) => e.id);
+    const participants = await tx.expenseParticipant.findMany({
+      where: { expenseId: { in: expenseIds } },
+    });
+
+    // Initialize balances in cents
     const balances = {};
     groupMembers.forEach((m) => (balances[m.userId] = 0));
 
-    // Expenses
-    expenses.forEach((e) => {
-      (e.paid_by || []).forEach((p) => {
-        balances[p.userId] += Number(p.amount);
-      });
-      (e.shared_amounts || []).forEach((s) => {
-        balances[s.userId] -= Number(s.amount);
-      });
+    // Expenses — sum from participants (cents to avoid JS float precision issues)
+    participants.forEach((p) => {
+      if (balances[p.userId] === undefined) balances[p.userId] = 0;
+      const netCents = Math.round(Number(p.paidAmount) * 100) - Math.round(Number(p.owedAmount) * 100);
+      balances[p.userId] += netCents;
     });
 
-    // Settlements
+    // Settlements — add/subtract in cents
     settlements.forEach((s) => {
-      balances[s.payer_id] += Number(s.amount);
-      balances[s.receiver_id] -= Number(s.amount);
+      const amountCents = Math.round(Number(s.amount) * 100);
+      balances[s.payer_id] += amountCents;
+      balances[s.receiver_id] -= amountCents;
     });
 
-    const balanceArray = Object.entries(balances).map(([userId, amount]) => ({
+    const balanceArray = Object.entries(balances).map(([userId, cents]) => ({
       userId,
-      amount,
+      amount: cents / 100, // Convert back to float for output
     }));
 
-    const allZero = Object.values(balances).every((b) => Math.abs(b) <= 0.01);
+    // If all balances are completely 0 cents
+    const allZero = Object.values(balances).every((cents) => Math.abs(cents) === 0);
 
     if (!allZero) {
       return {
