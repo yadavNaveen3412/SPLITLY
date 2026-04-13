@@ -91,16 +91,13 @@ export default {
 
 function SimplifyExpenses(data, userId) {
   return data.map((e) => {
-    const paidEntry = e.paid_by.find((paid) => paid.userId === userId);
-    const sharedEntry = e.shared_amounts.find(
-      (shared) => shared.userId === userId
-    );
+    const userParticipant = e.participants.find((p) => p.userId === userId);
+    
+    const amountPaid = userParticipant?.paidAmount || 0;
+    const amountOwed = userParticipant?.owedAmount || 0;
 
-    const isPaidByUser = !!paidEntry;
-    const isSharedByUser = !!sharedEntry;
-
-    const amountPaid = paidEntry?.amount || 0;
-    const amountOwed = sharedEntry?.amount || 0;
+    const isPaidByUser = amountPaid > 0;
+    const isSharedByUser = amountOwed > 0;
 
     const amount = amountPaid - amountOwed;
 
@@ -133,4 +130,4 @@ function SimplifyExpenses(data, userId) {
       type,
     };
   });
-}
+} 

@@ -155,12 +155,12 @@ export default {
     },
 
     getPaidBySummary(expense) {
-      const payers = expense.paid_by;
+      const payers = (expense.participants || []).filter((p) => p.paidAmount > 0);
       if (!payers || payers.length === 0) {
         return "No payment info";
       }
       if (payers.length === 1) {
-        const name = this.getUserNamesById(payers[0].userId);
+        const name = this.getUserNamesById(payers[0].userId) || payers[0].user?.name;
         return `Paid by ${name} `;
       }
       return `Paid by ${payers.length} people`;
@@ -169,11 +169,12 @@ export default {
     getAmountShared(expense) {
       try {
         const userId = this.user.id;
-        const payer = expense.paid_by.find((p) => p.userId === userId);
-        const sharer = expense.shared_amounts.find((s) => s.userId === userId);
+        const participant = (expense.participants || []).find(
+          (p) => p.userId === userId
+        );
 
-        const payerAmount = Number(payer?.amount || 0);
-        const sharerAmount = Number(sharer?.amount || 0);
+        const payerAmount = Number(participant?.paidAmount || 0);
+        const sharerAmount = Number(participant?.owedAmount || 0);
 
         return payerAmount - sharerAmount;
       } catch (e) {

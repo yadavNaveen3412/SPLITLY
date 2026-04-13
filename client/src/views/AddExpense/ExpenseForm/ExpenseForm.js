@@ -395,53 +395,78 @@ export default {
     handleSubmit() {
       if (!this.isFormValid) return;
 
-      const shared_amounts = this.allParticipants
-        .map((participant) => {
-          let amount = 0;
+      const participantsMap = new Map();
+      this.allParticipants.forEach((p) => {
+        participantsMap.set(p.id, { userId: p.id, paidAmount: 0, owedAmount: 0 });
+      });
 
-          if (this.formData.splitMethod === "equal") {
-            amount = this.splits[participant.id] || 0;
-          } else if (this.formData.splitMethod === "unequal") {
-            amount = parseFloat(this.splits[participant.id]) || 0;
-          } else if (this.formData.splitMethod === "percentage") {
-            const percentage = parseFloat(this.splits[participant.id]) || 0;
-            amount = (parseFloat(this.formData.amount) * percentage) / 100;
-          } else if (this.formData.splitMethod === "shares") {
-            const totalShares = Object.values(this.splits).reduce(
-              (sum, shares) => {
-                return sum + (parseInt(shares) || 1);
-              },
-              0
-            );
-            const amountPerShare =
-              parseFloat(this.formData.amount) / totalShares;
-            const participantShares =
-              parseInt(this.splits[participant.id]) || 1;
-            amount = amountPerShare * participantShares;
+      // Calculate owed (shared) amounts
+      let totalAssignedCents = 0;
+      const targetCents = Math.round(parseFloat(this.formData.amount) * 100);
+      const owedAssignments = [];
+
+      this.allParticipants.forEach((participant) => {
+        let amount = 0;
+
+        if (this.formData.splitMethod === "equal") {
+          amount = this.splits[participant.id] || 0;
+        } else if (this.formData.splitMethod === "unequal") {
+          amount = parseFloat(this.splits[participant.id]) || 0;
+        } else if (this.formData.splitMethod === "percentage") {
+          const percentage = parseFloat(this.splits[participant.id]) || 0;
+          amount = (parseFloat(this.formData.amount) * percentage) / 100;
+        } else if (this.formData.splitMethod === "shares") {
+          const totalShares = Object.values(this.splits).reduce(
+            (sum, shares) => {
+              return sum + (parseInt(shares) || 1);
+            },
+            0
+          );
+          const amountPerShare = parseFloat(this.formData.amount) / totalShares;
+          const participantShares = parseInt(this.splits[participant.id]) || 1;
+          amount = amountPerShare * participantShares;
+        }
+
+        if (amount > 0 && participantsMap.has(participant.id)) {
+          const cents = Math.round(amount * 100);
+          owedAssignments.push({ participantId: participant.id, cents });
+          totalAssignedCents += cents;
+        }
+      });
+
+      // Assign leftover missing cents to the first participant to ensure perfect balancing
+      if (this.formData.splitMethod !== "unequal" && owedAssignments.length > 0) {
+        const remainderCents = targetCents - totalAssignedCents;
+        if (remainderCents !== 0) {
+          owedAssignments[0].cents += remainderCents;
+        }
+      }
+
+      owedAssignments.forEach(({ participantId, cents }) => {
+        participantsMap.get(participantId).owedAmount = cents / 100;
+      });
+
+      // Calculate paid amounts
+      Object.keys(this.paidBy).forEach((participantId) => {
+        if (this.selectedPaidBy.has(participantId)) {
+          const amount = parseFloat(this.paidBy[participantId]) || 0;
+          if (amount > 0 && participantsMap.has(participantId)) {
+            participantsMap.get(participantId).paidAmount = amount;
           }
+        }
+      });
 
-          return {
-            userId: participant.id,
-            amount: parseFloat(amount.toFixed(2)),
-          };
-        })
-        .filter((item) => item.amount > 0);
-
-      const paid_by = Object.keys(this.paidBy)
-        .filter((participantId) => this.selectedPaidBy.has(participantId))
-        .map((participantId) => ({
-          userId: participantId,
-          amount: parseFloat(this.paidBy[participantId]) || 0,
-        }))
-        .filter((item) => item.amount > 0);
+      // Filter to only include participants who have non-zero amounts
+      const participants = Array.from(participantsMap.values()).filter(
+        (p) => p.paidAmount > 0 || p.owedAmount > 0
+      );
 
       const expenseData = {
         title: this.formData.title,
         description: this.formData.description,
         totalAmount: parseFloat(this.formData.amount),
         categoryId: this.formData.category,
-        paid_by,
-        shared_amounts,
+        participants,
       };
 
       this.$emit("submit", expenseData);

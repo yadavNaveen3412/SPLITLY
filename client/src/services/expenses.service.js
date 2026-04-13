@@ -7,14 +7,21 @@ const GET_EXPENSES_BY_GROUP = gql`
       id
       title
       description
-      paid_by
       cycleId
       totalAmount
       category {
         name
         icon
       }
-      shared_amounts
+      participants {
+        userId
+        paidAmount
+        owedAmount
+        user {
+          id
+          name
+        }
+      }
       createdAt
     }
   }
@@ -34,8 +41,15 @@ const GET_EXPENSE_BY_ID = gql`
         name
       }
       description
-      paid_by
-      shared_amounts
+      participants {
+        userId
+        paidAmount
+        owedAmount
+        user {
+          id
+          name
+        }
+      }
       title
       totalAmount
       updatedAt
@@ -80,8 +94,11 @@ const CREATE_EXPENSE = gql`
     createExpense(input: $input) {
       title
       totalAmount
-      paid_by
-      shared_amounts
+      participants {
+        userId
+        paidAmount
+        owedAmount
+      }
     }
   }
 `;
@@ -165,7 +182,6 @@ export const getExpenseByFriendId = async (friendId) => {
       fetchPolicy: "no-cache",
     });
 
-    // console.log("Friend Expenses:", data.getExpenseByFriendId);
     return data.getExpenseByFriendId;
   } catch (error) {
     console.log("Error fetching friend Expenses:", error);

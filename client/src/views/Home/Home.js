@@ -42,18 +42,21 @@ export default {
       this.$router.push({ name: "AddExpense" });
     },
     async calculateOverallBalance() {
-      this.balances.owedToYou = 0;
-      this.balances.youOwe = 0;
+      let owed = 0;
+      let owe = 0;
 
       const transactions = await userAllBalances(this.user.id);
 
       transactions.forEach((t) => {
         if (t.type === "owed") {
-          this.balances.owedToYou += t.amount;
+          owed += t.amount;
         } else if (t.type === "owe") {
-          this.balances.youOwe += t.amount;
+          owe += t.amount;
         }
       });
+      
+      this.balances.owedToYou = owed;
+      this.balances.youOwe = owe;
       console.log("transactions", transactions);
     },
   },

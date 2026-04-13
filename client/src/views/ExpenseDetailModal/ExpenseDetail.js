@@ -16,29 +16,16 @@ export default {
     peopleSummary() {
       const summaryMap = new Map();
 
-      this.expense.paid_by.forEach((p) => {
-        summaryMap.set(p.userId, {
-          id: p.userId,
-          name: p.user?.name ?? "Unknown",
-          paid: Number(p.amount),
-          shared: 0,
-        });
-      });
-
-      this.expense.shared_amounts.forEach((s) => {
-        if (!summaryMap.has(s.userId)) {
-          summaryMap.set(s.userId, {
-            id: s.userId,
-            name: s.user?.name ?? "Unknown",
-            paid: 0,
-            shared: Number(s.amount),
+      (this.expense.participants || []).forEach((p) => {
+        if (p.paidAmount > 0 || p.owedAmount > 0) {
+          summaryMap.set(p.userId, {
+            id: p.userId,
+            name: p.user?.name ?? "Unknown",
+            paid: Number(p.paidAmount),
+            shared: Number(p.owedAmount),
           });
-        } else {
-          summaryMap.get(s.userId).shared = Number(s.amount);
         }
       });
-
-      // console.log("SM:", summaryMap);
 
       return Array.from(summaryMap.values());
     },
