@@ -23,7 +23,7 @@
         <!-- Not logged in -->
         <template v-if="!userLoggedIn">
           <li class="nav-item">
-            <router-link class="nav-link" to="/login">
+            <router-link class="nav-link" to="/register">
               <span class="btn btn-primary login-btn">Login</span>
             </router-link>
           </li>

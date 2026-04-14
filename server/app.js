@@ -22,15 +22,12 @@ await server.start();
 app.use(
   `/graphql`,
   cors({
-    origin: [
-      `https://j7zkqf80-${process.env.FRONTEND_PORT}.inc1.devtunnels.ms`,
-      `http://localhost:${process.env.FRONTEND_PORT}`,
-    ],
+    origin: `http://localhost:${process.env.FRONTEND_PORT}`,
     credentials: true,
   }),
   express.json(),
   cookieParser(),
-  expressMiddleware(server, { context })
+  expressMiddleware(server, { context }),
 );
 
 setupWebSocket(httpServer, schema);
