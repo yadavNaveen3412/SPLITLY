@@ -79,7 +79,7 @@ model Expense {
   title         String
   description   String?
   groupId       String?
-  totalAmount   Float
+  totalAmount   Decimal              @db.Decimal(10, 2)
   categoryId    String
   created_by    String
   updated_by    String?
@@ -101,8 +101,8 @@ model ExpenseParticipant {
   id         String  @id @default(uuid())
   expenseId  String  @map("expense_id")
   userId     String  @map("user_id")
-  paidAmount Float   @default(0) @map("paid_amount")
-  owedAmount Float   @default(0) @map("owed_amount")
+  paidAmount Decimal @default(0) @map("paid_amount") @db.Decimal(10, 2)
+  owedAmount Decimal @default(0) @map("owed_amount") @db.Decimal(10, 2)
   groupId    String? @map("group_id")
   expense    Expense @relation("ExpenseParticipants", fields: [expenseId], references: [id], onDelete: Cascade)
   group      Group?  @relation(fields: [groupId], references: [id])
@@ -118,7 +118,7 @@ model Settlement {
   group_id          String
   payer_id          String
   receiver_id       String
-  amount            Float
+  amount            Decimal  @db.Decimal(10, 2)
   createdAt         DateTime @default(now()) @map("created_at")
   created_by        String
   cycleId           Int

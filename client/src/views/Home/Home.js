@@ -54,9 +54,9 @@ export default {
           owe += t.amount;
         }
       });
-      
-      this.balances.owedToYou = owed;
-      this.balances.youOwe = owe;
+
+      this.balances.owedToYou = Number(owed).toFixed(2);
+      this.balances.youOwe = Number(owe).toFixed(2);
       console.log("transactions", transactions);
     },
   },

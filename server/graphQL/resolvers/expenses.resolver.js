@@ -1,6 +1,7 @@
 import { DateTimeResolver } from "graphql-scalars";
 import { simplifyExpensesByFriendId } from "../../src/utils/expenseHelper.js";
 import { settleGroupService } from "../../src/services/expense.service.js";
+import { calculateOwedAmounts, validateSplit } from "expense-split-logic";
 
 const PARTICIPANT_INCLUDE = {
   participants: {
@@ -12,8 +13,48 @@ const PARTICIPANT_INCLUDE = {
   },
 };
 
+const prepareServerParticipants = (
+  totalAmount,
+  splitMethod,
+  rawParticipants,
+) => {
+  if (!rawParticipants || rawParticipants.length === 0) return [];
+
+  // 1. Calculate the exact owed amounts using shared logic
+  const owedAssignments = calculateOwedAmounts(
+    totalAmount,
+    splitMethod,
+    rawParticipants,
+  );
+
+  // 2. Map back to participant format for validation
+  const finalParticipants = rawParticipants.map((p) => {
+    const owed =
+      owedAssignments.find((a) => a.userId === p.userId)?.owedAmount || 0;
+    return {
+      userId: p.userId,
+      paidAmount: Number(p.paidAmount),
+      owedAmount: owed,
+    };
+  });
+
+  // 3. Strict financial integrity check (SUM(paid) === total AND SUM(owed) === total)
+  validateSplit(totalAmount, finalParticipants);
+
+  return finalParticipants;
+};
+
 export const expensesResolvers = {
   DateTime: DateTimeResolver,
+
+  Expense: {
+    totalAmount: (parent) => Number(parent.totalAmount),
+  },
+
+  ExpenseParticipant: {
+    paidAmount: (parent) => Number(parent.paidAmount),
+    owedAmount: (parent) => Number(parent.owedAmount),
+  },
 
   Query: {
     async getExpensesByGroup(_, { groupId }, { prisma }) {
@@ -105,8 +146,21 @@ export const expensesResolvers = {
       if (!user) {
         throw new Error("User not authenticated");
       }
-      const { title, description, groupId, totalAmount, categoryId, participants } =
-        input;
+      const {
+        title,
+        description,
+        groupId,
+        totalAmount,
+        categoryId,
+        splitMethod,
+        participants,
+      } = input;
+
+      const serverParticipants = prepareServerParticipants(
+        totalAmount,
+        splitMethod,
+        participants,
+      );
 
       let cycleId = 1;
       if (groupId) {
@@ -127,7 +181,7 @@ export const expensesResolvers = {
           created_by: user.id,
           cycleId,
           participants: {
-            create: participants.map((p) => ({
+            create: serverParticipants.map((p) => ({
               userId: p.userId,
               paidAmount: p.paidAmount,
               owedAmount: p.owedAmount,
@@ -159,18 +213,41 @@ export const expensesResolvers = {
         throw new Error("Expense doesn't exist");
       }
 
-      const { title, description, totalAmount, categoryId, participants, is_settled } =
-        input;
+      const {
+        title,
+        description,
+        totalAmount,
+        categoryId,
+        splitMethod,
+        participants,
+        is_settled,
+      } = input;
+
+      if (totalAmount !== undefined && !participants) {
+        throw new Error(
+          "Updating totalAmount securely requires submitting a new participants array with splitMethod.",
+        );
+      }
 
       const updatedExpense = await prisma.$transaction(async (tx) => {
-        // If participants are being updated, replace them atomically
+        // If participants are being updated, explicitly run server validation/calculation
         if (participants) {
+          if (!splitMethod) {
+            throw new Error("splitMethod is required when updating splits.");
+          }
+          const validationTotal = totalAmount ?? existing.totalAmount;
+          const serverParticipants = prepareServerParticipants(
+            validationTotal,
+            splitMethod,
+            participants,
+          );
+
           await tx.expenseParticipant.deleteMany({
             where: { expenseId: id },
           });
 
           await tx.expenseParticipant.createMany({
-            data: participants.map((p) => ({
+            data: serverParticipants.map((p) => ({
               expenseId: id,
               userId: p.userId,
               paidAmount: p.paidAmount,

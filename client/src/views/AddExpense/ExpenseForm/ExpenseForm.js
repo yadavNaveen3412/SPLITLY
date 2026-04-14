@@ -2,6 +2,7 @@ import ExpenseDetails from "./ExpenseDetails/ExpenseDetails.vue";
 import ExpenseSplit from "./ExpenseSplit/ExpenseSplit.vue";
 import ExpensePaidBy from "./ExpensePaidBy/ExpensePaidBy.vue";
 import { mapActions, mapGetters } from "vuex";
+import { distributeExactly, calculateOwedAmounts } from "expense-split-logic";
 
 export default {
   name: "ExpenseForm",
@@ -83,73 +84,34 @@ export default {
   methods: {
     ...mapActions("categories", ["loadCategories"]),
 
-    /**
-     * Helper function to distribute amount exactly among participants
-     * Distributes remainder to the first participant to ensure total matches exactly
-     */
-    distributeExactly(totalAmount, participantCount) {
-      const amountInCents = Math.round(totalAmount * 100);
-      const baseAmountInCents = Math.floor(amountInCents / participantCount);
-      const remainderInCents =
-        amountInCents - baseAmountInCents * participantCount;
-
-      const amounts = [];
-      for (let i = 0; i < participantCount; i++) {
-        // Add remainder to first participant
-        const amount =
-          (baseAmountInCents + (i === 0 ? remainderInCents : 0)) / 100;
-        amounts.push(amount);
-      }
-
-      return amounts;
-    },
-
     initializeSplits() {
       const totalAmount = parseFloat(this.formData.amount) || 0;
-
-      const includedParticipants =
-        this.formData.splitMethod === "equal"
-          ? this.allParticipants.filter(
-              (p) => !this.excludedMembersFromSplit.has(p.id)
-            )
-          : this.allParticipants;
+      const method = this.formData.splitMethod;
 
       this.manuallyEditedSplits.clear();
 
-      if (this.formData.splitMethod === "equal") {
-        // Use exact distribution for equal splits
-        const amounts = this.distributeExactly(
-          totalAmount,
-          includedParticipants.length
-        );
-        let amountIndex = 0;
+      const participantsForLib = this.allParticipants.map((p) => {
+        let splitValue = 1;
+        if (method === "equal") {
+          splitValue = this.excludedMembersFromSplit.has(p.id) ? 0 : 1;
+        } else if (method === "percentage") {
+          splitValue = 100 / this.allParticipants.length;
+        } else if (method === "shares") {
+          splitValue = 1;
+        } else if (method === "unequal") {
+          splitValue = null;
+        }
+        return { userId: p.id, splitValue };
+      });
 
-        this.allParticipants.forEach((p) => {
-          if (this.excludedMembersFromSplit.has(p.id)) {
-            this.splits[p.id] = 0;
-          } else {
-            this.splits[p.id] = amounts[amountIndex];
-            amountIndex++;
-          }
-        });
-      } else if (this.formData.splitMethod === "shares") {
-        this.allParticipants.forEach((p) => {
-          this.splits[p.id] = 1;
-        });
-      } else if (this.formData.splitMethod === "percentage") {
-        // Use exact distribution for percentage splits
-        const amounts = this.distributeExactly(
-          100,
-          this.allParticipants.length
-        );
-        this.allParticipants.forEach((p, index) => {
-          this.splits[p.id] = amounts[index];
-        });
-      } else if (this.formData.splitMethod === "unequal") {
-        this.allParticipants.forEach((p) => {
-          this.splits[p.id] = null;
-        });
-      }
+      const results = calculateOwedAmounts(
+        totalAmount,
+        method,
+        participantsForLib,
+      );
+      results.forEach((res) => {
+        this.splits[res.userId] = method === "unequal" ? null : res.owedAmount;
+      });
 
       this.splits = { ...this.splits };
       this.initializePaidBy();
@@ -180,34 +142,26 @@ export default {
 
     redistributeUnequal(changedParticipantId) {
       const totalAmount = parseFloat(this.formData.amount) || 0;
-
       this.manuallyEditedSplits.add(changedParticipantId);
 
-      const manuallyEdited = [];
-      const autoDistributed = [];
-
-      this.allParticipants.forEach((p) => {
-        if (this.manuallyEditedSplits.has(p.id)) {
-          manuallyEdited.push({
-            id: p.id,
-            value: parseFloat(this.splits[p.id]) || 0,
-          });
-        } else {
-          autoDistributed.push({ id: p.id });
-        }
-      });
-
-      const manualTotal = manuallyEdited.reduce((sum, p) => sum + p.value, 0);
-      const remaining = totalAmount - manualTotal;
-
-      if (autoDistributed.length > 0) {
-        // Use exact distribution for auto-distributed participants
-        const amounts = this.distributeExactly(
-          remaining,
-          autoDistributed.length
+      const manualTotal = this.allParticipants.reduce((sum, p) => {
+        return (
+          sum +
+          (this.manuallyEditedSplits.has(p.id)
+            ? parseFloat(this.splits[p.id]) || 0
+            : 0)
         );
-        autoDistributed.forEach((p, index) => {
-          this.splits[p.id] = amounts[index];
+      }, 0);
+
+      const remaining = totalAmount - manualTotal;
+      const autoParticipants = this.allParticipants.filter(
+        (p) => !this.manuallyEditedSplits.has(p.id),
+      );
+
+      if (autoParticipants.length > 0) {
+        const amounts = distributeExactly(remaining, autoParticipants.length);
+        autoParticipants.forEach((p, i) => {
+          this.splits[p.id] = amounts[i];
         });
       }
 
@@ -218,31 +172,24 @@ export default {
     redistributePercentage(changedParticipantId) {
       this.manuallyEditedSplits.add(changedParticipantId);
 
-      const manuallyEdited = [];
-      const autoDistributed = [];
-
-      this.allParticipants.forEach((p) => {
-        if (this.manuallyEditedSplits.has(p.id)) {
-          manuallyEdited.push({
-            id: p.id,
-            value: parseFloat(this.splits[p.id]) || 0,
-          });
-        } else {
-          autoDistributed.push({ id: p.id });
-        }
-      });
-
-      const manualTotal = manuallyEdited.reduce((sum, p) => sum + p.value, 0);
-      const remaining = 100 - manualTotal;
-
-      if (autoDistributed.length > 0) {
-        // Use exact distribution for auto-distributed percentages
-        const amounts = this.distributeExactly(
-          remaining,
-          autoDistributed.length
+      const manualTotal = this.allParticipants.reduce((sum, p) => {
+        return (
+          sum +
+          (this.manuallyEditedSplits.has(p.id)
+            ? parseFloat(this.splits[p.id]) || 0
+            : 0)
         );
-        autoDistributed.forEach((p, index) => {
-          this.splits[p.id] = amounts[index];
+      }, 0);
+
+      const remaining = 100 - manualTotal;
+      const autoParticipants = this.allParticipants.filter(
+        (p) => !this.manuallyEditedSplits.has(p.id),
+      );
+
+      if (autoParticipants.length > 0) {
+        const amounts = distributeExactly(remaining, autoParticipants.length);
+        autoParticipants.forEach((p, i) => {
+          this.splits[p.id] = amounts[i];
         });
       }
 
@@ -260,7 +207,7 @@ export default {
 
       if (this.formData.splitMethod === "equal") {
         const includedCount = this.allParticipants.filter(
-          (p) => !this.excludedMembersFromSplit.has(p.id)
+          (p) => !this.excludedMembersFromSplit.has(p.id),
         ).length;
 
         if (includedCount < 2) {
@@ -276,7 +223,7 @@ export default {
 
         if (Math.abs(totalSplit - totalAmount) > 0.01) {
           this.splitError = `Total split (₹${totalSplit.toFixed(
-            2
+            2,
           )}) must equal expense amount (₹${totalAmount.toFixed(2)})`;
         } else {
           this.splitError = "";
@@ -288,7 +235,7 @@ export default {
 
         if (Math.abs(totalPercentage - 100) > 0.01) {
           this.splitError = `Total percentage (${totalPercentage.toFixed(
-            2
+            2,
           )}%) must equal 100%`;
         } else {
           this.splitError = "";
@@ -324,15 +271,14 @@ export default {
 
         const manualTotal = manuallyEdited.reduce((sum, p) => sum + p.value, 0);
         const remaining = totalAmount - manualTotal;
+        const autoParticipants = this.allParticipants.filter(
+          (p) => !this.manuallyEditedSplits.has(p.id),
+        );
 
-        if (autoDistributed.length > 0) {
-          // Use exact distribution
-          const amounts = this.distributeExactly(
-            remaining,
-            autoDistributed.length
-          );
-          autoDistributed.forEach((p, index) => {
-            this.splits[p.id] = amounts[index];
+        if (autoParticipants.length > 0) {
+          const amounts = distributeExactly(remaining, autoParticipants.length);
+          autoParticipants.forEach((p, i) => {
+            this.splits[p.id] = amounts[i];
           });
         }
 
@@ -397,53 +343,27 @@ export default {
 
       const participantsMap = new Map();
       this.allParticipants.forEach((p) => {
-        participantsMap.set(p.id, { userId: p.id, paidAmount: 0, owedAmount: 0 });
+        participantsMap.set(p.id, {
+          userId: p.id,
+          paidAmount: 0,
+          splitValue: null,
+        });
       });
 
-      // Calculate owed (shared) amounts
-      let totalAssignedCents = 0;
-      const targetCents = Math.round(parseFloat(this.formData.amount) * 100);
-      const owedAssignments = [];
+      // Pass raw split configs directly to backend without pre-computing amounts locally
+      this.allParticipants.forEach((p) => {
+        if (participantsMap.has(p.id)) {
+          let val = this.splits[p.id];
 
-      this.allParticipants.forEach((participant) => {
-        let amount = 0;
+          // For EQUAL splits, flag exclusion physically so backend excludes them from denominator
+          if (this.formData.splitMethod === "equal") {
+            val = this.excludedMembersFromSplit.has(p.id) ? 0 : 1;
+          }
 
-        if (this.formData.splitMethod === "equal") {
-          amount = this.splits[participant.id] || 0;
-        } else if (this.formData.splitMethod === "unequal") {
-          amount = parseFloat(this.splits[participant.id]) || 0;
-        } else if (this.formData.splitMethod === "percentage") {
-          const percentage = parseFloat(this.splits[participant.id]) || 0;
-          amount = (parseFloat(this.formData.amount) * percentage) / 100;
-        } else if (this.formData.splitMethod === "shares") {
-          const totalShares = Object.values(this.splits).reduce(
-            (sum, shares) => {
-              return sum + (parseInt(shares) || 1);
-            },
-            0
-          );
-          const amountPerShare = parseFloat(this.formData.amount) / totalShares;
-          const participantShares = parseInt(this.splits[participant.id]) || 1;
-          amount = amountPerShare * participantShares;
+          if (val !== undefined && val !== null) {
+            participantsMap.get(p.id).splitValue = parseFloat(val);
+          }
         }
-
-        if (amount > 0 && participantsMap.has(participant.id)) {
-          const cents = Math.round(amount * 100);
-          owedAssignments.push({ participantId: participant.id, cents });
-          totalAssignedCents += cents;
-        }
-      });
-
-      // Assign leftover missing cents to the first participant to ensure perfect balancing
-      if (this.formData.splitMethod !== "unequal" && owedAssignments.length > 0) {
-        const remainderCents = targetCents - totalAssignedCents;
-        if (remainderCents !== 0) {
-          owedAssignments[0].cents += remainderCents;
-        }
-      }
-
-      owedAssignments.forEach(({ participantId, cents }) => {
-        participantsMap.get(participantId).owedAmount = cents / 100;
       });
 
       // Calculate paid amounts
@@ -456,16 +376,30 @@ export default {
         }
       });
 
-      // Filter to only include participants who have non-zero amounts
-      const participants = Array.from(participantsMap.values()).filter(
-        (p) => p.paidAmount > 0 || p.owedAmount > 0
-      );
+      // Filter to only include participants who have non-zero interactions
+      const participants = Array.from(participantsMap.values()).filter((p) => {
+        const paidSomething = p.paidAmount > 0;
+        let isOwedSomething = false;
+
+        if (this.formData.splitMethod === "equal") {
+          isOwedSomething = !this.excludedMembersFromSplit.has(p.userId);
+        } else if (
+          this.formData.splitMethod === "shares" ||
+          this.formData.splitMethod === "percentage" ||
+          this.formData.splitMethod === "unequal"
+        ) {
+          isOwedSomething = (p.splitValue || 0) > 0;
+        }
+
+        return paidSomething || isOwedSomething;
+      });
 
       const expenseData = {
         title: this.formData.title,
         description: this.formData.description,
         totalAmount: parseFloat(this.formData.amount),
         categoryId: this.formData.category,
+        splitMethod: this.formData.splitMethod,
         participants,
       };
 
