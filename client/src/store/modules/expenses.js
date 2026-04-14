@@ -18,9 +18,6 @@ const mutations = {
   SET_GROUP_EXPENSES_BY_FRIEND(state, payload) {
     state.groupExpensesByFriend = payload;
   },
-  // SET_TOTAL(state, total) {
-  //   state.total = total;
-  // },
 };
 
 const actions = {
@@ -34,8 +31,7 @@ const actions = {
           getCommonGroups(id),
           getExpenseByFriendId(id),
         ]);
-
-        // const expenses = SimplifyExpenses(data, userId);
+        
         const expenses = data || [];
 
         const groupTransactionsList = await Promise.all(

@@ -35,7 +35,7 @@ scalar DateTime
     input ParticipantInput {
         userId: String!
         paidAmount: Float!
-        owedAmount: Float!
+        splitValue: Float
     }
 
     input CreateExpenseInput {
@@ -44,6 +44,7 @@ scalar DateTime
         groupId: String
         totalAmount: Float!
         categoryId: String!
+        splitMethod: String!
         participants: [ParticipantInput!]!
     }
 
@@ -52,6 +53,7 @@ scalar DateTime
         description: String
         totalAmount: Float
         categoryId: String
+        splitMethod: String
         participants: [ParticipantInput!]
         is_settled: Boolean
     }

@@ -1,6 +1,10 @@
 import { settlementService } from "../../src/services/settlement.service.js";
 
 export const settlementsResolvers = {
+  Settlement: {
+    amount: (parent) => Number(parent.amount),
+  },
+
   Mutation: {
     async createSettlement(_, { input }, { prisma, user }) {
       if (!user) {

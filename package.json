@@ -1,0 +1,14 @@
+{
+  "name": "splitly-monorepo",
+  "private": true,
+  "workspaces": [
+    "client",
+    "server",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:client": "npm run serve --workspace=client",
+    "dev:server": "npm start --workspace=server",
+    "install:all": "npm install"
+  }
+}
