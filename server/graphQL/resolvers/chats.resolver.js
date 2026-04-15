@@ -1,5 +1,6 @@
 import { pubsub } from "../../src/pubsub.js";
-import { requireGroupMember } from "../../src/utils/guards.js";
+import { requireGroupMember } from "../../src/middleware/guards.js";
+import { sanitizeString } from "../../src/middleware/sanitizeUserInput.js";
 
 export const chatResolvers = {
   Query: {
@@ -17,6 +18,7 @@ export const chatResolvers = {
   Mutation: {
     sendChat: requireGroupMember(
       async (_, { group_id, chatMessage }, { prisma, user }) => {
+        chatMessage = sanitizeString(chatMessage);
         const chat = await prisma.chats.create({
           data: {
             groupId: group_id,
@@ -30,7 +32,7 @@ export const chatResolvers = {
         });
 
         return chat;
-      }
+      },
     ),
   },
 

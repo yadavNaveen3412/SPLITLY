@@ -23,7 +23,11 @@
           <div class="profile-photo-section">
             <div class="photo-wrapper">
               <div class="profile-photo" @click="triggerFileInput">
-                <img v-if="profileData.profilePic" :src="profileUrl" alt="Profile" />
+                <img
+                  v-if="profileData.profilePic"
+                  :src="profileUrl"
+                  alt="Profile"
+                />
                 <div v-else class="photo-placeholder">
                   {{ getInitials(profileData.name || "N A") }}
                 </div>
@@ -31,7 +35,13 @@
                   <i class="fa-solid fa-camera"></i>
                 </div>
               </div>
-              <input ref="fileInput" type="file" accept="image/*" class="file-input" @change="handlePhotoChange" />
+              <input
+                ref="fileInput"
+                type="file"
+                accept="image/*"
+                class="file-input"
+                @change="handlePhotoChange"
+              />
             </div>
             <p class="photo-hint">Click to change profile photo</p>
             <p v-if="formattedCreatedAt" class="account-created">
@@ -56,9 +66,19 @@
               Name
             </label>
             <div class="input-wrapper">
-              <input v-model="profileData.name" type="text" class="form-input" :class="{ editing: isEditing.name }"
-                :disabled="!isEditing.name" placeholder="Enter your name" />
-              <button v-if="!isEditing.name" class="btn-edit" @click="enableEdit('name')">
+              <input
+                v-model="profileData.name"
+                type="text"
+                class="form-input"
+                :class="{ editing: isEditing.name }"
+                :disabled="!isEditing.name"
+                placeholder="Enter your name"
+              />
+              <button
+                v-if="!isEditing.name"
+                class="btn-edit"
+                @click="enableEdit('name')"
+              >
                 <i class="fa-solid fa-pen"></i>
               </button>
               <button v-else class="btn-save" @click="saveField('name')">
@@ -73,7 +93,13 @@
               Email
             </label>
             <div class="input-wrapper">
-              <input v-model="profileData.email" type="email" class="form-input" disabled placeholder="Email" />
+              <input
+                v-model="profileData.email"
+                type="email"
+                class="form-input"
+                disabled
+                placeholder="Email"
+              />
               <span class="verified-badge">
                 <i class="fa-solid fa-check-circle"></i>
               </span>
@@ -87,16 +113,29 @@
               Mobile Number
             </label>
             <div class="input-wrapper">
-              <input v-model="profileData.contact" type="tel" class="form-input" :class="{ editing: isEditing.contact }"
-                :disabled="!isEditing.contact" placeholder="Enter mobile number" maxlength="10" />
-              <button v-if="!isEditing.contact" class="btn-edit" @click="enableEdit('contact')">
+              <input
+                v-model="profileData.contact"
+                type="tel"
+                class="form-input"
+                :class="{ editing: isEditing.contact }"
+                :disabled="!isEditing.contact"
+                placeholder="Enter mobile number"
+                maxlength="10"
+              />
+              <button
+                v-if="!isEditing.contact"
+                class="btn-edit"
+                @click="enableEdit('contact')"
+              >
                 <i class="fa-solid fa-pen"></i>
               </button>
               <button v-else class="btn-save" @click="saveField('contact')">
                 <i class="fa-solid fa-check"></i>
               </button>
             </div>
-            <p v-if="errors.contact" class="field-error">{{ errors.contact }}</p>
+            <p v-if="errors.contact" class="field-error">
+              {{ errors.contact }}
+            </p>
           </div>
 
           <div class="profile-actions">
@@ -104,7 +143,11 @@
               <i class="fa-solid fa-rotate-left"></i>
               Reset Changes
             </button>
-            <button class="btn btn-primary" :disabled="!hasChanges || saving" @click="saveProfile">
+            <button
+              class="btn btn-primary"
+              :disabled="!hasChanges || saving"
+              @click="saveProfile"
+            >
               <i v-if="!saving" class="fa-solid fa-save"></i>
               <i v-else class="fa-solid fa-spinner fa-spin"></i>
               {{ saving ? "Saving..." : "Save Profile" }}
@@ -120,13 +163,22 @@
               <QRcodeVue :value="shareUrl" :size="140" level="M" />
             </div>
             <div class="qr-code-text">{{ profileData.shareCode }}</div>
-            <button :class="['btn-copy-code', { copied: codeCopied }]" @click="copyCode">
-              <i :class="codeCopied ? 'fa-solid fa-check' : 'fa-solid fa-copy'"></i>
+            <button
+              :class="['btn-copy-code', { copied: codeCopied }]"
+              @click="copyCode"
+            >
+              <i
+                :class="codeCopied ? 'fa-solid fa-check' : 'fa-solid fa-copy'"
+              ></i>
               {{ codeCopied ? "Copied!" : "Copy Code" }}
             </button>
             <p class="qr-hint">Scan QR or share code with friends</p>
-            <input type="text" class="qr-code-text input-field" v-model="friendShareCode"
-              placeholder="Enter friend's code" />
+            <input
+              type="text"
+              class="qr-code-text input-field"
+              v-model="friendShareCode"
+              placeholder="Enter friend's code"
+            />
             <button class="btn-copy-code" @click="openAddFriendModal">
               <i class="fa-solid fa-user-plus"></i>
               Add Friend

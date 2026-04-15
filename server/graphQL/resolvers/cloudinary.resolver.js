@@ -1,5 +1,5 @@
 import cloudinary from "../../src/config/cloudinary.js";
-import { requireAuth } from "../../src/utils/guards.js";
+import { requireAuth } from "../../src/middleware/guards.js";
 
 export const cloudinaryResolvers = {
   Mutation: {
@@ -13,7 +13,7 @@ export const cloudinaryResolvers = {
           overwrite: true,
           invalidate: true,
         },
-        process.env.CLOUDINARY_API_SECRET
+        process.env.CLOUDINARY_API_SECRET,
       );
 
       return {

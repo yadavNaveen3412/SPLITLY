@@ -3,11 +3,13 @@ import { useServer } from "graphql-ws/use/ws";
 import { findUser } from "./src/utils/auth.js";
 import prisma from "./src/loaders/prisma.js";
 import { pubsub } from "./src/pubsub.js";
+import { verifyWebSocketOrigin } from "./src/middleware/cors.js";
 
 export function setupWebSocket(httpServer, schema) {
   const wsServer = new WebSocketServer({
     server: httpServer,
     path: "/graphql",
+    verifyClient: verifyWebSocketOrigin,
   });
 
   useServer(
@@ -22,12 +24,12 @@ export function setupWebSocket(httpServer, schema) {
           const cookieHeader = extra?.request?.headers?.cookie;
           if (cookieHeader) {
             const cookies = Object.fromEntries(
-              cookieHeader.split(";").map((c) => c.trim().split("="))
+              cookieHeader.split(";").map((c) => c.trim().split("=")),
             );
             token = cookies.jwt;
           }
-        } catch (err){
-          console.log("Error parsing cookie:", err)
+        } catch (err) {
+          console.log("Error parsing cookie:", err);
         }
 
         const user = token ? await findUser(token) : null;
@@ -41,7 +43,7 @@ export function setupWebSocket(httpServer, schema) {
         console.log("WebSocket client disconnected!");
       },
     },
-    wsServer
+    wsServer,
   );
 
   console.log("WS ready!");

@@ -7,7 +7,8 @@ import {
 } from "../../src/utils/shareCode.js";
 import "dotenv/config";
 import { verifyGoogleIdToken } from "../../src/utils/googleAuth.js";
-import { requireAuth } from "../../src/utils/guards.js";
+import { requireAuth } from "../../src/middleware/guards.js";
+import { sanitizeString } from "../../src/middleware/sanitizeUserInput.js";
 
 const BCRYPT_ROUNDS = 10;
 
@@ -54,7 +55,10 @@ export const userResolvers = {
     },
 
     findUser: requireAuth(async (_, { input }, { prisma, user }) => {
-      const { email, contact, shareCode } = input;
+      let { email, contact, shareCode } = input;
+
+      contact = sanitizeString(contact);
+      shareCode = sanitizeString(shareCode);
 
       const provided = [email, contact, shareCode].filter(Boolean);
 
@@ -83,7 +87,8 @@ export const userResolvers = {
 
   Mutation: {
     async register(_, { input }, { prisma, res }) {
-      const { name, email, password } = input;
+      let { name, email, password } = input;
+      name = sanitizeString(name);
 
       if (!name || !email || !password) {
         throw new Error("Name, email, and password are required.");
@@ -126,7 +131,7 @@ export const userResolvers = {
 
       if (!user.passwordHash) {
         throw new Error(
-          "This account uses Google Sign-In. Please log in with Google."
+          "This account uses Google Sign-In. Please log in with Google.",
         );
       }
 
@@ -191,27 +196,29 @@ export const userResolvers = {
 
     updateUserDetails: requireAuth(async (_, { input }, { prisma, user }) => {
       const data = {};
+      let { name, contact, profilePic, profilePicVersion } = input;
+      name = sanitizeString(name);
 
-      if (input.name !== undefined) {
-        if (input.name === null) {
+      if (name !== undefined) {
+        if (name === null) {
           throw new Error("Name cannot be null");
         }
-        data.name = input.name;
+        data.name = name;
       }
 
-      if (input.contact !== undefined) {
-        if (input.contact === null) {
+      if (contact !== undefined) {
+        if (contact === null) {
           throw new Error("Contact cannot be null");
         }
-        data.contact = input.contact;
+        data.contact = contact;
       }
 
-      if (input.profilePic !== undefined) {
-        data.profilePic = input.profilePic;
+      if (profilePic !== undefined) {
+        data.profilePic = profilePic;
       }
 
-      if (input.profilePicVersion !== undefined) {
-        data.profilePicVersion = input.profilePicVersion;
+      if (profilePicVersion !== undefined) {
+        data.profilePicVersion = profilePicVersion;
       }
 
       if (Object.keys(data).length === 0) {

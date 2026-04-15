@@ -1,7 +1,9 @@
 <template>
   <div class="register">
     <form @submit.prevent="handleSubmit">
-      <h3 class="heading">{{ isRegisterMode ? 'Create Account' : 'Welcome Back' }}</h3>
+      <h3 class="heading">
+        {{ isRegisterMode ? "Create Account" : "Welcome Back" }}
+      </h3>
 
       <div v-if="error" class="error-message">{{ errorMessage }}</div>
 
@@ -39,13 +41,22 @@
         />
       </div>
 
-      <button id="submit-btn" type="submit" class="submit-btn" :disabled="loading">
-        {{ loading ? 'Please wait...' : (isRegisterMode ? 'Register' : 'Login') }}
+      <button
+        id="submit-btn"
+        type="submit"
+        class="submit-btn"
+        :disabled="loading"
+      >
+        {{ loading ? "Please wait..." : isRegisterMode ? "Register" : "Login" }}
       </button>
 
       <p class="toggle-text">
-        {{ isRegisterMode ? 'Already have an account?' : "Don't have an account?" }}
-        <a href="#" @click.prevent="toggleMode">{{ isRegisterMode ? 'Login' : 'Register' }}</a>
+        {{
+          isRegisterMode ? "Already have an account?" : "Don't have an account?"
+        }}
+        <a href="#" @click.prevent="toggleMode">{{
+          isRegisterMode ? "Login" : "Register"
+        }}</a>
       </p>
 
       <div class="divider">

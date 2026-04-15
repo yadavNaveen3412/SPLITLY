@@ -28,7 +28,7 @@ export default {
     async fetchGroupDetails() {
       try {
         const { getGroupDetails } = await groupService.getGroupDetails(
-          this.groupId
+          this.groupId,
         );
         this.group = getGroupDetails;
       } catch (e) {
@@ -43,7 +43,7 @@ export default {
       try {
         const { renameGroup } = await groupService.renameGroup(
           this.groupId,
-          this.newGroupName
+          this.newGroupName,
         );
         this.group = renameGroup;
         alert("Group name changed successfully");
@@ -66,7 +66,7 @@ export default {
     },
     handleLeaveGroup() {
       alert(
-        "will Implement. can only leave after all expenses paid. make next person admin"
+        "will Implement. can only leave after all expenses paid. make next person admin",
       );
     },
     goBack() {

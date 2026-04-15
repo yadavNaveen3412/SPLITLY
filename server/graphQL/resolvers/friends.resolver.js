@@ -1,4 +1,4 @@
-import { requireAuth } from "../../src/utils/guards.js";
+import { requireAuth } from "../../src/middleware/guards.js";
 
 export const friendsResolvers = {
   Query: {
@@ -76,7 +76,7 @@ export const friendsResolvers = {
 
       // Find the friend's member record for name and id
       const friendMember = members.find(
-        (m) => m.user && m.user.id === friendId
+        (m) => m.user && m.user.id === friendId,
       );
       if (!friendMember || !friendMember.user) return null;
 

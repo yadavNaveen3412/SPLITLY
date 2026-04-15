@@ -66,7 +66,7 @@ export default {
           year: "numeric",
           month: "long",
           day: "numeric",
-        }
+        },
       );
     },
 
@@ -259,7 +259,7 @@ export default {
     confirmDeleteAccount() {
       if (
         confirm(
-          "Are you sure you want to delete your account? This action cannot be undone."
+          "Are you sure you want to delete your account? This action cannot be undone.",
         )
       ) {
         console.log("Account deleted!!");

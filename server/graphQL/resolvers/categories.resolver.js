@@ -1,4 +1,4 @@
-import { requireAuth } from "../../src/utils/guards.js";
+import { requireAuth } from "../../src/middleware/guards.js";
 
 export const categoriesResolvers = {
   Query: {

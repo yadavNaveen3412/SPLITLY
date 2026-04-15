@@ -1,5 +1,9 @@
 import crypto from "crypto";
-import { requireAuth, requireGroupMember } from "../../src/utils/guards.js";
+import {
+  requireAuth,
+  requireGroupMember,
+} from "../../src/middleware/guards.js";
+import { sanitizeString } from "../../src/middleware/sanitizeUserInput.js";
 
 export const groupResolvers = {
   Query: {
@@ -57,7 +61,7 @@ export const groupResolvers = {
       `;
 
         return result && result.length ? result[0].id : null;
-      }
+      },
     ),
 
     getCommonGroups: requireAuth(async (_, { friendId }, { prisma, user }) => {
@@ -85,6 +89,7 @@ export const groupResolvers = {
     createGroup: requireAuth(
       async (_, { title, type, members = [] }, { prisma, user }) => {
         const groupType = type || "GROUP";
+        title = sanitizeString(title);
         const newGroup = await prisma.group.create({
           data: {
             title,
@@ -103,7 +108,7 @@ export const groupResolvers = {
           },
         });
         return newGroup;
-      }
+      },
     ),
 
     addMemberToGroup: requireGroupMember(
@@ -146,16 +151,19 @@ export const groupResolvers = {
           },
         });
         return { added, invited, alreadyMembers, updatedGroup };
-      }
+      },
     ),
 
-    renameGroup: requireGroupMember(async (_, { groupId, title }, { prisma }) => {
-      return prisma.group.update({
-        where: { id: groupId },
-        data: { title },
-        include: { members: { include: { user: true } } },
-      });
-    }),
+    renameGroup: requireGroupMember(
+      async (_, { groupId, title }, { prisma }) => {
+        title = sanitizeString(title);
+        return prisma.group.update({
+          where: { id: groupId },
+          data: { title },
+          include: { members: { include: { user: true } } },
+        });
+      },
+    ),
 
     deleteGroup: requireGroupMember(async (_, { groupId }, { prisma }) => {
       const deletedG = await prisma.group.delete({
@@ -164,66 +172,68 @@ export const groupResolvers = {
       return !!deletedG;
     }),
 
-    getOrCreateNonGroup: requireAuth(async (_, { memberIds }, { prisma, user }) => {
-      const normalizedMemberIds = [...new Set(memberIds)].sort();
-      const groups = await prisma.group.findMany({
-        where: {
-          type: "NON_GROUP",
-          members: {
-            every: {
-              userId: { in: normalizedMemberIds },
-            },
-          },
-        },
-        include: {
-          _count: { select: { members: true } },
-        },
-      });
-
-      const exactGroup = groups.find(
-        (g) => g._count.members === normalizedMemberIds.length
-      );
-
-      if (!exactGroup) {
-        const key = normalizedMemberIds.join("|");
-        const title = crypto
-          .createHash("sha256")
-          .update(key)
-          .digest("hex")
-          .slice(0, 10);
-        const newGroup = await prisma.group.create({
-          data: {
-            title,
+    getOrCreateNonGroup: requireAuth(
+      async (_, { memberIds }, { prisma, user }) => {
+        const normalizedMemberIds = [...new Set(memberIds)].sort();
+        const groups = await prisma.group.findMany({
+          where: {
             type: "NON_GROUP",
-            createdById: user.id,
             members: {
-              create: {
-                userId: user.id,
+              every: {
+                userId: { in: normalizedMemberIds },
               },
             },
           },
           include: {
-            members: {
-              include: { user: true },
-            },
+            _count: { select: { members: true } },
           },
         });
 
-        const friendIds = normalizedMemberIds.filter((id) => id !== user.id);
+        const exactGroup = groups.find(
+          (g) => g._count.members === normalizedMemberIds.length,
+        );
 
-        for (const friendId of friendIds) {
-          await prisma.groupMember.create({
+        if (!exactGroup) {
+          const key = normalizedMemberIds.join("|");
+          const title = crypto
+            .createHash("sha256")
+            .update(key)
+            .digest("hex")
+            .slice(0, 10);
+          const newGroup = await prisma.group.create({
             data: {
-              groupId: newGroup.id,
-              userId: friendId,
+              title,
+              type: "NON_GROUP",
+              createdById: user.id,
+              members: {
+                create: {
+                  userId: user.id,
+                },
+              },
+            },
+            include: {
+              members: {
+                include: { user: true },
+              },
             },
           });
+
+          const friendIds = normalizedMemberIds.filter((id) => id !== user.id);
+
+          for (const friendId of friendIds) {
+            await prisma.groupMember.create({
+              data: {
+                groupId: newGroup.id,
+                userId: friendId,
+              },
+            });
+          }
+
+          return newGroup;
         }
 
-        return newGroup;
-      }
-
-      return exactGroup;
-    }),
+        return exactGroup;
+      },
+    ),
   },
 };

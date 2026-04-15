@@ -9,7 +9,8 @@ import {
   requireAuth,
   requireGroupMember,
   requireExpenseAccess,
-} from "../../src/utils/guards.js";
+} from "../../src/middleware/guards.js";
+import { sanitizeString } from "../../src/middleware/sanitizeUserInput.js";
 
 const PARTICIPANT_INCLUDE = {
   participants: {
@@ -24,7 +25,7 @@ const PARTICIPANT_INCLUDE = {
 const prepareServerParticipants = (
   totalAmount,
   splitMethod,
-  rawParticipants
+  rawParticipants,
 ) => {
   if (!rawParticipants || rawParticipants.length === 0) return [];
 
@@ -32,7 +33,7 @@ const prepareServerParticipants = (
   const owedAssignments = calculateOwedAmounts(
     totalAmount,
     splitMethod,
-    rawParticipants
+    rawParticipants,
   );
 
   // 2. Map back to participant format for validation
@@ -65,18 +66,20 @@ export const expensesResolvers = {
   },
 
   Query: {
-    getExpensesByGroup: requireGroupMember(async (_, { groupId }, { prisma }) => {
-      return await prisma.expense.findMany({
-        where: { groupId },
-        orderBy: { createdAt: "desc" },
-        include: {
-          category: true,
-          group: true,
-          createdByUser: true,
-          ...PARTICIPANT_INCLUDE,
-        },
-      });
-    }),
+    getExpensesByGroup: requireGroupMember(
+      async (_, { groupId }, { prisma }) => {
+        return await prisma.expense.findMany({
+          where: { groupId },
+          orderBy: { createdAt: "desc" },
+          include: {
+            category: true,
+            group: true,
+            createdByUser: true,
+            ...PARTICIPANT_INCLUDE,
+          },
+        });
+      },
+    ),
 
     getExpenseById: requireExpenseAccess(async (_, { id }, { prisma }) => {
       const expense = await prisma.expense.findUnique({
@@ -108,50 +111,52 @@ export const expensesResolvers = {
       return expense;
     }),
 
-    getExpenseByFriendId: requireAuth(async (_, { friendId }, { prisma, user }) => {
-      const sharedGroups = await prisma.group.findMany({
-        where: {
-          type: { in: ["PERSONAL", "NON_GROUP"] },
-          members: {
-            some: { userId: user.id },
-          },
-          AND: {
+    getExpenseByFriendId: requireAuth(
+      async (_, { friendId }, { prisma, user }) => {
+        const sharedGroups = await prisma.group.findMany({
+          where: {
+            type: { in: ["PERSONAL", "NON_GROUP"] },
             members: {
-              some: { userId: friendId },
+              some: { userId: user.id },
+            },
+            AND: {
+              members: {
+                some: { userId: friendId },
+              },
             },
           },
-        },
-        select: {
-          id: true,
-        },
-      });
+          select: {
+            id: true,
+          },
+        });
 
-      if (sharedGroups.length === 0) return [];
+        if (sharedGroups.length === 0) return [];
 
-      const groupIds = sharedGroups.map((g) => g.id);
+        const groupIds = sharedGroups.map((g) => g.id);
 
-      const expenses = await prisma.expense.findMany({
-        where: {
-          groupId: { in: groupIds },
-        },
-        include: {
-          category: true,
-          group: true,
-          createdByUser: true,
-          ...PARTICIPANT_INCLUDE,
-        },
-        orderBy: {
-          createdAt: "desc",
-        },
-      });
+        const expenses = await prisma.expense.findMany({
+          where: {
+            groupId: { in: groupIds },
+          },
+          include: {
+            category: true,
+            group: true,
+            createdByUser: true,
+            ...PARTICIPANT_INCLUDE,
+          },
+          orderBy: {
+            createdAt: "desc",
+          },
+        });
 
-      return simplifyExpensesByFriendId(expenses, user.id, friendId);
-    }),
+        return simplifyExpensesByFriendId(expenses, user.id, friendId);
+      },
+    ),
   },
 
   Mutation: {
     createExpense: requireAuth(async (_, { input }, { prisma, user }) => {
-      const {
+      let {
         title,
         description,
         groupId,
@@ -161,10 +166,13 @@ export const expensesResolvers = {
         participants,
       } = input;
 
+      title = sanitizeString(title);
+      description = sanitizeString(description);
+
       const serverParticipants = prepareServerParticipants(
         totalAmount,
         splitMethod,
-        participants
+        participants,
       );
 
       let cycleId = 1;
@@ -205,80 +213,85 @@ export const expensesResolvers = {
       return expense;
     }),
 
-    updateExpense: requireExpenseAccess(async (_, { id, input }, { prisma, user }) => {
-      const existing = await prisma.expense.findUnique({
-        where: { id },
-      });
+    updateExpense: requireExpenseAccess(
+      async (_, { id, input }, { prisma, user }) => {
+        const existing = await prisma.expense.findUnique({
+          where: { id },
+        });
 
-      if (!existing) {
-        throw new Error("Expense doesn't exist");
-      }
-
-      const {
-        title,
-        description,
-        totalAmount,
-        categoryId,
-        splitMethod,
-        participants,
-        is_settled,
-      } = input;
-
-      if (totalAmount !== undefined && !participants) {
-        throw new Error(
-          "Updating totalAmount securely requires submitting a new participants array with splitMethod."
-        );
-      }
-
-      const updatedExpense = await prisma.$transaction(async (tx) => {
-        // If participants are being updated, explicitly run server validation/calculation
-        if (participants) {
-          if (!splitMethod) {
-            throw new Error("splitMethod is required when updating splits.");
-          }
-          const validationTotal = totalAmount ?? existing.totalAmount;
-          const serverParticipants = prepareServerParticipants(
-            validationTotal,
-            splitMethod,
-            participants
-          );
-
-          await tx.expenseParticipant.deleteMany({
-            where: { expenseId: id },
-          });
-
-          await tx.expenseParticipant.createMany({
-            data: serverParticipants.map((p) => ({
-              expenseId: id,
-              userId: p.userId,
-              paidAmount: p.paidAmount,
-              owedAmount: p.owedAmount,
-              groupId: existing.groupId,
-            })),
-          });
+        if (!existing) {
+          throw new Error("Expense doesn't exist");
         }
 
-        return tx.expense.update({
-          where: { id },
-          data: {
-            title: title ?? existing.title,
-            description: description ?? existing.description,
-            totalAmount: totalAmount ?? existing.totalAmount,
-            categoryId: categoryId ?? existing.categoryId,
-            is_Settled: is_settled ?? existing.is_Settled,
-            updated_by: user.id,
-          },
-          include: {
-            category: true,
-            group: true,
-            createdByUser: true,
-            ...PARTICIPANT_INCLUDE,
-          },
-        });
-      });
+        let {
+          title,
+          description,
+          totalAmount,
+          categoryId,
+          splitMethod,
+          participants,
+          is_settled,
+        } = input;
 
-      return updatedExpense;
-    }),
+        title = sanitizeString(title);
+        description = sanitizeString(description);
+
+        if (totalAmount !== undefined && !participants) {
+          throw new Error(
+            "Updating totalAmount securely requires submitting a new participants array with splitMethod.",
+          );
+        }
+
+        const updatedExpense = await prisma.$transaction(async (tx) => {
+          // If participants are being updated, explicitly run server validation/calculation
+          if (participants) {
+            if (!splitMethod) {
+              throw new Error("splitMethod is required when updating splits.");
+            }
+            const validationTotal = totalAmount ?? existing.totalAmount;
+            const serverParticipants = prepareServerParticipants(
+              validationTotal,
+              splitMethod,
+              participants,
+            );
+
+            await tx.expenseParticipant.deleteMany({
+              where: { expenseId: id },
+            });
+
+            await tx.expenseParticipant.createMany({
+              data: serverParticipants.map((p) => ({
+                expenseId: id,
+                userId: p.userId,
+                paidAmount: p.paidAmount,
+                owedAmount: p.owedAmount,
+                groupId: existing.groupId,
+              })),
+            });
+          }
+
+          return tx.expense.update({
+            where: { id },
+            data: {
+              title: title ?? existing.title,
+              description: description ?? existing.description,
+              totalAmount: totalAmount ?? existing.totalAmount,
+              categoryId: categoryId ?? existing.categoryId,
+              is_Settled: is_settled ?? existing.is_Settled,
+              updated_by: user.id,
+            },
+            include: {
+              category: true,
+              group: true,
+              createdByUser: true,
+              ...PARTICIPANT_INCLUDE,
+            },
+          });
+        });
+
+        return updatedExpense;
+      },
+    ),
 
     deleteExpense: requireExpenseAccess(async (_, { id }, { prisma, user }) => {
       const existing = await prisma.expense.findUnique({
@@ -292,8 +305,10 @@ export const expensesResolvers = {
       return !!res;
     }),
 
-    settleGroup: requireGroupMember(async (_, { groupId }, { prisma, user }) => {
-      return settleGroupService(groupId, prisma);
-    }),
+    settleGroup: requireGroupMember(
+      async (_, { groupId }, { prisma, user }) => {
+        return settleGroupService(groupId, prisma);
+      },
+    ),
   },
 };

@@ -39,8 +39,8 @@
 
     <div class="form-section">
       <label class="form-label">Category *</label>
-      <select 
-        :value="formData.category" 
+      <select
+        :value="formData.category"
         @change="updateField('category', $event.target.value)"
         class="form-select"
       >

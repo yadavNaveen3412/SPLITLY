@@ -196,7 +196,6 @@
               v-if="showSettledSeparator"
               class="text-center text-muted my-4"
             >
-             
               <p class="fw-semibold mb-1">Expenses before this are settled</p>
               <span
                 class="text-primary"

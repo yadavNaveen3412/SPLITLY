@@ -1,4 +1,3 @@
-
 export default {
   name: "RegisterPage",
   data() {
@@ -19,7 +18,11 @@ export default {
     errorMessage() {
       if (!this.error) return "";
       // GraphQL errors come wrapped
-      return this.error?.message || this.error?.graphQLErrors?.[0]?.message || "Something went wrong";
+      return (
+        this.error?.message ||
+        this.error?.graphQLErrors?.[0]?.message ||
+        "Something went wrong"
+      );
     },
   },
   methods: {

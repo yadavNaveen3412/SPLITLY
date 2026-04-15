@@ -20,7 +20,9 @@
         <button @click="renameGroup" class="btn btn-primary mt-2">
           Change Name
         </button>
-        <p v-if="errorMessage" class="text-danger small mt-1"> {{ errorMessage }}</p>
+        <p v-if="errorMessage" class="text-danger small mt-1">
+          {{ errorMessage }}
+        </p>
       </div>
       <!-- Leave Group -->
       <div class="mb-3">
@@ -38,7 +40,6 @@
           Delete Group
         </button>
       </div>
-    
     </div>
   </div>
 </template>

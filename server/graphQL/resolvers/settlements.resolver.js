@@ -1,5 +1,8 @@
 import { settlementService } from "../../src/services/settlement.service.js";
-import { requireAuth, requireGroupMember } from "../../src/utils/guards.js";
+import {
+  requireAuth,
+  requireGroupMember,
+} from "../../src/middleware/guards.js";
 
 export const settlementsResolvers = {
   Settlement: {
@@ -50,7 +53,7 @@ export const settlementsResolvers = {
             settlementCreator: true,
           },
         });
-      }
+      },
     ),
 
     groupSettlements: requireGroupMember(async (_, { groupId }, { prisma }) => {
@@ -63,7 +66,7 @@ export const settlementsResolvers = {
         const resolvedUserId = userId || user.id;
         const settlement = settlementService(prisma);
         return settlement.calculateUserBalanceList(resolvedUserId, groupId);
-      }
+      },
     ),
 
     myAllBalances: requireAuth(async (_, { userId }, { prisma, user }) => {
@@ -77,7 +80,7 @@ export const settlementsResolvers = {
         const resolvedUserId = userId || user.id;
         const settlement = settlementService(prisma);
         return settlement.userFriendBalance(resolvedUserId, friendId);
-      }
+      },
     ),
 
     myNetWithFriend: requireAuth(
@@ -85,7 +88,7 @@ export const settlementsResolvers = {
         const resolvedUserId = userId || user.id;
         const settlement = settlementService(prisma);
         return settlement.calculateNetWithFriend(resolvedUserId, friendId);
-      }
+      },
     ),
   },
 };

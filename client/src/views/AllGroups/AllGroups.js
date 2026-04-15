@@ -63,7 +63,7 @@ export default {
         this.groups.map(async (group) => {
           const transactions = await calculateUserBalanceList(
             this.user.id,
-            group.id
+            group.id,
           );
 
           let netBalance = 0;
@@ -76,7 +76,7 @@ export default {
             ...group,
             netBalance,
           };
-        })
+        }),
       );
     },
   },
