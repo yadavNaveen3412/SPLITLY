@@ -2,7 +2,10 @@ import ExpenseDetails from "./ExpenseDetails/ExpenseDetails.vue";
 import ExpenseSplit from "./ExpenseSplit/ExpenseSplit.vue";
 import ExpensePaidBy from "./ExpensePaidBy/ExpensePaidBy.vue";
 import { mapActions, mapGetters } from "vuex";
-import { distributeExactly, calculateOwedAmounts } from "expense-split-logic";
+import {
+  distributeExactly,
+  calculateOwedAmounts,
+} from "@splitly/expense-split-logic";
 
 export default {
   name: "ExpenseForm",

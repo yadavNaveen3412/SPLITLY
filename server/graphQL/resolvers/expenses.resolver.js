@@ -1,7 +1,15 @@
 import { DateTimeResolver } from "graphql-scalars";
 import { simplifyExpensesByFriendId } from "../../src/utils/expenseHelper.js";
 import { settleGroupService } from "../../src/services/expense.service.js";
-import { calculateOwedAmounts, validateSplit } from "expense-split-logic";
+import {
+  calculateOwedAmounts,
+  validateSplit,
+} from "@splitly/expense-split-logic";
+import {
+  requireAuth,
+  requireGroupMember,
+  requireExpenseAccess,
+} from "../../src/utils/guards.js";
 
 const PARTICIPANT_INCLUDE = {
   participants: {
@@ -16,7 +24,7 @@ const PARTICIPANT_INCLUDE = {
 const prepareServerParticipants = (
   totalAmount,
   splitMethod,
-  rawParticipants,
+  rawParticipants
 ) => {
   if (!rawParticipants || rawParticipants.length === 0) return [];
 
@@ -24,7 +32,7 @@ const prepareServerParticipants = (
   const owedAssignments = calculateOwedAmounts(
     totalAmount,
     splitMethod,
-    rawParticipants,
+    rawParticipants
   );
 
   // 2. Map back to participant format for validation
@@ -57,7 +65,7 @@ export const expensesResolvers = {
   },
 
   Query: {
-    async getExpensesByGroup(_, { groupId }, { prisma }) {
+    getExpensesByGroup: requireGroupMember(async (_, { groupId }, { prisma }) => {
       return await prisma.expense.findMany({
         where: { groupId },
         orderBy: { createdAt: "desc" },
@@ -68,9 +76,9 @@ export const expensesResolvers = {
           ...PARTICIPANT_INCLUDE,
         },
       });
-    },
+    }),
 
-    async getExpenseById(_, { id }, { prisma }) {
+    getExpenseById: requireExpenseAccess(async (_, { id }, { prisma }) => {
       const expense = await prisma.expense.findUnique({
         where: { id },
         include: {
@@ -98,9 +106,9 @@ export const expensesResolvers = {
 
       if (!expense) return null;
       return expense;
-    },
+    }),
 
-    async getExpenseByFriendId(_, { friendId }, { prisma, user }) {
+    getExpenseByFriendId: requireAuth(async (_, { friendId }, { prisma, user }) => {
       const sharedGroups = await prisma.group.findMany({
         where: {
           type: { in: ["PERSONAL", "NON_GROUP"] },
@@ -138,14 +146,11 @@ export const expensesResolvers = {
       });
 
       return simplifyExpensesByFriendId(expenses, user.id, friendId);
-    },
+    }),
   },
 
   Mutation: {
-    async createExpense(_, { input }, { prisma, user }) {
-      if (!user) {
-        throw new Error("User not authenticated");
-      }
+    createExpense: requireAuth(async (_, { input }, { prisma, user }) => {
       const {
         title,
         description,
@@ -159,7 +164,7 @@ export const expensesResolvers = {
       const serverParticipants = prepareServerParticipants(
         totalAmount,
         splitMethod,
-        participants,
+        participants
       );
 
       let cycleId = 1;
@@ -198,13 +203,9 @@ export const expensesResolvers = {
       });
 
       return expense;
-    },
+    }),
 
-    async updateExpense(_, { id, input }, { prisma, user }) {
-      if (!user) {
-        throw new Error("User not authenticated");
-      }
-
+    updateExpense: requireExpenseAccess(async (_, { id, input }, { prisma, user }) => {
       const existing = await prisma.expense.findUnique({
         where: { id },
       });
@@ -225,7 +226,7 @@ export const expensesResolvers = {
 
       if (totalAmount !== undefined && !participants) {
         throw new Error(
-          "Updating totalAmount securely requires submitting a new participants array with splitMethod.",
+          "Updating totalAmount securely requires submitting a new participants array with splitMethod."
         );
       }
 
@@ -239,7 +240,7 @@ export const expensesResolvers = {
           const serverParticipants = prepareServerParticipants(
             validationTotal,
             splitMethod,
-            participants,
+            participants
           );
 
           await tx.expenseParticipant.deleteMany({
@@ -277,11 +278,9 @@ export const expensesResolvers = {
       });
 
       return updatedExpense;
-    },
+    }),
 
-    async deleteExpense(_, { id }, { prisma, user }) {
-      if (!user) throw new Error("User not authenticated");
-
+    deleteExpense: requireExpenseAccess(async (_, { id }, { prisma, user }) => {
       const existing = await prisma.expense.findUnique({
         where: { id },
       });
@@ -291,11 +290,10 @@ export const expensesResolvers = {
       // ExpenseParticipant rows are cascade-deleted automatically
       const res = await prisma.expense.delete({ where: { id } });
       return !!res;
-    },
+    }),
 
-    async settleGroup(_, { groupId }, { prisma, user }) {
-      if (!user) throw new Error("User not authenticated");
+    settleGroup: requireGroupMember(async (_, { groupId }, { prisma, user }) => {
       return settleGroupService(groupId, prisma);
-    },
+    }),
   },
 };

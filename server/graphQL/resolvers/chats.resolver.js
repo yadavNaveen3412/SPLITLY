@@ -1,8 +1,9 @@
 import { pubsub } from "../../src/pubsub.js";
+import { requireGroupMember } from "../../src/utils/guards.js";
 
 export const chatResolvers = {
   Query: {
-    getChats: async (_, { group_id }, { prisma }) => {
+    getChats: requireGroupMember(async (_, { group_id }, { prisma }) => {
       const chats = await prisma.chats.findMany({
         where: {
           groupId: group_id,
@@ -10,32 +11,34 @@ export const chatResolvers = {
         orderBy: { createdAt: "asc" },
       });
       return chats;
-    },
+    }),
   },
 
   Mutation: {
-    sendChat: async (_, { group_id, chatMessage }, { prisma, user }) => {
-      const chat = await prisma.chats.create({
-        data: {
-          groupId: group_id,
-          chatMessage,
-          senderId: user.id,
-        },
-      });
+    sendChat: requireGroupMember(
+      async (_, { group_id, chatMessage }, { prisma, user }) => {
+        const chat = await prisma.chats.create({
+          data: {
+            groupId: group_id,
+            chatMessage,
+            senderId: user.id,
+          },
+        });
 
-      await pubsub.publish(`MESSAGE_SENT_${group_id}`, {
-        messageAdded: chat,
-      });
+        await pubsub.publish(`MESSAGE_SENT_${group_id}`, {
+          messageAdded: chat,
+        });
 
-      return chat;
-    },
+        return chat;
+      }
+    ),
   },
 
   Subscription: {
     messageAdded: {
-      subscribe: (_, { group_id }) => {
+      subscribe: requireGroupMember((_, { group_id }) => {
         return pubsub.asyncIterableIterator([`MESSAGE_SENT_${group_id}`]);
-      },
+      }),
     },
   },
 };

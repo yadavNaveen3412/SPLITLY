@@ -1,12 +1,9 @@
 import cloudinary from "../../src/config/cloudinary.js";
+import { requireAuth } from "../../src/utils/guards.js";
 
 export const cloudinaryResolvers = {
   Mutation: {
-    async requestAvatarUpload(_, __, { user }) {
-      if (!user?.id) {
-        throw new Error("Authentication Required!!");
-      }
-
+    requestAvatarUpload: requireAuth(async (_, __, { user }) => {
       const timestamp = Math.floor(Date.now() / 1000);
       const public_id = `users/${user.id}/avatar`;
       const signature = cloudinary.utils.api_sign_request(
@@ -26,6 +23,6 @@ export const cloudinaryResolvers = {
         cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
         api_key: process.env.CLOUDINARY_API_KEY,
       };
-    },
+    }),
   },
 };

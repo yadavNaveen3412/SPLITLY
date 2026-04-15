@@ -1,7 +1,9 @@
+import { requireAuth } from "../../src/utils/guards.js";
+
 export const categoriesResolvers = {
   Query: {
-    async getAllCategories(_,__,{prisma}){
-        return await prisma.category.findMany();
-    }
+    getAllCategories: requireAuth(async (_, __, { prisma }) => {
+      return await prisma.category.findMany();
+    }),
   },
 };

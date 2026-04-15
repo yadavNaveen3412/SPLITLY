@@ -1,4 +1,3 @@
-
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import prisma from "../../src/loaders/prisma.js";
@@ -8,6 +7,7 @@ import {
 } from "../../src/utils/shareCode.js";
 import "dotenv/config";
 import { verifyGoogleIdToken } from "../../src/utils/googleAuth.js";
+import { requireAuth } from "../../src/utils/guards.js";
 
 const BCRYPT_ROUNDS = 10;
 
@@ -53,11 +53,7 @@ export const userResolvers = {
       return !!user;
     },
 
-    async findUser(_, { input }, { prisma, user }) {
-      if (!user) {
-        throw new Error("Not Authenticated!");
-      }
-
+    findUser: requireAuth(async (_, { input }, { prisma, user }) => {
       const { email, contact, shareCode } = input;
 
       const provided = [email, contact, shareCode].filter(Boolean);
@@ -82,7 +78,7 @@ export const userResolvers = {
       }
 
       return await prisma.user.findFirst({ where });
-    },
+    }),
   },
 
   Mutation: {
@@ -193,11 +189,7 @@ export const userResolvers = {
       return true;
     },
 
-    async updateUserDetails(_, { input }, { prisma, user }) {
-      if (!user?.id) {
-        throw new Error("Authentication required.");
-      }
-
+    updateUserDetails: requireAuth(async (_, { input }, { prisma, user }) => {
       const data = {};
 
       if (input.name !== undefined) {
@@ -232,6 +224,6 @@ export const userResolvers = {
       });
 
       return updatedUser;
-    },
+    }),
   },
 };

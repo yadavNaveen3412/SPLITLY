@@ -1,8 +1,9 @@
 import crypto from "crypto";
+import { requireAuth, requireGroupMember } from "../../src/utils/guards.js";
 
 export const groupResolvers = {
   Query: {
-    getGroups(_, { type }, { prisma, user }) {
+    getGroups: requireAuth((_, { type }, { prisma, user }) => {
       return prisma.group.findMany({
         where: {
           AND: [
@@ -21,35 +22,29 @@ export const groupResolvers = {
           },
         },
       });
-    },
+    }),
 
-    getGroupDetails(_, { id }, { prisma, user }) {
-      if (!user) {
-        throw new Error("Authentication required");
-      }
+    getGroupDetails: requireGroupMember((_, { id }, { prisma, user }) => {
       return prisma.group.findUnique({
         where: { id: String(id) },
         include: {
           members: { include: { user: true } },
         },
       });
-    },
+    }),
 
-    async getPersonalGroupId(_, { otherUserId }, { prisma, user }) {
-      if (!user) {
-        throw new Error("Authentication required");
-      }
+    getPersonalGroupId: requireAuth(
+      async (_, { otherUserId }, { prisma, user }) => {
+        const currentUserId = user.id;
+        if (!otherUserId) {
+          throw new Error("otherUserId required");
+        }
 
-      const currentUserId = user.id;
-      if (!otherUserId) {
-        throw new Error("otherUserId required");
-      }
+        if (currentUserId === otherUserId) {
+          return null;
+        }
 
-      if (currentUserId === otherUserId) {
-        return null;
-      }
-
-      const result = await prisma.$queryRaw`
+        const result = await prisma.$queryRaw`
         SELECT g.id
         FROM groups g
         JOIN group_members gm ON gm."groupId" = g.id
@@ -61,10 +56,11 @@ export const groupResolvers = {
         LIMIT 1;
       `;
 
-      return result && result.length ? result[0].id : null;
-    },
+        return result && result.length ? result[0].id : null;
+      }
+    ),
 
-    async getCommonGroups(_, { friendId }, { prisma, user }) {
+    getCommonGroups: requireAuth(async (_, { friendId }, { prisma, user }) => {
       const groups = await prisma.group.findMany({
         where: {
           type: "GROUP",
@@ -83,91 +79,92 @@ export const groupResolvers = {
         },
       });
       return groups;
-    },
+    }),
   },
   Mutation: {
-    async createGroup(_, { title, type, members = [] }, { prisma, user }) {
-      if (!user) {
-        throw new Error("Authentication required to create a group.");
-      }
-      const groupType = type || "GROUP";
-      const newGroup = await prisma.group.create({
-        data: {
-          title,
-          type: groupType,
-          createdById: user.id,
-          members: {
-            create: {
-              userId: user.id,
+    createGroup: requireAuth(
+      async (_, { title, type, members = [] }, { prisma, user }) => {
+        const groupType = type || "GROUP";
+        const newGroup = await prisma.group.create({
+          data: {
+            title,
+            type: groupType,
+            createdById: user.id,
+            members: {
+              create: {
+                userId: user.id,
+              },
             },
           },
-        },
-        include: {
-          members: {
-            include: { user: true },
-          },
-        },
-      });
-      return newGroup;
-    },
-
-    async addMemberToGroup(_, { groupId, emails }, { prisma }) {
-      const added = [];
-      const invited = [];
-      const alreadyMembers = [];
-
-      for (const email of emails) {
-        const user = await prisma.user.findUnique({ where: { email } });
-        if (!user) {
-          invited.push(email);
-          continue;
-        }
-
-        const existing = await prisma.groupMember.findFirst({
-          where: { groupId, userId: user.id },
-        });
-
-        if (existing) {
-          alreadyMembers.push(email);
-          continue;
-        }
-
-        await prisma.groupMember.create({
-          data: {
-            groupId,
-            userId: user.id,
+          include: {
+            members: {
+              include: { user: true },
+            },
           },
         });
-
-        added.push(email);
+        return newGroup;
       }
+    ),
 
-      const updatedGroup = await prisma.group.findUnique({
-        where: { id: groupId },
+    addMemberToGroup: requireGroupMember(
+      async (_, { groupId, emails }, { prisma }) => {
+        const added = [];
+        const invited = [];
+        const alreadyMembers = [];
 
-        include: {
-          members: { include: { user: true } },
-        },
-      });
-      return { added, invited, alreadyMembers, updatedGroup };
-    },
+        for (const email of emails) {
+          const user = await prisma.user.findUnique({ where: { email } });
+          if (!user) {
+            invited.push(email);
+            continue;
+          }
 
-    async renameGroup(_, { groupId, title }, { prisma }) {
+          const existing = await prisma.groupMember.findFirst({
+            where: { groupId, userId: user.id },
+          });
+
+          if (existing) {
+            alreadyMembers.push(email);
+            continue;
+          }
+
+          await prisma.groupMember.create({
+            data: {
+              groupId,
+              userId: user.id,
+            },
+          });
+
+          added.push(email);
+        }
+
+        const updatedGroup = await prisma.group.findUnique({
+          where: { id: groupId },
+
+          include: {
+            members: { include: { user: true } },
+          },
+        });
+        return { added, invited, alreadyMembers, updatedGroup };
+      }
+    ),
+
+    renameGroup: requireGroupMember(async (_, { groupId, title }, { prisma }) => {
       return prisma.group.update({
         where: { id: groupId },
         data: { title },
         include: { members: { include: { user: true } } },
       });
-    },
+    }),
 
-    async deleteGroup(_, { groupId }, { prisma }) {
+    deleteGroup: requireGroupMember(async (_, { groupId }, { prisma }) => {
       const deletedG = await prisma.group.delete({
         where: { id: groupId },
       });
       return !!deletedG;
-    },
+    }),
 
-    async getOrCreateNonGroup(_, { memberIds }, { prisma, user }) {
+    getOrCreateNonGroup: requireAuth(async (_, { memberIds }, { prisma, user }) => {
       const normalizedMemberIds = [...new Set(memberIds)].sort();
       const groups = await prisma.group.findMany({
         where: {
@@ -227,6 +224,6 @@ export const groupResolvers = {
       }
 
       return exactGroup;
-    },
+    }),
   },
 };

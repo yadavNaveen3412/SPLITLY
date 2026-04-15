@@ -1,4 +1,5 @@
 import { settlementService } from "../../src/services/settlement.service.js";
+import { requireAuth, requireGroupMember } from "../../src/utils/guards.js";
 
 export const settlementsResolvers = {
   Settlement: {
@@ -6,11 +7,7 @@ export const settlementsResolvers = {
   },
 
   Mutation: {
-    async createSettlement(_, { input }, { prisma, user }) {
-      if (!user) {
-        throw new Error("User not authenticated");
-      }
-
+    createSettlement: requireAuth(async (_, { input }, { prisma, user }) => {
       const { group_id, payer_id, receiver_id, amount } = input;
 
       const group = await prisma.group.findUnique({
@@ -37,70 +34,58 @@ export const settlementsResolvers = {
         },
       });
       return settlement;
-    },
+    }),
   },
 
   Query: {
-    async getSettlementsByGroup(_, { group_id }, { prisma }) {
-      return await prisma.settlement.findMany({
-        where: { group_id },
+    getSettlementsByGroup: requireGroupMember(
+      async (_, { group_id }, { prisma }) => {
+        return await prisma.settlement.findMany({
+          where: { group_id },
 
-        include: {
-          group: true,
-          payer: true,
-          receiver: true,
-          settlementCreator: true,
-        },
-      });
-    },
-
-    async groupSettlements(_, { groupId }, { prisma, user }) {
-      if (!user?.id) {
-        throw new Error("Authentication Required!!");
+          include: {
+            group: true,
+            payer: true,
+            receiver: true,
+            settlementCreator: true,
+          },
+        });
       }
+    ),
 
+    groupSettlements: requireGroupMember(async (_, { groupId }, { prisma }) => {
       const settlement = settlementService(prisma);
       return settlement.computeSettlements(groupId);
-    },
+    }),
 
-    async myGroupBalances(_, { userId, groupId }, { prisma, user }) {
-      const resolvedUserId = userId || user?.id;
-      if (!resolvedUserId) {
-        throw new Error("Authentication Required!!");
+    myGroupBalances: requireGroupMember(
+      async (_, { userId, groupId }, { prisma, user }) => {
+        const resolvedUserId = userId || user.id;
+        const settlement = settlementService(prisma);
+        return settlement.calculateUserBalanceList(resolvedUserId, groupId);
       }
+    ),
 
-      const settlement = settlementService(prisma);
-      return settlement.calculateUserBalanceList(resolvedUserId, groupId);
-    },
-
-    async myAllBalances(_, { userId }, { prisma, user }) {
-      const resolvedUserId = userId || user?.id;
-      if (!resolvedUserId) {
-        throw new Error("Authentication Required!!");
-      }
-
+    myAllBalances: requireAuth(async (_, { userId }, { prisma, user }) => {
+      const resolvedUserId = userId || user.id;
       const settlement = settlementService(prisma);
       return settlement.userAllBalances(resolvedUserId);
-    },
+    }),
 
-    async myFriendBalance(_, { userId, friendId }, { prisma, user }) {
-      const resolvedUserId = userId || user?.id;
-      if (!resolvedUserId) {
-        throw new Error("Authentication Required!!");
+    myFriendBalance: requireAuth(
+      async (_, { userId, friendId }, { prisma, user }) => {
+        const resolvedUserId = userId || user.id;
+        const settlement = settlementService(prisma);
+        return settlement.userFriendBalance(resolvedUserId, friendId);
       }
+    ),
 
-      const settlement = settlementService(prisma);
-      return settlement.userFriendBalance(resolvedUserId, friendId);
-    },
-
-    async myNetWithFriend(_, { userId, friendId }, { prisma, user }) {
-      const resolvedUserId = userId || user?.id;
-      if (!resolvedUserId) {
-        throw new Error("Authentication Required!!");
+    myNetWithFriend: requireAuth(
+      async (_, { userId, friendId }, { prisma, user }) => {
+        const resolvedUserId = userId || user.id;
+        const settlement = settlementService(prisma);
+        return settlement.calculateNetWithFriend(resolvedUserId, friendId);
       }
-
-      const settlement = settlementService(prisma);
-      return settlement.calculateNetWithFriend(resolvedUserId, friendId);
-    },
+    ),
   },
 };

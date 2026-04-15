@@ -1,5 +1,5 @@
 {
-  "name": "expense-split-logic",
+  "name": "@splitly/expense-split-logic",
   "version": "1.0.0",
   "main": "index.js",
   "type": "module",

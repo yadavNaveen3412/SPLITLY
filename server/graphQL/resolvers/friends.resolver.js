@@ -1,6 +1,8 @@
+import { requireAuth } from "../../src/utils/guards.js";
+
 export const friendsResolvers = {
   Query: {
-    getAllFriends: async (_, __, { prisma, user }) => {
+    getAllFriends: requireAuth(async (_, __, { prisma, user }) => {
       const groups = await prisma.group.findMany({
         where: {
           OR: [{ type: "PERSONAL" }, { type: "GROUP" }],
@@ -43,9 +45,9 @@ export const friendsResolvers = {
       }
 
       return Array.from(friendsMap.values());
-    },
+    }),
 
-    getFriendById: async (_, { friendId }, { prisma, user }) => {
+    getFriendById: requireAuth(async (_, { friendId }, { prisma, user }) => {
       // Find a PERSONAL group that contains BOTH the current user and the friend
       const group = await prisma.group.findFirst({
         where: {
@@ -82,6 +84,6 @@ export const friendsResolvers = {
         groupId: group.id,
         name: friendMember.user.name,
       };
-    },
+    }),
   },
 };
