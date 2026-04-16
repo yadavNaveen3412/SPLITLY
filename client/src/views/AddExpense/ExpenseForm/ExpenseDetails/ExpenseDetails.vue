@@ -8,6 +8,7 @@
         type="text"
         class="form-input"
         placeholder="e.g., Dinner at restaurant"
+        maxlength="50"
       />
     </div>
 
@@ -19,6 +20,7 @@
         class="form-textarea"
         placeholder="Add details about the expense..."
         rows="3"
+        maxlength="255"
       ></textarea>
     </div>
 
@@ -31,6 +33,8 @@
           @input="handleAmountChange($event.target.value)"
           type="number"
           step="0.01"
+          min="0.01"
+          max="1000000"
           class="form-input amount-input"
           placeholder="0.00"
         />

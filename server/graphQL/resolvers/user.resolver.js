@@ -90,6 +90,10 @@ export const userResolvers = {
       let { name, email, password } = input;
       name = sanitizeString(name);
 
+      if (!name || name.length < 3 || name.length > 50) {
+        throw new Error("Name must be between 3 and 50 characters.");
+      }
+
       if (!name || !email || !password) {
         throw new Error("Name, email, and password are required.");
       }
@@ -198,6 +202,11 @@ export const userResolvers = {
       const data = {};
       let { name, contact, profilePic, profilePicVersion } = input;
       name = sanitizeString(name);
+      console.log(`Name: ${name.length}`);
+
+      if (name !== undefined && (name.length < 3 || name.length > 50)) {
+        throw new Error("Name must be between 3 and 50 characters.");
+      }
 
       if (name !== undefined) {
         if (name === null) {

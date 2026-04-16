@@ -19,6 +19,14 @@ export const chatResolvers = {
     sendChat: requireGroupMember(
       async (_, { group_id, chatMessage }, { prisma, user }) => {
         chatMessage = sanitizeString(chatMessage);
+
+        if (!chatMessage || chatMessage.length === 0) {
+          throw new Error("Message cannot be empty.");
+        }
+
+        if (chatMessage.length > 1000) {
+          throw new Error("Message must not exceed 1000 characters.");
+        }
         const chat = await prisma.chats.create({
           data: {
             groupId: group_id,

@@ -344,6 +344,25 @@ export default {
     handleSubmit() {
       if (!this.isFormValid) return;
 
+      const title = this.formData.title?.trim();
+      const description = this.formData.description?.trim();
+      const amount = parseFloat(this.formData.amount);
+
+      if (!title || title.length < 3 || title.length > 50) {
+        alert("Expense title must be between 3 and 50 characters.");
+        return;
+      }
+
+      if (description && description.length > 255) {
+        alert("Description must not exceed 255 characters.");
+        return;
+      }
+
+      if (isNaN(amount) || amount < 0.01 || amount > 1000000) {
+        alert("Total amount must be between 0.01 and 1,000,000.");
+        return;
+      }
+
       const participantsMap = new Map();
       this.allParticipants.forEach((p) => {
         participantsMap.set(p.id, {

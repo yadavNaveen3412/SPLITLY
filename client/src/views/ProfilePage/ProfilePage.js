@@ -144,8 +144,8 @@ export default {
           this.errors.name = "Name is required";
           return false;
         }
-        if (value.length < 2) {
-          this.errors.name = "Name must be at least 2 characters";
+        if (value.length < 3 || value.length > 50) {
+          this.errors.name = "Name must be between 3 and 50 characters";
           return false;
         }
       }

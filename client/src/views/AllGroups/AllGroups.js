@@ -42,9 +42,8 @@ export default {
       this.newGroupTitle = "";
     },
     async handleCreateGroup() {
-      if (!this.newGroupTitle.trim()) {
-        alert("Please enter a valid group name.");
-
+      if (!this.newGroupTitle.trim() || this.newGroupTitle.length < 3 || this.newGroupTitle.length > 50) {
+        alert("Group title must be between 3 and 50 characters.");
         return;
       }
       await this.createGroup({ title: this.newGroupTitle, type: "GROUP" });

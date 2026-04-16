@@ -333,6 +333,7 @@
                 type="email"
                 class="form-control"
                 placeholder="Enter email address"
+                maxlength="254"
                 @input="checkUserExists"
               />
               <button

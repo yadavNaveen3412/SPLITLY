@@ -90,6 +90,11 @@ export const groupResolvers = {
       async (_, { title, type, members = [] }, { prisma, user }) => {
         const groupType = type || "GROUP";
         title = sanitizeString(title);
+
+        if (!title || title.length < 3 || title.length > 50) {
+          throw new Error("Group title must be between 3 and 50 characters.");
+        }
+
         const newGroup = await prisma.group.create({
           data: {
             title,
@@ -157,6 +162,11 @@ export const groupResolvers = {
     renameGroup: requireGroupMember(
       async (_, { groupId, title }, { prisma }) => {
         title = sanitizeString(title);
+
+        if (!title || title.length < 3 || title.length > 50) {
+          throw new Error("Group title must be between 3 and 50 characters.");
+        }
+
         return prisma.group.update({
           where: { id: groupId },
           data: { title },

@@ -169,6 +169,18 @@ export const expensesResolvers = {
       title = sanitizeString(title);
       description = sanitizeString(description);
 
+      if (!title || title.length < 3 || title.length > 50) {
+        throw new Error("Expense title must be between 3 and 50 characters.");
+      }
+
+      if (description && description.length > 255) {
+        throw new Error("Description must not exceed 255 characters.");
+      }
+
+      if (totalAmount < 0.01 || totalAmount > 1000000) {
+        throw new Error("Total amount must be between 0.01 and 1,000,000.");
+      }
+
       const serverParticipants = prepareServerParticipants(
         totalAmount,
         splitMethod,
@@ -235,6 +247,18 @@ export const expensesResolvers = {
 
         title = sanitizeString(title);
         description = sanitizeString(description);
+
+        if (title !== undefined && (title.length < 3 || title.length > 50)) {
+          throw new Error("Expense title must be between 3 and 50 characters.");
+        }
+
+        if (description && description.length > 255) {
+          throw new Error("Description must not exceed 255 characters.");
+        }
+
+        if (totalAmount !== undefined && (totalAmount < 0.01 || totalAmount > 1000000)) {
+          throw new Error("Total amount must be between 0.01 and 1,000,000.");
+        }
 
         if (totalAmount !== undefined && !participants) {
           throw new Error(

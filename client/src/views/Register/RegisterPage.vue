@@ -14,6 +14,7 @@
           type="text"
           class="form-input"
           placeholder="Full Name"
+          maxlength="50"
           required
         />
       </div>
@@ -25,6 +26,7 @@
           type="email"
           class="form-input"
           placeholder="Email"
+          maxlength="254"
           required
         />
       </div>

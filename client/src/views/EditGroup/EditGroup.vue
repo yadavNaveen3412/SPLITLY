@@ -16,6 +16,7 @@
           v-model="newGroupName"
           class="form-control"
           :placeholder="group.title"
+          maxlength="50"
         />
         <button @click="renameGroup" class="btn btn-primary mt-2">
           Change Name

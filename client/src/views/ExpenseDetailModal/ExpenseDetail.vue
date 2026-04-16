@@ -12,20 +12,28 @@
         </div>
         <!-- Top Row: Icon, Title, and Amount   -->
         <div class="d-flex justify-content-between align-items-center mb-2">
-          <div class="d-flex align-items-center">
+          <div class="d-flex align-items-center min-w-0">
             <i
               :class="expense.category.icon"
               class="fs-2 me-3"
               style="color: #225750"
             ></i>
-            <div>
-              <h4 class="mb-0">{{ expense.title }}</h4>
-              <small class="text-muted d-block mb-2" v-if="expense.description">
-                {{ expense.description }}
+            <div class="min-w-0">
+              <h4 class="mb-0 text-truncate-custom">{{ expense.title }}</h4>
+              <small
+                class="text-muted d-block mb-2 description-text"
+                :class="{ 'description-expanded': isDescriptionExpanded }"
+                v-if="expense.description"
+                @click="toggleDescription"
+              >
+                {{ displayedDescription }}
+                <span v-if="shouldTruncate" class="text-primary fw-bold ms-1">
+                  {{ isDescriptionExpanded ? "Show less" : "Show more" }}
+                </span>
               </small>
             </div>
           </div>
-          <h4 class="mb-0 align-items-center text-success">
+          <h4 class="mb-0 align-items-center text-success flex-shrink-0 ms-3">
             ₹{{ expense.totalAmount }}
           </h4>
         </div>

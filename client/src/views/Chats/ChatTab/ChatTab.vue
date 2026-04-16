@@ -74,6 +74,7 @@
       size="20"
       class="message-input"
       placeholder="Type a message..."
+      maxlength="1000"
       @keyup.enter="sendMessage"
     />
     <button

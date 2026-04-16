@@ -30,6 +30,12 @@ export default {
       try {
         let success;
         if (this.isRegisterMode) {
+          if (this.name.length < 3 || this.name.length > 50) {
+            this.$store.commit("auth/SET_ERROR", {
+              message: "Name must be between 3 and 50 characters.",
+            });
+            return;
+          }
           success = await this.$store.dispatch("auth/register", {
             name: this.name,
             email: this.email,

@@ -47,6 +47,9 @@
   font-weight: 600;
   color: #2d3748;
   margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .expense-date {
   font-size: 0.75rem;

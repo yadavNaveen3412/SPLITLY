@@ -105,6 +105,11 @@ export default {
       const text = this.newMessage.trim();
 
       if (!text) return;
+
+      if (text.length > 1000) {
+        alert("Message must not exceed 1000 characters.");
+        return;
+      }
       const message = {
         id: this.id,
         chatMessage: this.newMessage,

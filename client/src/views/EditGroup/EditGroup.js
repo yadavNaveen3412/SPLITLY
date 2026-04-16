@@ -36,8 +36,8 @@ export default {
       }
     },
     async renameGroup() {
-      if (!this.newGroupName) {
-        this.errorMessage = "Please enter a valid group name.";
+      if (!this.newGroupName || this.newGroupName.length < 3 || this.newGroupName.length > 50) {
+        this.errorMessage = "Group name must be between 3 and 50 characters.";
         return;
       }
       try {

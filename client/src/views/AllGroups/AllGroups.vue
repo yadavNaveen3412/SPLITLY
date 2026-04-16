@@ -93,6 +93,7 @@
                   v-model="newGroupTitle"
                   class="form-control"
                   placeholder="Enter group title"
+                  maxlength="50"
                   required
                 />
               </div>

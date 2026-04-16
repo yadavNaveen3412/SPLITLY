@@ -4,7 +4,7 @@
   padding-top: 5rem;
   padding-bottom: 3rem;
 }
-.container{
+.container {
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 1rem;
@@ -40,10 +40,12 @@
 .whole-section {
   background: #ffffff;
   padding: 1.5rem;
-  border-radius: 14px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  
-
+}
+.group-left h5 {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px; /* Adjust as needed */
 }
 
 .group-list {

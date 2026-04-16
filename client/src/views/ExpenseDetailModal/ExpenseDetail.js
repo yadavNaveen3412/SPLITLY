@@ -6,7 +6,11 @@ export default {
   props: {
     expense: Object,
   },
-  // data() {},
+  data() {
+    return {
+      isDescriptionExpanded: false,
+    };
+  },
   computed: {
     ...mapGetters("auth", ["getUser"]),
     user() {
@@ -39,10 +43,26 @@ export default {
         return 0;
       });
     },
+
+    shouldTruncate() {
+      return (
+        this.expense.description && this.expense.description.length > 100
+      );
+    },
+
+    displayedDescription() {
+      if (this.isDescriptionExpanded || !this.shouldTruncate) {
+        return this.expense.description;
+      }
+      return this.expense.description.substring(0, 100) + "...";
+    },
   },
   methods: {
     formatDate(date) {
       return new Date(date).toLocaleString();
+    },
+    toggleDescription() {
+      this.isDescriptionExpanded = !this.isDescriptionExpanded;
     },
     editExpense() {
       this.$emit("edit-expense", this.expense);

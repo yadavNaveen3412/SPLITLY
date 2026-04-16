@@ -73,6 +73,7 @@
                 :class="{ editing: isEditing.name }"
                 :disabled="!isEditing.name"
                 placeholder="Enter your name"
+                maxlength="50"
               />
               <button
                 v-if="!isEditing.name"
