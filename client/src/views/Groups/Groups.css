@@ -1,0 +1,219 @@
+.main {
+  margin-top: 4rem;
+  height: calc(100vh - 4rem);
+  background: #dcf1ee;
+  padding: 2rem 0;
+  overflow-y: auto;
+}
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+.card {
+  border: none;
+  border-radius: 15px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.welcome-card {
+  /* background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%); */
+  background: none;
+}
+.welcome-card h2 {
+  color: #2d3748;
+  font-weight: 700;
+}
+.shadow-sm {
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075) !important;
+}
+/* Friends List Styles */
+.friends-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.friend-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.25rem;
+  background: #f8f9fa;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 2px solid transparent;
+}
+.friend-item:hover {
+  background: #ffffff;
+  border-color: #225750;
+  transform: translateX(5px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+}
+.friend-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex: 1;
+}
+.friend-avatar {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  /* background: linear-gradient(135deg, #B0E7E0 0%, #225750 100%); */
+  background: #225750;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.friend-avatar img {
+  width: 50px;
+  height: 50px;
+  object-fit: cover;
+}
+
+.friend-name h5 {
+  color: #2d3748;
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+.friend-balances {
+  display: flex;
+  gap: 1.5rem;
+  align-items: center;
+}
+.balance-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  min-width: 120px;
+}
+.balance-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 500;
+  margin-bottom: 0.25rem;
+}
+.balance-amount {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+.balance-item.owed .balance-label {
+  color: #059669;
+}
+.balance-item.owed .balance-amount {
+  color: #10b981;
+}
+.balance-item.owe .balance-label {
+  color: #dc2626;
+}
+.balance-item.owe .balance-amount {
+  color: #ef4444;
+}
+.balance-item.settled {
+  color: #6b7280;
+  font-size: 0.9rem;
+  font-weight: 500;
+  align-items: center;
+}
+/* Responsive Design */
+@media (max-width: 768px) {
+  .friend-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  .friend-balances {
+    width: 100%;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+  .balance-item {
+    min-width: auto;
+  }
+}
+@media (max-width: 576px) {
+  .container {
+    padding: 0 0.5rem;
+  }
+  .friend-avatar {
+    width: 40px;
+    height: 40px;
+    font-size: 0.9rem;
+  }
+  .friend-name h5 {
+    font-size: 1rem;
+  }
+  .balance-amount {
+    font-size: 1.1rem;
+  }
+}
+
+.main.has-chat-panel {
+  margin-right: 20rem;
+}
+/* For mobile */
+@media (max-width: 768px) {
+  .main.has-chat-panel {
+    margin-right: 0;
+  }
+}
+
+/* .add-expense-btn {
+  background-color: #225750;
+  color: white;
+  width: auto;
+  padding: 12px 20px;
+  font-size: 1rem;
+  font-weight: 700;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  z-index: 1000;
+  border: none;
+  cursor: pointer;
+}
+
+.add-expense-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+  background-color: #225750;
+} */
+
+.friends-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.friends-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+/* Add Friend button */
+.add-friend-btn,
+.add-expense-btn {
+  background-color: #225750;
+  color: white;
+  border: 2px solid #225750;
+  padding: 12px 18px;
+  font-size: 1rem;
+  font-weight: 700;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s ease;
+}
+
+.add-friend-btn:hover,
+.add-expense-btn:hover {
+  transform: scale(1.05);
+}

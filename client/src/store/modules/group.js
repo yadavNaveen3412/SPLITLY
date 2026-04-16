@@ -17,12 +17,41 @@ const actions = {
     commit("SET_LOADING", true);
     try {
       const groups = await groupService.getGroups(type);
-
-      console.log("group in fethcgroup in store", groups);
-
       commit("SET_GROUPS", Array.isArray(groups) ? [...groups] : []);
     } catch (err) {
       console.error("Failed to fetch groups", err);
+    } finally {
+      commit("SET_LOADING", false);
+    }
+  },
+
+  async fetchGroupsWithBalances({ commit, rootGetters }, type) {
+    commit("SET_LOADING", true);
+    try {
+      const groups = await groupService.getGroups(type);
+      const userId = rootGetters["auth/getUserId"];
+      const { calculateUserBalanceList } = await import("@/utils/settlements"); // Lazy import to match service if needed
+
+      const groupsWithBalances = await Promise.all(
+        groups.map(async (group) => {
+          const transactions = await calculateUserBalanceList(userId, group.id);
+          let netBalance = 0;
+          transactions.forEach((t) => {
+            if (t.type === "owed") netBalance += t.amount;
+            if (t.type === "owe") netBalance -= t.amount;
+          });
+
+          return {
+            ...group,
+            displayName: group.title,
+            netBalance,
+          };
+        }),
+      );
+
+      commit("SET_GROUPS", groupsWithBalances);
+    } catch (err) {
+      console.error("Failed to fetch groups with balances", err);
     } finally {
       commit("SET_LOADING", false);
     }
