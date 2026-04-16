@@ -3,7 +3,8 @@ import HomePage from "../views/Home/HomePage.vue";
 
 import FriendsPage from "@/views/Friends/FriendsPage.vue";
 import ChatsPage from "@/views/Chats/ChatsPage.vue";
-import AllGroups from "@/views/AllGroups/AllGroups.vue";
+import GroupsPage from "@/views/Groups/GroupsPage.vue";
+import CreateGroupModal from "@/modals/CreateGroupModal/CreateGroupModal.vue";
 import GroupPage from "@/views/SingleGroup/GroupPage.vue";
 import EditGroup from "@/views/EditGroup/EditGroup.vue";
 import AddExpenseModal from "@/views/AddExpense/AddExpenseModal/AddExpenseModal.vue";
@@ -61,13 +62,18 @@ export default {
     {
       name: "Groups",
       path: "/groups",
-      component: AllGroups,
+      component: GroupsPage,
       children: [
         {
           name: "GroupChats",
           path: "chats/:id",
           component: ChatsPage,
           props: true,
+        },
+        {
+          name: "CreateGroup",
+          path: "create",
+          component: CreateGroupModal,
         },
       ],
     },

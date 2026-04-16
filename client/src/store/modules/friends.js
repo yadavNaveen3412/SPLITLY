@@ -31,8 +31,8 @@ const actions = {
 
           return {
             ...friend,
-            owedToYou: net > 0 ? net : 0,
-            youOwe: net < 0 ? Math.abs(net) : 0,
+            displayName: friend.name,
+            netBalance: net, // > 0: owes you, < 0: you owe
           };
         })
       );
