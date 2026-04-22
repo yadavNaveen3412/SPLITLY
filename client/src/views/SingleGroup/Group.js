@@ -1,5 +1,4 @@
 import { mapGetters, mapActions } from "vuex";
-import { groupService } from "@/services/groups.service";
 import { userService } from "@/services/user.service";
 import { expenseService } from "@/services/expenses.service";
 import ExpenseDetail from "../ExpenseDetailModal/ExpenseDetail.vue";
@@ -140,7 +139,7 @@ export default {
   },
   methods: {
     ...mapActions("friends", ["loadFriends"]),
-    ...mapActions("group", ["addMembers", "fetchGroups"]),
+    ...mapActions("group", ["addMembers", "fetchGroups", "fetchGroupDetails"]),
 
     getUserNamesById(userId) {
       const member = this.group.members.find((m) => m.user.id === userId);
@@ -193,9 +192,7 @@ export default {
 
     async fetchGroupDetail() {
       try {
-        const { getGroupDetails } = await groupService.getGroupDetails(
-          this.groupId,
-        );
+        const getGroupDetails = await this.fetchGroupDetails(this.groupId);
         this.group = getGroupDetails;
       } catch (error) {
         console.error("Error loading group:", error);
@@ -234,7 +231,7 @@ export default {
       this.checkUserTimeout = setTimeout(async () => {
         try {
           const exists = await userService.checkUserExists(this.emailInput);
-          this.userExists = exists.checkUserExists;
+          this.userExists = exists;
         } catch (error) {
           console.error("Error checking user:", error);
           this.userExists = null;
@@ -265,30 +262,30 @@ export default {
       this.addingMembers = true;
       this.addMemberResult = "";
       try {
-        const res = await groupService.addMemberToGroup(
-          this.groupId,
-          this.selectedFriends,
-        );
-        const result = res.addMemberToGroup;
+        const result = await this.addMembers({
+          groupId: this.groupId,
+          userIds: this.selectedFriends,
+        });
+
         let message = "";
         if (result.added?.length) {
           message += `✓ Added ${result.added.length} member(s). `;
-          this.addMemberResultClass = "alert-success";
-        }
-        if (result.invited?.length) {
-          message += `Sent ${result.invited.length} invite(s). `;
-          this.addMemberResultClass = "alert-info";
         }
         if (result.alreadyMembers?.length) {
-          message += ` ${result.alreadyMembers.length} already member(s).`;
-          this.addMemberResultClass = "alert-warning";
+          message += `${result.alreadyMembers.length} already in group. `;
         }
+        if (result.invited?.length) {
+          message += `Invited ${result.invited.length} new users. `;
+        }
+
         this.addMemberResult = message;
+        this.addMemberResultClass = "alert-success";
         this.group = result.updatedGroup;
+
         setTimeout(() => {
           this.selectedFriends = [];
           this.addMemberResult = "";
-          this.isModalOpen = false; // close modal
+          this.isModalOpen = false;
         }, 2000);
       } catch (error) {
         console.error("Error adding members:", error);

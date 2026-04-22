@@ -61,13 +61,65 @@ const actions = {
 
   async createGroup({ dispatch }, payload) {
     try {
-      const { title, type } = payload;
-      const created = await groupService.createGroup(title, type);
-      console.log("Created Group: ", created);
-      await dispatch("fetchGroups", type);
-      return created;
+      const { title, type, members = [] } = payload;
+      const { createGroup } = await groupService.createGroup(title, type, members);
+      console.log("Created Group: ", createGroup);
+      await dispatch("fetchGroupsWithBalances", type);
+      return createGroup;
     } catch (e) {
       console.log("failed to create group", e);
+    }
+  },
+
+  async addMembers({ dispatch }, { groupId, userIds }) {
+    try {
+      const { addMemberToGroup } = await groupService.addMemberToGroup(groupId, userIds);
+      await dispatch("fetchGroupsWithBalances", "GROUP");
+      return addMemberToGroup;
+    } catch (e) {
+      console.log("failed to add members", e);
+      throw e;
+    }
+  },
+
+  async fetchGroupDetails(_, groupId) {
+    try {
+      const { getGroupDetails } = await groupService.getGroupDetails(groupId);
+      return getGroupDetails;
+    } catch (e) {
+      console.log("failed to fetch group details", e);
+      throw e;
+    }
+  },
+
+  async renameGroup({ dispatch }, { groupId, title }) {
+    try {
+      const { renameGroup } = await groupService.renameGroup(groupId, title);
+      await dispatch("fetchGroups", renameGroup.type);
+      return renameGroup;
+    } catch (e) {
+      console.log("failed to rename group", e);
+      throw e;
+    }
+  },
+
+  async deleteGroup({ dispatch }, { groupId, type }) {
+    try {
+      const { deleteGroup } = await groupService.deleteGroup(groupId);
+      await dispatch("fetchGroups", type);
+      return deleteGroup;
+    } catch (e) {
+      console.log("failed to delete group", e);
+      throw e;
+    }
+  },
+
+  async getPersonalGroupId(_, otherUserId) {
+    try {
+      return await groupService.getPersonalGroupId(otherUserId);
+    } catch (e) {
+      console.log("failed to get personal group id", e);
+      throw e;
     }
   },
 

@@ -18,7 +18,7 @@
           :placeholder="group.title"
           maxlength="50"
         />
-        <button @click="renameGroup" class="btn btn-primary mt-2">
+        <button @click="handleRenameGroup" class="btn btn-primary mt-2">
           Change Name
         </button>
         <p v-if="errorMessage" class="text-danger small mt-1">
@@ -34,7 +34,7 @@
       <!-- Delete Group -->
       <div class="mb-3" title="Only admins can delete this group.">
         <button
-          @click="handleDeleteGroup"
+          @click="handleDeleteGroupAction"
           class="btn btn-danger"
           :disabled="!canDeleteGroup"
         >

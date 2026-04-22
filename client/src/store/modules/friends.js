@@ -1,6 +1,4 @@
-import { fetchFriends } from "@/services/friends.service";
-import { groupService } from "@/services/groups.service";
-import { getUserById } from "@/services/user.service";
+import { fetchFriends, createFriend } from "@/services/friends.service";
 
 const state = () => ({
   friends: [],
@@ -54,20 +52,13 @@ const actions = {
     }
   },
 
-  async createFriend({ rootGetters }, friendId) {
+  async createFriend({ dispatch }, friendId) {
     try {
-      const { name: friendName, email } = await getUserById(friendId);
-      const name = await rootGetters["auth/getUserName"];
-
-      // console.log("Friend Store Username:", name);
-
-      const title = `${name.split(" ")[0]}_${friendName.split(" ")[0]}`;
-      const { createGroup } = await groupService.createGroup(title, "PERSONAL");
-      const groupId = createGroup.id;
-
-      await groupService.addMemberToGroup(groupId, [email]);
-
-      return groupId;
+      const group = await createFriend(friendId);
+      await dispatch("group/fetchGroupsWithBalances", "PERSONAL", {
+        root: true,
+      });
+      return group.id;
     } catch (error) {
       console.log("Error creating Friend", error);
     }

@@ -1,4 +1,5 @@
 import { requireAuth } from "../../src/middleware/guards.js";
+import { groupService } from "../../src/services/group.service.js";
 
 export const friendsResolvers = {
   Query: {
@@ -60,43 +61,11 @@ export const friendsResolvers = {
 
       return Array.from(friendsMap.values());
     }),
-    getFriendById: requireAuth(async (_, { friendId }, { prisma, user }) => {
-      // Find a PERSONAL group that contains BOTH the current user and the friend
-      const group = await prisma.group.findFirst({
-        where: {
-          type: "PERSONAL",
-          AND: [
-            { members: { some: { userId: user.id } } },
-            { members: { some: { userId: friendId } } },
-          ],
-        },
-        include: {
-          members: {
-            include: { user: true },
-          },
-        },
-      });
-
-      // Not found or not both members
-      if (!group) return null;
-
-      // Defensive check: PERSONAL groups should have exactly 2 members
-      const members = group.members || [];
-      if (members.length !== 2) {
-        // If you want, you can throw here to surface a data integrity issue.
-        return null;
-      }
-
-      // Find the friend's member record for name and id
-      const friendMember = members.find(
-        (m) => m.user && m.user.id === friendId,
-      );
-      if (!friendMember || !friendMember.user) return null;
-
-      return {
-        groupId: group.id,
-        name: friendMember.user.name,
-      };
+  },
+  Mutation: {
+    createFriend: requireAuth(async (_, { friendId }, { prisma, user }) => {
+      const gService = groupService(prisma);
+      return gService.createFriend(friendId, user);
     }),
   },
 };

@@ -1,7 +1,10 @@
 export const friendsTypeDefs = `#graphql
     type Query {
         getAllFriends: [Friend!]!
-        getFriendById(friendId: ID!): PersonalFriend
+    }
+
+    type Mutation {
+        createFriend(friendId: ID!): Group!
     }
 
     type Friend {
@@ -16,10 +19,5 @@ export const friendsTypeDefs = `#graphql
         youOwe: Float
         profilePic: String
         profilePicVersion: String
-    }
-
-    type PersonalFriend {
-        groupId: ID
-        name: String
     }
 `;

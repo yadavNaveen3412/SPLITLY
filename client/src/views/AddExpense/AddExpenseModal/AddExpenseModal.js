@@ -2,7 +2,6 @@ import SelectionList from "../SelectionList/SelectionList.vue";
 import MemberSelection from "../MemberSelection/MemberSelection.vue";
 import ExpenseForm from "../ExpenseForm/ExpenseForm.vue";
 import { mapActions, mapGetters } from "vuex";
-import { groupService } from "@/services/groups.service";
 import { createExpense } from "@/services/expenses.service";
 
 export default {
@@ -77,7 +76,7 @@ export default {
   },
 
   methods: {
-    ...mapActions("group", ["fetchGroups", "getNonGroupId"]),
+    ...mapActions("group", ["fetchGroups", "getNonGroupId", "getPersonalGroupId"]),
     ...mapActions("friends", ["loadFriends"]),
     initialize() {
       this.currentStep = 1;
@@ -107,19 +106,6 @@ export default {
 
     closeModal() {
       this.$router.back();
-      // const { source, groupId, friendId } = this.$route.query;
-
-      // if (source === "group" && groupId) {
-      //   this.$router.back();
-      // } else if (source === "friend" && friendId) {
-      //   this.$router.push({ name: "Chats", params: { id: friendId } });
-      // } else if (source === "friends") {
-      //   this.$router.push({ name: "Friends" });
-      // } else if (source === "groups") {
-      //   this.$router.push({ name: "Groups" });
-      // } else {
-      //   this.$router.push({ name: "Home" });
-      // }
     },
 
     handleAddNew() {
@@ -157,7 +143,7 @@ export default {
         this.selectedFriendIds &&
         this.selectedFriendIds.length === 1
       ) {
-        this.expenseData.groupId = await groupService.getPersonalGroupId(
+        this.expenseData.groupId = await this.getPersonalGroupId(
           this.selectedFriendIds[0],
         );
       } else {

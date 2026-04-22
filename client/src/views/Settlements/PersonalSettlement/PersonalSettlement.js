@@ -1,11 +1,10 @@
-import { mapGetters } from "vuex";
+import { mapGetters, mapActions } from "vuex";
 import ConfirmSettlement from "../ConfirmSettlement/ConfirmSettlement.vue";
-import { groupService } from "@/services/groups.service";
 import { calculateNetWithFriend, userFriendBalance } from "@/utils/settlements";
 import { getUserById } from "@/services/user.service";
 
 export default {
-  name: "PersonalSettlement",
+  name: "PersonalFriendSettlement",
   props: ["friendId"],
 
   components: {
@@ -46,6 +45,8 @@ export default {
     },
   },
   methods: {
+    ...mapActions("group", ["fetchGroupDetails"]),
+
     async getUserName() {
       const user = await getUserById(this.friendId);
       this.friendName = user.name;
@@ -59,10 +60,8 @@ export default {
         this.showConfirmModal = true;
         return;
       }
-      const { getGroupDetails } = await groupService.getGroupDetails(
-        item.groupId
-      );
-      this.group = getGroupDetails;
+
+      this.group = await this.fetchGroupDetails(item.groupId);
 
       this.showConfirmModal = true;
     },

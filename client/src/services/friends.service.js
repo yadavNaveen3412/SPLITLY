@@ -17,6 +17,16 @@ const GET_ALL_FRIENDS = gql`
   }
 `;
 
+const CREATE_FRIEND_MUTATION = gql`
+  mutation CreateFriend($friendId: ID!) {
+    createFriend(friendId: $friendId) {
+      id
+      title
+      type
+    }
+  }
+`;
+
 export const fetchFriends = async () => {
   try {
     const { data } = await apolloClient.query({
@@ -28,4 +38,12 @@ export const fetchFriends = async () => {
   } catch (error) {
     console.error("Error fetching friends' data: ", error);
   }
+};
+
+export const createFriend = async (friendId) => {
+  const resp = await apolloClient.mutate({
+    mutation: CREATE_FRIEND_MUTATION,
+    variables: { friendId },
+  });
+  return resp.data.createFriend;
 };

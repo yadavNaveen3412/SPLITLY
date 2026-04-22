@@ -9,18 +9,18 @@ export const groupTypeDefs = `#graphql
 
     type Mutation{
         createGroup(title:String!, type:GroupType,members:[String]):Group!
-        addMemberToGroup(groupId:String!, emails:[String!]!):AddMemberToGroupResult!
+        addMemberToGroup(groupId:String!, userIds:[ID!]!):AddMemberToGroupResult!
         renameGroup(groupId:String! , title:String!):Group!
         deleteGroup(groupId:String! ):Boolean!
         getOrCreateNonGroup(memberIds: [ID!]!) : Group!
     }
 
     type AddMemberToGroupResult {
-        added: [String!]!
-        invited: [String!]!
-        alreadyMembers: [String!]!
+        added: [ID!]!
+        alreadyMembers: [ID!]!
+        invited: [ID!]!
         updatedGroup: Group!
-}
+    }
 
     enum GroupType{
         PERSONAL

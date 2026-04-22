@@ -10,8 +10,8 @@
       <div
         v-for="item in items"
         :key="item.id"
-        :class="['selection-item', { selected: isSelected(item.email) }]"
-        @click="toggleSelection(item.email)"
+        :class="['selection-item', { selected: isSelected(item.id) }]"
+        @click="toggleSelection(item.id)"
       >
         <div class="item-avatar">
           <img v-if="item.profilePic" :src="getProfileUrl(item)" alt="" />
@@ -21,7 +21,7 @@
           <div class="item-name">{{ item.displayName || item.name }}</div>
           <div v-if="item.email" class="item-email">{{ item.email }}</div>
         </div>
-        <div v-if="isSelected(item.email)" class="check-icon">
+        <div v-if="isSelected(item.id)" class="check-icon">
           <i class="fa-solid fa-check"></i>
         </div>
       </div>
@@ -63,16 +63,16 @@ export default {
       }
       return null;
     },
-    isSelected(email) {
-      return this.selectedIds.includes(email);
+    isSelected(id) {
+      return this.selectedIds.includes(id);
     },
-    toggleSelection(email) {
+    toggleSelection(id) {
       const newSelection = [...this.selectedIds];
-      const index = newSelection.indexOf(email);
+      const index = newSelection.indexOf(id);
       if (index > -1) {
         newSelection.splice(index, 1);
       } else {
-        newSelection.push(email);
+        newSelection.push(id);
       }
       this.$emit("update:selectedIds", newSelection);
     },

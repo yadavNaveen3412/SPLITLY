@@ -51,7 +51,7 @@ export const userResolvers = {
         },
       });
 
-      return !!user;
+      return user ? user.id : null;
     },
 
     findUser: requireAuth(async (_, { input }, { prisma, user }) => {

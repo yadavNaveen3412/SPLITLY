@@ -2,7 +2,7 @@
   <div class="main" :class="{ 'has-chat-panel': hasChatPanel }">
     <div class="container">
       <!-- Page Header -->
-      <BaseHeader title="Your Groups">
+      <BaseHeader title="Groups">
         <template #actions>
           <BaseButton
             label="Create Group"

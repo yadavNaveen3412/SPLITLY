@@ -3,7 +3,7 @@ import {
   requireAuth,
   requireGroupMember,
 } from "../../src/middleware/guards.js";
-import { sanitizeString } from "../../src/middleware/sanitizeUserInput.js";
+import { groupService } from "../../src/services/group.service.js";
 
 export const groupResolvers = {
   Query: {
@@ -88,74 +88,15 @@ export const groupResolvers = {
   Mutation: {
     createGroup: requireAuth(
       async (_, { title, type, members = [] }, { prisma, user }) => {
-        const groupType = type || "GROUP";
-        title = sanitizeString(title);
-
-        if (!title || title.length < 3 || title.length > 50) {
-          throw new Error("Group title must be between 3 and 50 characters.");
-        }
-
-        const newGroup = await prisma.group.create({
-          data: {
-            title,
-            type: groupType,
-            createdById: user.id,
-            members: {
-              create: {
-                userId: user.id,
-              },
-            },
-          },
-          include: {
-            members: {
-              include: { user: true },
-            },
-          },
-        });
-        return newGroup;
+        const gService = groupService(prisma);
+        return gService.createGroup(title, type, members, user);
       },
     ),
 
     addMemberToGroup: requireGroupMember(
-      async (_, { groupId, emails }, { prisma }) => {
-        const added = [];
-        const invited = [];
-        const alreadyMembers = [];
-
-        for (const email of emails) {
-          const user = await prisma.user.findUnique({ where: { email } });
-          if (!user) {
-            invited.push(email);
-            continue;
-          }
-
-          const existing = await prisma.groupMember.findFirst({
-            where: { groupId, userId: user.id },
-          });
-
-          if (existing) {
-            alreadyMembers.push(email);
-            continue;
-          }
-
-          await prisma.groupMember.create({
-            data: {
-              groupId,
-              userId: user.id,
-            },
-          });
-
-          added.push(email);
-        }
-
-        const updatedGroup = await prisma.group.findUnique({
-          where: { id: groupId },
-
-          include: {
-            members: { include: { user: true } },
-          },
-        });
-        return { added, invited, alreadyMembers, updatedGroup };
+      async (_, { groupId, userIds }, { prisma }) => {
+        const gService = groupService(prisma);
+        return gService.addMembersToGroup(groupId, userIds);
       },
     ),
 

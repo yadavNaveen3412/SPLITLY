@@ -1,5 +1,4 @@
-import { groupService } from "@/services/groups.service";
-import { mapGetters } from "vuex";
+import { mapGetters, mapActions } from "vuex";
 
 export default {
   name: "EditGroup",
@@ -25,38 +24,39 @@ export default {
   },
 
   methods: {
-    async fetchGroupDetails() {
+    ...mapActions("group", ["fetchGroupDetails", "renameGroup", "deleteGroup"]),
+
+    async handleFetchGroupDetails() {
       try {
-        const { getGroupDetails } = await groupService.getGroupDetails(
-          this.groupId,
-        );
-        this.group = getGroupDetails;
+        this.group = await this.fetchGroupDetails(this.groupId);
       } catch (e) {
         console.log("error in fetching group details in edit page", e);
       }
     },
-    async renameGroup() {
+    async handleRenameGroup() {
       if (!this.newGroupName || this.newGroupName.length < 3 || this.newGroupName.length > 50) {
         this.errorMessage = "Group name must be between 3 and 50 characters.";
         return;
       }
       try {
-        const { renameGroup } = await groupService.renameGroup(
-          this.groupId,
-          this.newGroupName,
-        );
-        this.group = renameGroup;
+        this.group = await this.renameGroup({
+          groupId: this.groupId,
+          title: this.newGroupName,
+        });
         alert("Group name changed successfully");
         this.newGroupName = "";
       } catch (e) {
         console.log("error in renaming group", e);
       }
     },
-    async handleDeleteGroup() {
+    async handleDeleteGroupAction() {
       try {
-        const { deleteGroup } = await groupService.deleteGroup(this.groupId);
+        const success = await this.deleteGroup({
+          groupId: this.groupId,
+          type: this.group.type,
+        });
 
-        if (deleteGroup) {
+        if (success) {
           alert("Group deleted");
           this.$router.push({ name: "Groups" });
         }

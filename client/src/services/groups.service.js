@@ -21,8 +21,8 @@ const GET_GROUPS = gql`
 `;
 
 const CREATE_GROUP_MUTATION = gql`
-  mutation CreateGroup($title: String!, $type: GroupType) {
-    createGroup(title: $title, type: $type) {
+  mutation CreateGroup($title: String!, $type: GroupType, $members: [String]) {
+    createGroup(title: $title, type: $type, members: $members) {
       type
       title
       id
@@ -76,8 +76,8 @@ const DELETE_GROUP = gql`
 `;
 
 const ADD_MEMBER_TO_GROUP = gql`
-  mutation AddMemberToGroup($groupId: String!, $emails: [String!]!) {
-    addMemberToGroup(groupId: $groupId, emails: $emails) {
+  mutation AddMemberToGroup($groupId: String!, $userIds: [ID!]!) {
+    addMemberToGroup(groupId: $groupId, userIds: $userIds) {
       added
       alreadyMembers
       invited
@@ -132,10 +132,10 @@ export const groupService = {
     return resp.data.getGroups;
   },
 
-  async createGroup(title, type) {
+  async createGroup(title, type, members = []) {
     const resp = await apolloClient.mutate({
       mutation: CREATE_GROUP_MUTATION,
-      variables: { title, type },
+      variables: { title, type, members },
       refetchQueries: [{ query: GET_GROUPS, variables: { type } }],
       awaitRefetchQueries: true,
     });
@@ -169,10 +169,10 @@ export const groupService = {
     return resp.data;
   },
 
-  async addMemberToGroup(groupId, emails) {
+  async addMemberToGroup(groupId, userIds) {
     const resp = await apolloClient.mutate({
       mutation: ADD_MEMBER_TO_GROUP,
-      variables: { groupId, emails },
+      variables: { groupId, userIds },
       fetchPolicy: "no-cache",
     });
     return resp.data;

@@ -1,5 +1,4 @@
 import BaseSelectionList from "@/components/ui/BaseSelectionList/BaseSelectionList.vue";
-import { groupService } from "@/services/groups.service";
 import { mapActions, mapGetters } from "vuex";
 
 export default {
@@ -50,24 +49,13 @@ export default {
       if (!this.canCreate) return;
 
       try {
-        // Step 1: Create Group
-        console.log("Creating group:", this.groupTitle);
-        const { createGroup } = await this.createGroup({
+        console.log("Creating group with members:", this.groupTitle);
+        await this.createGroup({
           title: this.groupTitle,
           type: "GROUP",
+          members: [...this.selectedFriendIds, ...this.invitedEmails],
         });
 
-        // Step 2: Add Members
-        console.log("Adding members:", [
-          ...this.selectedFriendIds,
-          ...this.invitedEmails,
-        ]);
-        const res = await groupService.addMemberToGroup(
-          createGroup.id,
-          this.selectedFriendIds,
-        );
-        console.log("Added members:", res);
-        await this.fetchGroupsWithBalances("GROUP");
         this.closeModal();
       } catch (err) {
         console.error("Failed to create group", err);
