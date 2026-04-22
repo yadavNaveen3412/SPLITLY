@@ -4,11 +4,7 @@ import { userService } from "@/services/user.service";
 import { expenseService } from "@/services/expenses.service";
 import ExpenseDetail from "../ExpenseDetailModal/ExpenseDetail.vue";
 import GroupSettlement from "../Settlements/GroupSettlement/GroupSettlement.vue";
-// import { checkAndSettleGroup } from "@/utils/settlements";
-import {
-  calculateUserBalanceList,
-  computeSettlements,
-} from "@/utils/settlements";
+import { calculateUserBalanceList } from "@/utils/settlements";
 import { settlementService } from "@/services/settlements.service";
 export default {
   name: "GroupPage",
@@ -79,7 +75,7 @@ export default {
       const diff = this.friends
         .filter(
           (friend) =>
-            !this.group.members.some((member) => member.user?.id === friend.id)
+            !this.group.members.some((member) => member.user?.id === friend.id),
         )
         .map((friend) => ({
           id: friend.id,
@@ -102,13 +98,13 @@ export default {
 
     currentActivities() {
       return [...this.currentExpenses, ...this.currentSettlements].sort(
-        (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+        (a, b) => new Date(b.createdAt) - new Date(a.createdAt),
       );
     },
 
     pastActivities() {
       return [...this.pastExpenses, ...this.pastSettlements].sort(
-        (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+        (a, b) => new Date(b.createdAt) - new Date(a.createdAt),
       );
     },
 
@@ -155,12 +151,15 @@ export default {
     },
 
     getPaidBySummary(expense) {
-      const payers = (expense.participants || []).filter((p) => p.paidAmount > 0);
+      const payers = (expense.participants || []).filter(
+        (p) => p.paidAmount > 0,
+      );
       if (!payers || payers.length === 0) {
         return "No payment info";
       }
       if (payers.length === 1) {
-        const name = this.getUserNamesById(payers[0].userId) || payers[0].user?.name;
+        const name =
+          this.getUserNamesById(payers[0].userId) || payers[0].user?.name;
         return `Paid by ${name} `;
       }
       return `Paid by ${payers.length} people`;
@@ -170,7 +169,7 @@ export default {
       try {
         const userId = this.user.id;
         const participant = (expense.participants || []).find(
-          (p) => p.userId === userId
+          (p) => p.userId === userId,
         );
 
         const payerAmount = Number(participant?.paidAmount || 0);
@@ -195,7 +194,7 @@ export default {
     async fetchGroupDetail() {
       try {
         const { getGroupDetails } = await groupService.getGroupDetails(
-          this.groupId
+          this.groupId,
         );
         this.group = getGroupDetails;
       } catch (error) {
@@ -214,7 +213,7 @@ export default {
       }));
 
       const setRes = await settlementService.getSettlementsByGroup(
-        this.groupId
+        this.groupId,
       );
       this.settlements = setRes.getSettlementsByGroup.map((s) => ({
         ...s,
@@ -223,7 +222,7 @@ export default {
 
       this.userBalances = await calculateUserBalanceList(
         this.user.id,
-        this.group.id
+        this.group.id,
       );
     },
     async checkUserExists() {
@@ -268,7 +267,7 @@ export default {
       try {
         const res = await groupService.addMemberToGroup(
           this.groupId,
-          this.selectedFriends
+          this.selectedFriends,
         );
         const result = res.addMemberToGroup;
         let message = "";
@@ -350,7 +349,7 @@ export default {
       await this.fetchGroupDetail();
       this.userBalances = await calculateUserBalanceList(
         this.user.id,
-        this.group.id
+        this.group.id,
       );
     },
     async handleSettlement(payload) {
@@ -366,8 +365,6 @@ export default {
     await this.loadFriends();
   },
   async mounted() {
-    await this.fetchData();
-    await computeSettlements(this.group.id);
     await this.fetchGroups("GROUP");
     await this.fetchAll();
     document.body.style.overflow = "";

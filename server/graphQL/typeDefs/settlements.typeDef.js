@@ -53,21 +53,21 @@ export const settlementsTypeDefs = `#graphql
         groupSettlements(groupId: ID!): [SettlementTransaction!]!
 
         myGroupBalances(
-            userId: ID!
+            userId: ID
             groupId: ID!
         ): [UserBalance!]!
 
         myAllBalances(
-            userId: ID!
+            userId: ID
         ): [UserBalance!]!
 
         myFriendBalance(
-            userId: ID!
+            userId: ID
             friendId: ID!
         ): [UserBalance!]!
 
         myNetWithFriend(
-            userId: ID!
+            userId: ID
             friendId: ID!
         ): Float!
     }

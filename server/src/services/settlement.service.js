@@ -1,10 +1,11 @@
-import { settleGroupService } from "./expense.service.js";
+import { balanceService } from "./balance.service.js";
 
 /**
  * Factory function
  * Call this ONCE per request with prisma from context
  */
 export const settlementService = (prisma) => {
+  const bService = balanceService(prisma);
   /* ----------------------------------
      Internal helpers
   ---------------------------------- */
@@ -59,36 +60,22 @@ export const settlementService = (prisma) => {
   };
 
   /* ----------------------------------
-     Groups (ALL types)
-  ---------------------------------- */
-
-  const getAllUserGroups = async (userId) => {
-    return prisma.group.findMany({
-      where: {
-        OR: [{ createdById: userId }, { members: { some: { userId } } }],
-      },
-      include: {
-        members: {
-          include: { user: true },
-        },
-      },
-    });
-  };
-
-  /* ----------------------------------
      Core settlement APIs
   ---------------------------------- */
 
   const computeSettlements = async (groupId) => {
-    const { message, balanceArray } = await settleGroupService(groupId, prisma);
+    const balancesRaw = await bService.getGroupBalances(groupId);
 
-    if (message === "Group Settled") {
-      return [];
-    }
+    const balances = {};
+    balancesRaw.forEach((br) => {
+      if (!balances[br.user1Id]) balances[br.user1Id] = 0;
+      if (!balances[br.user2Id]) balances[br.user2Id] = 0;
 
-    const balances = Object.fromEntries(
-      balanceArray.map((b) => [b.userId, b.amount])
-    );
+      const amount = Number(br.netAmount);
+      // user1 owes user2 positive amount
+      balances[br.user1Id] -= amount;
+      balances[br.user2Id] += amount;
+    });
 
     const { owed, owes } = splitBalances(balances);
     return settleUp(owed, owes);
@@ -107,23 +94,25 @@ export const settlementService = (prisma) => {
   };
 
   const userAllBalances = async (userId) => {
-    const groups = await getAllUserGroups(userId);
-    const allTransactions = [];
+    // This uses the efficient getUserBalances which uses UNION ALL
+    const balances = await bService.getUserBalances(userId);
 
-    for (const group of groups) {
-      const txns = await calculateUserBalanceList(userId, group.id);
+    // We need group metadata for the response
+    const groupIds = Array.from(new Set(balances.map((b) => b.groupId)));
+    const groups = await prisma.group.findMany({
+      where: { id: { in: groupIds } },
+      select: { id: true, type: true, title: true },
+    });
+    const groupMap = Object.fromEntries(groups.map((g) => [g.id, g]));
 
-      allTransactions.push(
-        ...txns.map((t) => ({
-          ...t,
-          groupId: group.id,
-          groupType: group.type,
-          groupTitle: group.title,
-        }))
-      );
-    }
-
-    return allTransactions;
+    return balances.map((b) => ({
+      type: b.type,
+      person: b.friendId,
+      amount: Math.abs(b.amount),
+      groupId: b.groupId,
+      groupType: groupMap[b.groupId]?.type,
+      groupTitle: groupMap[b.groupId]?.title,
+    }));
   };
 
   const userFriendBalance = async (userId, friendId) => {
@@ -153,3 +142,4 @@ export const settlementService = (prisma) => {
     calculateNetWithFriend,
   };
 };
+

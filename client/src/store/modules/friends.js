@@ -1,7 +1,6 @@
 import { fetchFriends } from "@/services/friends.service";
 import { groupService } from "@/services/groups.service";
 import { getUserById } from "@/services/user.service";
-import { calculateNetWithFriend } from "@/utils/settlements";
 
 const state = () => ({
   friends: [],
@@ -24,21 +23,29 @@ const actions = {
     try {
       const userId = rootGetters["auth/getUserId"];
       const friends = await fetchFriends();
+      const { userAllBalances } = await import("@/utils/settlements");
 
-      const friendsWithNet = await Promise.all(
-        friends.map(async (friend) => {
-          const net = await calculateNetWithFriend(userId, friend.id);
+      // Single call to get all balances for the user across all groups
+      const allBalances = await userAllBalances(userId);
 
-          return {
-            ...friend,
-            displayName: friend.name,
-            netBalance: net, // > 0: owes you, < 0: you owe
-          };
-        }),
-      );
+      // Aggregate net balances by person (friendId)
+      const friendBalanceMap = {};
+      allBalances.forEach((b) => {
+        if (!friendBalanceMap[b.person]) friendBalanceMap[b.person] = 0;
+        if (b.type === "owed") friendBalanceMap[b.person] += b.amount;
+        if (b.type === "owe") friendBalanceMap[b.person] -= b.amount;
+      });
 
+      const friendsWithNet = friends.map((friend) => {
+        const net = friendBalanceMap[friend.id] || 0;
+        return {
+          ...friend,
+          displayName: friend.name,
+          netBalance: net, // > 0: owes you, < 0: you owe
+        };
+      });
+      console.log(`friendsWithNet`, friendsWithNet);
       commit("SET_FRIENDS", friendsWithNet);
-      // commit("SET_FRIENDS", friends);
     } catch (error) {
       console.error("Error loading friends: ", error);
       commit("SET_FRIENDS", []);

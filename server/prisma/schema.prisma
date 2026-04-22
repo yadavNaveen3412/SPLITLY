@@ -169,6 +169,7 @@ model Balance {
   @@index([groupId, user2Id])
   @@index([user1Id])
   @@index([user2Id])
+  @@map("balances")
 }
 
 enum GroupType {

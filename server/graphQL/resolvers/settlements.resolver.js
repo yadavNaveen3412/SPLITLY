@@ -1,4 +1,5 @@
 import { settlementService } from "../../src/services/settlement.service.js";
+import { balanceService } from "../../src/services/balance.service.js";
 import {
   requireAuth,
   requireGroupMember,
@@ -20,23 +21,29 @@ export const settlementsResolvers = {
 
       if (!group) throw new Error("Group not found");
 
-      const settlement = await prisma.settlement.create({
-        data: {
-          group_id,
-          payer_id,
-          receiver_id,
-          amount,
-          created_by: user.id,
-          cycleId: group.currentCycleId,
-        },
-        include: {
-          group: true,
-          payer: true,
-          receiver: true,
-          settlementCreator: true,
-        },
+      const bService = balanceService(prisma);
+
+      return await prisma.$transaction(async (tx) => {
+        const settlement = await tx.settlement.create({
+          data: {
+            group_id,
+            payer_id,
+            receiver_id,
+            amount: Number(amount),
+            created_by: user.id,
+            cycleId: group.currentCycleId,
+          },
+          include: {
+            group: true,
+            payer: true,
+            receiver: true,
+            settlementCreator: true,
+          },
+        });
+
+        await bService.updateBalanceForSettlement(tx, settlement);
+        return settlement;
       });
-      return settlement;
     }),
   },
 

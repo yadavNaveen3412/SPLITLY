@@ -49,7 +49,7 @@ export const settlementService = {
       variables: { input },
       fetchPolicy: "no-cache",
     });
-    return resp.data;
+    return resp.data.createSettlement;
   },
 
   async getSettlementsByGroup(group_id) {

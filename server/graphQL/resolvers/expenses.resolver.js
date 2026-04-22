@@ -1,6 +1,7 @@
 import { DateTimeResolver } from "graphql-scalars";
 import { simplifyExpensesByFriendId } from "../../src/utils/expenseHelper.js";
 import { settleGroupService } from "../../src/services/expense.service.js";
+import { balanceService } from "../../src/services/balance.service.js";
 import {
   calculateOwedAmounts,
   validateSplit,
@@ -173,14 +174,6 @@ export const expensesResolvers = {
         throw new Error("Expense title must be between 3 and 50 characters.");
       }
 
-      if (description && description.length > 255) {
-        throw new Error("Description must not exceed 255 characters.");
-      }
-
-      if (totalAmount < 0.01 || totalAmount > 1000000) {
-        throw new Error("Total amount must be between 0.01 and 1,000,000.");
-      }
-
       const serverParticipants = prepareServerParticipants(
         totalAmount,
         splitMethod,
@@ -196,39 +189,45 @@ export const expensesResolvers = {
         cycleId = group?.currentCycleId ?? 1;
       }
 
-      const expense = await prisma.expense.create({
-        data: {
-          title,
-          description: description || null,
-          groupId,
-          totalAmount: Number(totalAmount),
-          categoryId,
-          created_by: user.id,
-          cycleId,
-          participants: {
-            create: serverParticipants.map((p) => ({
-              userId: p.userId,
-              paidAmount: p.paidAmount,
-              owedAmount: p.owedAmount,
-              groupId,
-            })),
-          },
-        },
-        include: {
-          category: true,
-          group: true,
-          createdByUser: true,
-          ...PARTICIPANT_INCLUDE,
-        },
-      });
+      const bService = balanceService(prisma);
 
-      return expense;
+      return await prisma.$transaction(async (tx) => {
+        const createdExpense = await tx.expense.create({
+          data: {
+            title,
+            description: description || null,
+            groupId,
+            totalAmount: Number(totalAmount),
+            categoryId,
+            created_by: user.id,
+            cycleId,
+            participants: {
+              create: serverParticipants.map((p) => ({
+                userId: p.userId,
+                paidAmount: p.paidAmount,
+                owedAmount: p.owedAmount,
+                groupId,
+              })),
+            },
+          },
+          include: {
+            category: true,
+            group: true,
+            createdByUser: true,
+            ...PARTICIPANT_INCLUDE,
+          },
+        });
+
+        await bService.updateBalancesForExpense(tx, createdExpense, "CREATE");
+        return createdExpense;
+      });
     }),
 
     updateExpense: requireExpenseAccess(
       async (_, { id, input }, { prisma, user }) => {
         const existing = await prisma.expense.findUnique({
           where: { id },
+          include: { participants: true },
         });
 
         if (!existing) {
@@ -252,22 +251,18 @@ export const expensesResolvers = {
           throw new Error("Expense title must be between 3 and 50 characters.");
         }
 
-        if (description && description.length > 255) {
-          throw new Error("Description must not exceed 255 characters.");
-        }
+        const bService = balanceService(prisma);
 
-        if (totalAmount !== undefined && (totalAmount < 0.01 || totalAmount > 1000000)) {
-          throw new Error("Total amount must be between 0.01 and 1,000,000.");
-        }
-
-        if (totalAmount !== undefined && !participants) {
-          throw new Error(
-            "Updating totalAmount securely requires submitting a new participants array with splitMethod.",
+        return await prisma.$transaction(async (tx) => {
+          // 1. Undo old balance effects
+          await bService.updateBalancesForExpense(
+            tx,
+            existing,
+            "DELETE",
+            existing.participants,
           );
-        }
 
-        const updatedExpense = await prisma.$transaction(async (tx) => {
-          // If participants are being updated, explicitly run server validation/calculation
+          // 2. Update participants if provided
           if (participants) {
             if (!splitMethod) {
               throw new Error("splitMethod is required when updating splits.");
@@ -294,7 +289,8 @@ export const expensesResolvers = {
             });
           }
 
-          return tx.expense.update({
+          // 3. Update expense core
+          const updated = await tx.expense.update({
             where: { id },
             data: {
               title: title ?? existing.title,
@@ -311,22 +307,37 @@ export const expensesResolvers = {
               ...PARTICIPANT_INCLUDE,
             },
           });
-        });
 
-        return updatedExpense;
+          // 4. Apply new balance effects
+          await bService.updateBalancesForExpense(tx, updated, "CREATE");
+          return updated;
+        });
       },
     ),
 
     deleteExpense: requireExpenseAccess(async (_, { id }, { prisma, user }) => {
       const existing = await prisma.expense.findUnique({
         where: { id },
+        include: { participants: true },
       });
 
       if (!existing) throw new Error("Expense not found");
 
-      // ExpenseParticipant rows are cascade-deleted automatically
-      const res = await prisma.expense.delete({ where: { id } });
-      return !!res;
+      const bService = balanceService(prisma);
+
+      await prisma.$transaction(async (tx) => {
+        // 1. Undo balance effects
+        await bService.updateBalancesForExpense(
+          tx,
+          existing,
+          "DELETE",
+          existing.participants,
+        );
+        // 2. Delete expense
+        await tx.expense.delete({ where: { id } });
+      });
+
+      return true;
     }),
 
     settleGroup: requireGroupMember(

@@ -30,24 +30,26 @@ const actions = {
     try {
       const groups = await groupService.getGroups(type);
       const userId = rootGetters["auth/getUserId"];
-      const { calculateUserBalanceList } = await import("@/utils/settlements"); // Lazy import to match service if needed
+      const { userAllBalances } = await import("@/utils/settlements");
 
-      const groupsWithBalances = await Promise.all(
-        groups.map(async (group) => {
-          const transactions = await calculateUserBalanceList(userId, group.id);
-          let netBalance = 0;
-          transactions.forEach((t) => {
-            if (t.type === "owed") netBalance += t.amount;
-            if (t.type === "owe") netBalance -= t.amount;
-          });
+      // Single call to get all balances for the user
+      const allBalances = await userAllBalances(userId);
 
-          return {
-            ...group,
-            displayName: group.title,
-            netBalance,
-          };
-        }),
-      );
+      // Create a map of groupId -> netAmount for quick lookup
+      const groupBalanceMap = {};
+      allBalances.forEach((b) => {
+        if (!groupBalanceMap[b.groupId]) groupBalanceMap[b.groupId] = 0;
+        if (b.type === "owed") groupBalanceMap[b.groupId] += b.amount;
+        if (b.type === "owe") groupBalanceMap[b.groupId] -= b.amount;
+      });
+
+      const groupsWithBalances = groups.map((group) => {
+        return {
+          ...group,
+          displayName: group.title,
+          netBalance: groupBalanceMap[group.id] || 0,
+        };
+      });
 
       commit("SET_GROUPS", groupsWithBalances);
     } catch (err) {

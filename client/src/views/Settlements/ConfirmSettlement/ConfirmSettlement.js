@@ -54,7 +54,7 @@ export default {
         amount: Number(this.selectedUser.amount),
       };
 
-      const { createSettlement } = await settlementService.createSettlement(
+      const createSettlement = await settlementService.createSettlement(
         input
       );
       this.$emit("settlement", createSettlement);

@@ -26,9 +26,12 @@ export const friendsResolvers = {
           if (!member.user || member.user.id === user.id) continue;
 
           const friend = member.user;
-          const key = `${friend.id}`;
+          const key = friend.id;
 
-          if (!friendsMap.has(key)) {
+          const existing = friendsMap.get(key);
+
+          // 👉 If not present → add
+          if (!existing) {
             friendsMap.set(key, {
               id: friend.id,
               name: friend.name,
@@ -40,13 +43,23 @@ export const friendsResolvers = {
               groupTitle: group.title,
               groupType: group.type,
             });
+            continue;
+          }
+
+          // 👉 If already present, replace ONLY if current is PERSONAL and existing is not
+          if (group.type === "PERSONAL" && existing.groupType !== "PERSONAL") {
+            friendsMap.set(key, {
+              ...existing,
+              groupId: group.id,
+              groupTitle: group.title,
+              groupType: group.type,
+            });
           }
         }
       }
 
       return Array.from(friendsMap.values());
     }),
-
     getFriendById: requireAuth(async (_, { friendId }, { prisma, user }) => {
       // Find a PERSONAL group that contains BOTH the current user and the friend
       const group = await prisma.group.findFirst({

@@ -103,6 +103,16 @@ const CREATE_EXPENSE = gql`
   }
 `;
 
+const UPDATE_EXPENSE = gql`
+  mutation UpdateExpense($id: String!, $input: UpdateExpenseInput!) {
+    updateExpense(id: $id, input: $input) {
+      id
+      title
+      totalAmount
+    }
+  }
+`;
+
 const DELETE_EXPENSE = gql`
   mutation DeleteExpense($id: String!) {
     deleteExpense(id: $id)
@@ -148,7 +158,16 @@ export const expenseService = {
       variables: { id },
       fetchPolicy: "no-cache",
     });
-    return resp.data;
+    return resp.data.deleteExpense;
+  },
+
+  async updateExpense(id, input) {
+    const resp = await apolloClient.mutate({
+      mutation: UPDATE_EXPENSE,
+      variables: { id, input },
+      fetchPolicy: "no-cache",
+    });
+    return resp.data.updateExpense;
   },
 
   async settleGroup(groupId) {
