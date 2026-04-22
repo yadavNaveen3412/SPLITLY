@@ -34,7 +34,7 @@ const actions = {
             displayName: friend.name,
             netBalance: net, // > 0: owes you, < 0: you owe
           };
-        })
+        }),
       );
 
       commit("SET_FRIENDS", friendsWithNet);
@@ -70,6 +70,16 @@ const actions = {
 const getters = {
   getFriends: (state) => state.friends,
   isLoading: (state) => state.loading,
+
+  getGroupIdByFriendId: (state) => (friendId) => {
+    const friend = state.friends.find((friend) => friend.id === friendId);
+    return friend ? friend.groupId : null;
+  },
+
+  checkFriendById: (state) => (friendId) => {
+    const friend = state.friends.find((friend) => friend.id === friendId);
+    return friend.groupType === "PERSONAL";
+  },
 
   getFriendsByIds: (state) => (idArray) => {
     if (!idArray || idArray?.length === 0) return [];

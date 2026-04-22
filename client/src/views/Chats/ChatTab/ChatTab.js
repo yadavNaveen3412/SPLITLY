@@ -1,4 +1,3 @@
-import { getFriendById } from "@/services/friends.service";
 import { getUserById } from "@/services/user.service";
 import { mapActions, mapGetters } from "vuex";
 
@@ -28,6 +27,7 @@ export default {
 
   computed: {
     ...mapGetters("chats", ["getChats"]),
+    ...mapGetters("friends", ["checkFriendById"]),
     chats() {
       return this.getChats;
     },
@@ -152,12 +152,7 @@ export default {
     async checkIfFriend() {
       this.isCheckingFriend = true;
       try {
-        const result = await getFriendById(this.id);
-        if (!result) {
-          this.isFriend = false;
-        } else {
-          this.isFriend = true;
-        }
+        this.isFriend = this.checkFriendById(this.id);
       } catch (error) {
         console.log("Error checking friend status:", error);
         this.isFriend = false;

@@ -4,7 +4,7 @@ export const chatTypeDefs = `#graphql
     }
 
     type Mutation {
-        sendChat(group_id: ID!, chatMessage: String!): Chats!
+        sendChat(group_id: ID!, chatMessage: String!, clientId: String!): Chats!
     }
 
     type Chats {
@@ -14,6 +14,7 @@ export const chatTypeDefs = `#graphql
         createdAt: String!
         updatedAt: String!
         chatMessage: String!
+        clientId: String
     }
 
     type Subscription {

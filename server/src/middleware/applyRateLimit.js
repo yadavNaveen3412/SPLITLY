@@ -39,11 +39,10 @@ export const rateLimitingMiddleware = (req, res, next) => {
   }
 
   // Other mutations
-  if (query.includes("mutation")) {
-    const isMutation = /^\s*mutation\b/i.test(query);
-    if (isMutation) {
-      return mutationRateLimiter(req, res, next);
-    }
+
+  const isMutation = /^\s*mutation\b/i.test(query);
+  if (isMutation) {
+    return mutationRateLimiter(req, res, next);
   }
 
   // Queries (default)

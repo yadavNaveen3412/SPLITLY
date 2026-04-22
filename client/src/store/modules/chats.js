@@ -3,7 +3,6 @@ import {
   sendChat,
   subscribeToMessage,
 } from "@/services/chat.service";
-import { getFriendById } from "@/services/friends.service";
 
 const state = () => ({
   chats: [],
@@ -18,7 +17,22 @@ const mutations = {
   },
 
   ADD_CHAT(state, chat) {
-    state.chats.push(chat);
+    if (chat.clientId) {
+      const index = state.chats.findIndex((c) => c.clientId === chat.clientId);
+
+      if (index !== -1) {
+        state.chats[index] = {
+          ...chat,
+          sentByYou: true,
+        };
+        return;
+      }
+    }
+
+    const exists = state.chats.some((c) => c.id === chat.id);
+    if (!exists) {
+      state.chats.push(chat);
+    }
   },
 
   SET_LOADING(state, status) {
@@ -39,17 +53,22 @@ const mutations = {
 };
 
 const actions = {
-  async loadChats({ commit, state, dispatch }, payload) {
+  async loadChats({ commit, state, dispatch, rootGetters }, payload) {
     commit("SET_LOADING", true);
     try {
       await dispatch("setGroupId", payload);
 
-      if (state.groupId) {
-        const chats = await getChats(state.groupId);
-        commit("SET_CHATS", chats);
-      } else {
+      if (!state.groupId) {
         commit("SET_CHATS", []);
+        return;
       }
+
+      const rawChats = await getChats(state.groupId);
+      const chats = rawChats.map((chat) => ({
+        ...chat,
+        sentByYou: chat.senderId === rootGetters["auth/getUserId"],
+      }));
+      commit("SET_CHATS", chats);
     } catch (err) {
       console.log("An error occured:", err);
     } finally {
@@ -57,19 +76,37 @@ const actions = {
     }
   },
 
-  async sendChat({ commit, dispatch, state }, payload) {
+  async sendChat({ commit, state, rootGetters }, payload) {
     commit("SET_LOADING", true);
+    if (!state.groupId) {
+      console.log("Not a friend");
+      return;
+    }
+
+    const clientId = `temp_${Date.now()}`;
+    const tempMessage = {
+      id: clientId,
+      clientId,
+      groupId: state.groupId,
+      senderId: rootGetters["auth/getUserId"],
+      chatMessage: payload.chatMessage,
+      sentByYou: true,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
     try {
-      if (state.groupId) {
-        await sendChat({
-          group_id: state.groupId,
-          chatMessage: payload.chatMessage,
-        });
-        await dispatch("loadChats", { id: payload.id, type: payload.type });
-      } else {
-        console.log("Not a friend");
-      }
+      commit("ADD_CHAT", tempMessage);
+      await sendChat({
+        group_id: state.groupId,
+        chatMessage: payload.chatMessage,
+        clientId,
+      });
     } catch (err) {
+      commit(
+        "SET_CHATS",
+        state.chats.filter((c) => c.clientId !== clientId),
+      );
       console.log("An error occured:", err);
     } finally {
       commit("SET_LOADING", false);
@@ -77,21 +114,18 @@ const actions = {
   },
 
   async subscribeToChats({ commit, state, rootGetters }) {
-    if (state.groupId) {
-      if (state.subscription) return;
+    if (!state.groupId) return;
 
-      const subscription = subscribeToMessage(state.groupId, (newMessage) => {
-        commit("ADD_CHAT", {
-          ...newMessage,
-          sentByYou:
-            newMessage.senderId === rootGetters["auth/getUserId"]
-              ? true
-              : false,
-        });
+    if (state.subscription) return;
+
+    const subscription = subscribeToMessage(state.groupId, (newMessage) => {
+      commit("ADD_CHAT", {
+        ...newMessage,
+        sentByYou: newMessage.senderId === rootGetters["auth/getUserId"],
       });
+    });
 
-      commit("SET_SUBSCRIPTION", subscription);
-    }
+    commit("SET_SUBSCRIPTION", subscription);
   },
 
   stopSubscription({ state, commit }) {
@@ -101,15 +135,12 @@ const actions = {
     }
   },
 
-  async setGroupId({ commit }, payload) {
+  async setGroupId({ commit, rootGetters }, payload) {
     const { id, type } = payload;
     if (type === "friends") {
-      const f = await getFriendById(id);
-      if (f) {
-        commit("SET_GROUP_ID", f.groupId);
-      } else {
-        commit("SET_GROUP_ID", null);
-      }
+      const groupId = rootGetters["friends/getGroupIdByFriendId"](id);
+      console.log(`GID CHAT STORE: ${groupId}`);
+      commit("SET_GROUP_ID", groupId);
     } else {
       commit("SET_GROUP_ID", id);
     }

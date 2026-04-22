@@ -56,10 +56,8 @@ export const settlementService = {
     const resp = await apolloClient.query({
       query: GET_SETTLEMENTS_BY_GROUP,
       variables: { group_id },
-      fetchPolicy: "network-only",
+      fetchPolicy: "cache-first",
     });
     return resp.data;
   },
 };
-
- 

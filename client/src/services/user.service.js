@@ -13,7 +13,6 @@ const GET_USER = gql`
       createdAt
       updatedAt
       shareCode
-      googleSub
     }
   }
 `;
@@ -70,20 +69,20 @@ const UPDATE_USER_DETAILS = gql`
 
 export const userService = {
   async getUser() {
-    const resp = await apolloClient.query({
+    const { data } = await apolloClient.query({
       query: GET_USER,
       fetchPolicy: "no-cache",
     });
-    return resp.data;
+    return data.getUser;
   },
 
   async checkUserExists(email) {
-    const resp = await apolloClient.query({
+    const { data } = await apolloClient.query({
       query: CHECK_USER_EXISTS,
       variables: { email },
       fetchPolicy: "network-only",
     });
-    return resp.data;
+    return data.checkUserExists;
   },
 };
 

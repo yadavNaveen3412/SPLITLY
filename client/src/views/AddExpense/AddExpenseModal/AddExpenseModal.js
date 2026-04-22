@@ -126,8 +126,11 @@ export default {
       if (this.activeTab === "friends") {
         this.$router.push({ name: "AddFriend" });
       }
+      if (this.activeTab === "groups") {
+        this.$router.push({ name: "CreateGroup" });
+      }
       console.log(
-        `Add new ${this.activeTab === "groups" ? "group" : "friend"}`
+        `Add new ${this.activeTab === "groups" ? "group" : "friend"}`,
       );
     },
 
@@ -155,7 +158,7 @@ export default {
         this.selectedFriendIds.length === 1
       ) {
         this.expenseData.groupId = await groupService.getPersonalGroupId(
-          this.selectedFriendIds[0]
+          this.selectedFriendIds[0],
         );
       } else {
         this.expenseData.groupId = await this.getNonGroupId([

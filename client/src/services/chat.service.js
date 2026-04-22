@@ -1,6 +1,5 @@
 import gql from "graphql-tag";
 import apolloClient from "@/apollo";
-import store from "@/store";
 
 const GET_CHATS = gql`
   query GetChats($group_id: ID!) {
@@ -16,9 +15,19 @@ const GET_CHATS = gql`
 `;
 
 const SEND_CHAT = gql`
-  mutation SendChat($group_id: ID!, $chatMessage: String!) {
-    sendChat(group_id: $group_id, chatMessage: $chatMessage) {
+  mutation SendChat($group_id: ID!, $chatMessage: String!, $clientId: String!) {
+    sendChat(
+      group_id: $group_id
+      chatMessage: $chatMessage
+      clientId: $clientId
+    ) {
+      id
       chatMessage
+      groupId
+      senderId
+      createdAt
+      updatedAt
+      clientId
     }
   }
 `;
@@ -26,12 +35,13 @@ const SEND_CHAT = gql`
 const MESSAGE_SUBSCRIPTION = gql`
   subscription MessageAdded($groupId: ID!) {
     messageAdded(group_id: $groupId) {
+      id
       chatMessage
       groupId
-      id
-      createdAt
       senderId
+      createdAt
       updatedAt
+      clientId
     }
   }
 `;
@@ -41,39 +51,27 @@ export const getChats = async (group_id) => {
     const { data } = await apolloClient.query({
       query: GET_CHATS,
       variables: { group_id },
-      fetchPolicy: "network-only",
+      fetchPolicy: "cache-first",
     });
 
-    const chatData = data.getChats;
-
-    const chats = chatData.map((chat) => ({
-      chatMessage: chat.chatMessage,
-      senderId: chat.senderId,
-      createdAt: chat.createdAt,
-      sentByYou:
-        chat.senderId === store.getters["auth/getUserId"] ? true : false,
-    }));
-
-    // console.log("CHatss::", chats);
-
-    return chats;
+    return data.getChats;
   } catch (error) {
-    console.log("Error occured:: ", error);
+    console.error("Error occured:: ", error);
+    throw error;
   }
 };
 
 export const sendChat = async (payload) => {
   try {
-    const { group_id, chatMessage } = payload;
+    const { group_id, chatMessage, clientId } = payload;
     const { data } = await apolloClient.mutate({
       mutation: SEND_CHAT,
-      variables: { group_id, chatMessage },
-      // refetchQueries: [{ query: GET_CHATS, variables: { group_id } }],
-      // awaitRefetchQueries: true,
+      variables: { group_id, chatMessage, clientId },
     });
-    return data;
+    return data.sendChat;
   } catch (error) {
     console.log("Error:", error);
+    throw error;
   }
 };
 

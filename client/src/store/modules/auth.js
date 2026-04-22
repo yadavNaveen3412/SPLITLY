@@ -30,13 +30,14 @@ const mutations = {
 };
 
 const actions = {
-  async login({ commit, dispatch }, { idToken }) {
+  async login({ commit }, { idToken }) {
     commit("SET_ERROR", null);
     commit("SET_LOADING", true);
     try {
-      await authService.loginWithGoogle(idToken);
-      commit("SET_CHECKED", false);
-      await dispatch("fetchUser");
+      console.log(`idToken: ${idToken}`);
+      const user = await authService.loginWithGoogle(idToken);
+      commit("SET_CHECKED", true);
+      commit("SET_USER", user);
       return true;
     } catch (err) {
       commit("SET_ERROR", err);
@@ -46,13 +47,13 @@ const actions = {
     }
   },
 
-  async loginWithEmail({ commit, dispatch }, { email, password }) {
+  async loginWithEmail({ commit }, { email, password }) {
     commit("SET_ERROR", null);
     commit("SET_LOADING", true);
     try {
-      await authService.loginWithEmail({ email, password });
-      commit("SET_CHECKED", false);
-      await dispatch("fetchUser");
+      const user = await authService.loginWithEmail({ email, password });
+      commit("SET_CHECKED", true);
+      commit("SET_USER", user);
       return true;
     } catch (err) {
       commit("SET_ERROR", err);
@@ -62,13 +63,13 @@ const actions = {
     }
   },
 
-  async register({ commit, dispatch }, { name, email, password }) {
+  async register({ commit }, { name, email, password }) {
     commit("SET_ERROR", null);
     commit("SET_LOADING", true);
     try {
-      await authService.register({ name, email, password });
+      const user = await authService.register({ name, email, password });
       commit("SET_CHECKED", false);
-      await dispatch("fetchUser");
+      commit("SET_USER", user);
       return true;
     } catch (err) {
       commit("SET_ERROR", err);
@@ -97,7 +98,7 @@ const actions = {
   async fetchUser({ commit, state }) {
     if (state.checked) return;
     try {
-      const { getUser } = await userService.getUser();
+      const getUser = await userService.getUser();
       if (getUser) {
         commit("SET_USER", getUser);
       }

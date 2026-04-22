@@ -1,5 +1,4 @@
 import { expenseService } from "@/services/expenses.service";
-import { getFriendById } from "@/services/friends.service";
 import PersonalSettlement from "@/views/Settlements/PersonalSettlement/PersonalSettlement.vue";
 import ExpenseDetail from "@/views/ExpenseDetailModal/ExpenseDetail.vue";
 import { mapActions, mapGetters } from "vuex";
@@ -47,7 +46,7 @@ export default {
   },
 
   methods: {
-    ...mapActions("friends", ["createFriend"]),
+    ...mapActions("friends", ["createFriend", "checkFriendById"]),
     ...mapActions("expenses", ["loadExpenses"]),
 
     formatDate(date) {
@@ -92,12 +91,7 @@ export default {
 
     async checkIfFriend() {
       try {
-        const result = await getFriendById(this.id);
-        if (!result) {
-          this.isFriend = false;
-        } else {
-          this.isFriend = true;
-        }
+        this.isFriend = this.checkFriendById(this.id);
       } catch (error) {
         console.log("Error checking friend status:", error);
         this.isFriend = false;

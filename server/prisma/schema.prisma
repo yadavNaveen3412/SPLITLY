@@ -27,6 +27,8 @@ model User {
   settlementCreator   Settlement[]         @relation("Creator")
   payer               Settlement[]         @relation("Payer")
   receiver            Settlement[]         @relation("Receiver")
+  balances            Balance[]            @relation("BalanceUser1")
+  balances2           Balance[]            @relation("BalanceUser2")
 
   @@map("users")
 }
@@ -47,6 +49,7 @@ model Group {
   members             GroupMember[]        @relation("GroupToMembers")
   createdBy           User                 @relation("UserToGroup", fields: [createdById], references: [id])
   settlements         Settlement[]         @relation("GroupSettlement")
+  balances            Balance[]
 
   @@index([createdById, type])
   @@map("groups")
@@ -143,6 +146,29 @@ model Chats {
 
   @@index([groupId, createdAt])
   @@map("chats")
+}
+
+model Balance {
+  id String @id @default(uuid())
+
+  groupId String
+  user1Id String
+  user2Id String
+
+  netAmount Decimal @db.Decimal(10, 2) // positive if user1 owes user2, negative if user2 owes user1
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  group Group @relation(fields: [groupId], references: [id])
+  user1 User  @relation("BalanceUser1", fields: [user1Id], references: [id])
+  user2 User  @relation("BalanceUser2", fields: [user2Id], references: [id])
+
+  @@unique([groupId, user1Id, user2Id])
+  @@index([groupId, user1Id])
+  @@index([groupId, user2Id])
+  @@index([user1Id])
+  @@index([user2Id])
 }
 
 enum GroupType {

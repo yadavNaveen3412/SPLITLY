@@ -127,7 +127,7 @@ export const expenseService = {
       const resp = await apolloClient.query({
         query: GET_EXPENSES_BY_GROUP,
         variables: { groupId },
-        fetchPolicy: "network-only",
+        fetchPolicy: "cache-first",
       });
       return resp.data;
     } catch (error) {
@@ -138,7 +138,7 @@ export const expenseService = {
     const resp = await apolloClient.query({
       query: GET_EXPENSE_BY_ID,
       variables: { id },
-      fetchPolicy: "network-only",
+      fetchPolicy: "cache-first",
     });
     return resp.data;
   },

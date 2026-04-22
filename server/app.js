@@ -33,7 +33,9 @@ app.use(
   corsMiddleware,
   express.json(),
   rateLimitingMiddleware,
-  csrfMiddleware,
+  process.env.NODE_ENV === "production"
+    ? csrfMiddleware
+    : (req, res, next) => next(),
   cookieParser(),
   expressMiddleware(server, { context }),
 );

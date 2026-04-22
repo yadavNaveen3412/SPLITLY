@@ -127,7 +127,7 @@ export const groupService = {
     const resp = await apolloClient.query({
       query: GET_GROUPS,
       variables: { type },
-      fetchPolicy: "network-only",
+      fetchPolicy: "cache-first",
     });
     return resp.data.getGroups;
   },
@@ -146,7 +146,7 @@ export const groupService = {
     const resp = await apolloClient.query({
       query: GET_GROUP_DETAILS,
       variables: { id },
-      fetchPolicy: "network-only",
+      fetchPolicy: "cache-first",
     });
     return resp.data;
   },

@@ -6,6 +6,14 @@ const REGISTER = gql`
     register(input: $input) {
       user {
         id
+        name
+        contact
+        email
+        profilePic
+        profilePicVersion
+        createdAt
+        updatedAt
+        shareCode
       }
     }
   }
@@ -16,6 +24,14 @@ const LOGIN_WITH_EMAIL = gql`
     loginWithEmail(input: $input) {
       user {
         id
+        name
+        contact
+        email
+        profilePic
+        profilePicVersion
+        createdAt
+        updatedAt
+        shareCode
       }
     }
   }
@@ -26,6 +42,14 @@ const LOGIN_WITH_GOOGLE = gql`
     loginWithGoogle(idToken: $idToken) {
       user {
         id
+        name
+        contact
+        email
+        profilePic
+        profilePicVersion
+        createdAt
+        updatedAt
+        shareCode
       }
     }
   }
@@ -39,37 +63,37 @@ const LOGOUT_MUTATION = gql`
 
 export const authService = {
   async register(input) {
-    const resp = await apolloClient.mutate({
+    const { data } = await apolloClient.mutate({
       mutation: REGISTER,
       variables: { input },
       fetchPolicy: "no-cache",
     });
-    return resp.data;
+    return data.register.user;
   },
 
   async loginWithEmail(input) {
-    const resp = await apolloClient.mutate({
+    const { data } = await apolloClient.mutate({
       mutation: LOGIN_WITH_EMAIL,
       variables: { input },
       fetchPolicy: "no-cache",
     });
-    return resp.data;
+    return data.loginWithEmail.user;
   },
 
   async loginWithGoogle(idToken) {
-    const resp = await apolloClient.mutate({
+    const { data } = await apolloClient.mutate({
       mutation: LOGIN_WITH_GOOGLE,
       variables: { idToken },
       fetchPolicy: "no-cache",
     });
-    return resp.data;
+    return data.loginWithGoogle.user;
   },
 
   async logout() {
-    const resp = await apolloClient.mutate({
+    const { data } = await apolloClient.mutate({
       mutation: LOGOUT_MUTATION,
       fetchPolicy: "no-cache",
     });
-    return resp.data;
+    return data.logout;
   },
 };

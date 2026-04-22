@@ -17,7 +17,7 @@ export const chatResolvers = {
 
   Mutation: {
     sendChat: requireGroupMember(
-      async (_, { group_id, chatMessage }, { prisma, user }) => {
+      async (_, { group_id, chatMessage, clientId }, { prisma, user }) => {
         chatMessage = sanitizeString(chatMessage);
 
         if (!chatMessage || chatMessage.length === 0) {
@@ -35,11 +35,13 @@ export const chatResolvers = {
           },
         });
 
+        const payload = { ...chat, clientId };
+
         await pubsub.publish(`MESSAGE_SENT_${group_id}`, {
-          messageAdded: chat,
+          messageAdded: payload,
         });
 
-        return chat;
+        return payload;
       },
     ),
   },

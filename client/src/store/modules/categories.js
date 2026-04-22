@@ -1,4 +1,4 @@
-import { fetchCategories } from "@/services/categories.service";
+import { categoryService } from "@/services/categories.service";
 
 const state = () => ({
   categories: [],
@@ -19,7 +19,7 @@ const actions = {
     commit("SET_LOADING", true);
 
     try {
-      const categories = await fetchCategories();
+      const categories = await categoryService.getCategories();
       commit("SET_CATEGORIES", categories);
     } catch (error) {
       console.error("Error loading categories: ", error);
