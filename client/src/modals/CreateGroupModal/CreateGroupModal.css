@@ -1,6 +1,6 @@
 .modal-overlay {
   position: fixed;
-  top: 0;
+  top: 1.5rem;
   left: 0;
   width: 100%;
   height: 100%;
@@ -8,7 +8,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 2000;
+  z-index: 10000;
   backdrop-filter: blur(4px);
 }
 
@@ -29,7 +29,7 @@
 
 .modal-header {
   padding: 1.5rem 2rem;
-  border-bottom: 1px solid #f3f4f6;
+  border-bottom: 1px solid var(--color-bg-hover);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -39,21 +39,21 @@
   margin: 0;
   font-size: 1.5rem;
   font-weight: 700;
-  color: #1a443e;
+  color: var(--color-primary-dark);
 }
 
 .close-btn {
   background: none;
   border: none;
   font-size: 2rem;
-  color: #9ca3af;
+  color: var(--color-text-muted);
   cursor: pointer;
   line-height: 1;
   transition: color 0.2s;
 }
 
 .close-btn:hover {
-  color: #1a443e;
+  color: var(--color-primary-dark);
 }
 
 .modal-content {
@@ -64,29 +64,29 @@
 
 .form-label {
   font-weight: 600;
-  color: #374151;
+  color: var(--color-text-primary);
   margin-bottom: 0.5rem;
   display: block;
 }
 
 .custom-input {
-  border: 2px solid #e5e7eb;
+  border: 2px solid var(--color-border);
   border-radius: 10px;
   padding: 0.75rem 1rem;
   transition: all 0.2s;
 }
 
 .custom-input:focus {
-  border-color: #225750;
+  border-color: var(--color-primary);
   box-shadow: 0 0 0 4px rgba(34, 87, 80, 0.1);
   outline: none;
 }
 
 .add-email-btn {
-  background-color: #f3f4f6;
-  border: 2px solid #e5e7eb;
+  background-color: var(--color-bg-hover);
+  border: 2px solid var(--color-border);
   border-left: none;
-  color: #374151;
+  color: var(--color-text-primary);
   font-weight: 600;
   padding: 0 1.5rem;
   border-top-right-radius: 10px;
@@ -94,7 +94,7 @@
 }
 
 .add-email-btn:hover {
-  background-color: #e5e7eb;
+  background-color: var(--color-border);
 }
 
 .selection-section {
@@ -105,8 +105,8 @@
 
 .modal-footer {
   padding: 1rem 1.5rem 4rem 2rem;
-  border-top: 1px solid #f3f4f6;
-  background-color: #f9fafb;
+  border-top: 1px solid var(--color-bg-hover);
+  background-color: var(--color-bg-muted);
 }
 
 .footer-actions {
@@ -124,26 +124,26 @@
 
 .btn-cancel {
   background: white;
-  border: 2px solid #e5e7eb;
-  color: #6b7280;
+  border: 2px solid var(--color-border);
+  color: var(--color-text-secondary);
 }
 
 .btn-cancel:hover {
-  background: #f3f4f6;
-  color: #374151;
+  background: var(--color-bg-hover);
+  color: var(--color-text-primary);
 }
 
 .create-btn {
-  background-color: #225750;
+  background-color: var(--color-primary);
   color: white;
   border: none;
   flex: 1;
 }
 
 .create-btn:hover:not(:disabled) {
-  background-color: #1a443e;
+  background-color: var(--color-primary-dark);
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(34, 87, 80, 0.2);
+  box-shadow: 0 4px 12px var(--color-shadow);
 }
 
 .create-btn:disabled {

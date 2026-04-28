@@ -2,7 +2,6 @@ import SelectionList from "../SelectionList/SelectionList.vue";
 import MemberSelection from "../MemberSelection/MemberSelection.vue";
 import ExpenseForm from "../ExpenseForm/ExpenseForm.vue";
 import { mapActions, mapGetters } from "vuex";
-import { createExpense } from "@/services/expenses.service";
 
 export default {
   name: "AddExpenseModal",
@@ -19,6 +18,8 @@ export default {
     return {
       isOpen: true,
       currentStep: 1,
+      previousStep: 0,
+      isBackward: false,
       activeTab: "groups",
       selectedGroupId: null,
       selectedFriendIds: [],
@@ -76,8 +77,13 @@ export default {
   },
 
   methods: {
-    ...mapActions("group", ["fetchGroups", "getNonGroupId", "getPersonalGroupId"]),
+    ...mapActions("group", [
+      "fetchGroups",
+      "getNonGroupId",
+      "getPersonalGroupId",
+    ]),
     ...mapActions("friends", ["loadFriends"]),
+    ...mapActions("expenses", ["createExpense"]),
     initialize() {
       this.currentStep = 1;
       this.selectedGroupId = null;
@@ -89,6 +95,8 @@ export default {
     },
 
     goToNextStep() {
+      this.previousStep = this.currentStep;
+      this.isBackward = false;
       if (this.currentStep === 1 && this.activeTab === "groups") {
         this.currentStep = 2;
       } else {
@@ -97,6 +105,8 @@ export default {
     },
 
     goToPreviousStep() {
+      this.previousStep = this.currentStep;
+      this.isBackward = true;
       if (this.currentStep === 3 && this.activeTab === "groups") {
         this.currentStep = 2;
       } else {
@@ -155,7 +165,7 @@ export default {
 
       console.log("Expense Data:", this.expenseData);
 
-      await createExpense(JSON.parse(JSON.stringify(this.expenseData)));
+      await this.createExpense(JSON.parse(JSON.stringify(this.expenseData)));
 
       this.closeModal();
     },

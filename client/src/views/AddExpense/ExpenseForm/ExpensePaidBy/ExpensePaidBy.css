@@ -10,11 +10,11 @@
 .section-title {
   font-size: 16px;
   font-weight: 600;
-  color: #1f2937;
+  color: var(--color-text-primary);
   margin: 0;
   padding: 16px 24px;
-  border-bottom: 1px solid #e5e7eb;
-  background-color: #f9fafb;
+  border-bottom: 1px solid var(--color-border);
+  background-color: var(--color-bg-muted);
 }
 
 .disabled-overlay {
@@ -44,17 +44,17 @@
 .disabled-message p {
   font-size: 16px;
   font-weight: 500;
-  color: #6b7280;
+  color: var(--color-text-secondary);
   margin: 0;
 }
 
 .paid-by-error {
   margin: 16px 24px 0;
   padding: 10px;
-  background-color: #fef2f2;
-  border: 1px solid #fecaca;
-  border-radius: 6px;
-  color: #dc2626;
+  background-color: var(--color-danger-light-bg);
+  border: 1px solid var(--color-danger-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-danger);
   font-size: 13px;
   text-align: center;
 }
@@ -74,21 +74,21 @@
   align-items: center;
   padding: 12px;
   background-color: white;
-  border: 2px solid #e5e7eb;
-  border-radius: 8px;
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-md);
   gap: 12px;
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .paid-by-item:not(.disabled):hover {
-  border-color: #d1d5db;
-  background-color: #f9fafb;
+  border-color: var(--color-border-input);
+  background-color: var(--color-bg-muted);
 }
 
 .paid-by-item.selected {
-  background-color: #f0f7f6;
-  border-color: #225750;
+  background-color: var(--color-primary-light);
+  border-color: var(--color-primary);
 }
 
 .paid-by-item.disabled {
@@ -106,8 +106,8 @@
 .participant-avatar {
   width: 36px;
   height: 36px;
-  border-radius: 50%;
-  background-color: #225750;
+  border-radius: var(--radius-circle);
+  background-color: var(--color-primary);
   color: white;
   display: flex;
   align-items: center;
@@ -120,7 +120,7 @@
 .participant-name {
   font-size: 14px;
   font-weight: 500;
-  color: #1f2937;
+  color: var(--color-text-primary);
 }
 
 .paid-amount-input {
@@ -132,26 +132,26 @@
 .currency-small {
   font-size: 13px;
   font-weight: 500;
-  color: #6b7280;
+  color: var(--color-text-secondary);
   margin-right: 4px;
 }
 
 .paid-input {
   width: 90px;
   padding: 6px 8px;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
+  border: 1px solid var(--color-border-input);
+  border-radius: var(--radius-sm);
   font-size: 14px;
   text-align: right;
 }
 
 .paid-input:focus {
   outline: none;
-  border-color: #225750;
+  border-color: var(--color-primary);
 }
 
 .paid-input:disabled {
-  background-color: #f3f4f6;
+  background-color: var(--color-bg-hover);
   cursor: not-allowed;
 }
 
@@ -160,21 +160,34 @@
   height: 24px;
 }
 
+/* Remove number input arrows */
+.paid-input::-webkit-inner-spin-button,
+.paid-input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  appearance: none;
+  margin: 0;
+}
+
+.paid-input[type=number] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
 /* Scrollbar styling */
 .paid-by-list::-webkit-scrollbar {
   width: 6px;
 }
 
 .paid-by-list::-webkit-scrollbar-track {
-  background: #f3f4f6;
+  background: var(--color-bg-hover);
   border-radius: 3px;
 }
 
 .paid-by-list::-webkit-scrollbar-thumb {
-  background: #d1d5db;
+  background: var(--color-border-input);
   border-radius: 3px;
 }
 
 .paid-by-list::-webkit-scrollbar-thumb:hover {
-  background: #9ca3af;
+  background: var(--color-text-muted);
 }

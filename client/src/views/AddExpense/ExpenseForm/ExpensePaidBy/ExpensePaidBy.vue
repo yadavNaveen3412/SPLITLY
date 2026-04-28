@@ -35,6 +35,8 @@
             class="paid-input"
             placeholder="0.00"
             :disabled="!hasAmount"
+            @focus="$event.target.select()"
+            @keydown="handleKeyDown($event, currentUser.id)"
             @click.stop
           />
         </div>
@@ -63,6 +65,8 @@
             class="paid-input"
             placeholder="0.00"
             :disabled="!hasAmount"
+            @focus="$event.target.select()"
+            @keydown="handleKeyDown($event, participant.id)"
             @click.stop
           />
         </div>

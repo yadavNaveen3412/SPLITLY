@@ -1,7 +1,7 @@
-import { expenseService } from "@/services/expenses.service";
 import PersonalSettlement from "@/views/Settlements/PersonalSettlement/PersonalSettlement.vue";
 import ExpenseDetail from "@/views/ExpenseDetailModal/ExpenseDetail.vue";
 import { mapActions, mapGetters } from "vuex";
+import ExpenseImage from "@/assets/images/ExpenseImage.png";
 
 export default {
   name: "ExpenseTab",
@@ -16,6 +16,7 @@ export default {
       isCheckingFriend: true,
       isShowSettleUpModal: false,
       showExpenseModal: false,
+      ExpenseImage,
     };
   },
 
@@ -35,19 +36,13 @@ export default {
       immediate: true,
       async handler(newVal) {
         await this.loadExpenses({ type: this.page, id: newVal });
-        // console.log("NeeVal:", newVal);
-
-        // console.log("ETab", this.groupExpenses);
-        // console.log("ETab2", this.expenses);
-        // console.log("ETab page", this.page);
-        // console.log("ETab id", newVal);
       },
     },
   },
 
   methods: {
     ...mapActions("friends", ["createFriend", "checkFriendById"]),
-    ...mapActions("expenses", ["loadExpenses"]),
+    ...mapActions("expenses", ["loadExpenses", "getExpenseById"]),
 
     formatDate(date) {
       return new Date(date).toLocaleDateString("en-US", {
@@ -99,8 +94,8 @@ export default {
     },
 
     async openExpenseModal(expenseId) {
-      const { getExpenseById } = await expenseService.getExpenseById(expenseId);
-      this.selectedExpense = getExpenseById;
+      const expense = await this.getExpenseById(expenseId);
+      this.selectedExpense = expense;
       this.showExpenseModal = true;
     },
 

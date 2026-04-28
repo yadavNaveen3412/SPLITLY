@@ -1,7 +1,6 @@
 import { mapGetters, mapActions } from "vuex";
 import ConfirmSettlement from "../ConfirmSettlement/ConfirmSettlement.vue";
 import { calculateNetWithFriend, userFriendBalance } from "@/utils/settlements";
-import { getUserById } from "@/services/user.service";
 
 export default {
   name: "PersonalFriendSettlement",
@@ -30,25 +29,26 @@ export default {
       if (this.net < 0) {
         return {
           text: `Overall, you owe ${this.friendName} ₹${Math.abs(
-            this.net
+            this.net,
           ).toFixed(2)}`,
-          class: "text-danger",
+          class: "text-danger-custom",
         };
       } else if (this.net > 0) {
         return {
           text: `Overall, ${this.friendName} owes you ₹${Math.abs(
-            this.net
+            this.net,
           ).toFixed(2)}`,
-          class: "text-success",
+          class: "text-success-custom",
         };
       }
     },
   },
   methods: {
     ...mapActions("group", ["fetchGroupDetails"]),
+    ...mapActions("auth", ["getUserById"]),
 
     async getUserName() {
-      const user = await getUserById(this.friendId);
+      const user = await this.getUserById(this.friendId);
       this.friendName = user.name;
     },
 
@@ -78,7 +78,7 @@ export default {
     await this.getUserName();
     this.friendTransaction = await userFriendBalance(
       this.user.id,
-      this.friendId
+      this.friendId,
     );
     this.net = await calculateNetWithFriend(this.user.id, this.friendId);
   },

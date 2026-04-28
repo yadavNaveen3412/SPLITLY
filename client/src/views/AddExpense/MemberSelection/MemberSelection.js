@@ -37,9 +37,10 @@ export default {
     },
 
     allSelected() {
+      const otherMembers = this.groupData.members.filter(m => m.id !== this.userId);
       return (
-        this.groupData.members.length > 0 &&
-        this.selectedMembers.length === this.groupData.members.length - 1
+        otherMembers.length > 0 &&
+        this.selectedMembers.length === otherMembers.length
       );
     },
 
@@ -55,6 +56,8 @@ export default {
     },
 
     toggleMember(memberId) {
+      if (memberId === this.userId) return; // Current user is included by default
+
       const member = this.groupData.members.find((m) => m.id === memberId);
       if (!member) return;
 
@@ -74,10 +77,10 @@ export default {
       if (this.allSelected) {
         this.$emit("update:selectedMembers", []);
       } else {
-        const filteredMembers = this.groupData.members.filter((member) => {
+        const otherMembers = this.groupData.members.filter((member) => {
           return member.id !== this.userId;
         });
-        this.$emit("update:selectedMembers", filteredMembers);
+        this.$emit("update:selectedMembers", otherMembers);
       }
     },
   },

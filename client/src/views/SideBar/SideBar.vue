@@ -1,64 +1,79 @@
 <template>
-  <link
-    rel="stylesheet"
-    href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css"
-  />
-
   <div
-    class="d-flex flex-column flex-shrink-0 pt-3 sidebar"
+    class="sidebar custom-scroll"
     :class="{ collapsed: sidebarState.isCollapsed }"
   >
-    <ul class="nav flex-column mb-auto">
-      <li class="nav-item sidebar-icon" @click="toggleSidebar()">
-        <i
-          :class="
-            sidebarState.isCollapsed
-              ? 'bi bi-layout-sidebar'
-              : 'bi bi-layout-sidebar-inset'
-          "
-        ></i
-        ><span class="nav-text">&nbsp; Close</span>
-      </li>
+    <!-- Brand logo + label at the very top -->
+    <div class="sidebar-brand">
+      <div class="sidebar-brand-logo">
+        <svg
+          width="22"
+          height="22"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="white"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M4 12h6" />
+          <path d="M10 12l-3-3" />
+          <path d="M10 12l-3 3" />
+          <path d="M20 12h-6" />
+          <path d="M14 12l3-3" />
+          <path d="M14 12l3 3" />
+        </svg>
+      </div>
+      <span class="sidebar-brand-name">
+        Split<span class="sidebar-brand-ly">LY</span>
+      </span>
+    </div>
+
+    <!-- Nav links (grow to fill space) -->
+    <ul class="nav flex-column">
       <li class="nav-item">
         <router-link
           to="/home"
           :class="{ active: activeItem === 'Home' }"
           @click="setActive('Home')"
         >
-          <i class="fa-solid fa-house"></i
-          ><span class="nav-text">&nbsp; Home</span>
+          <i class="fa-solid fa-house"></i>
+          <span class="nav-text">&nbsp; Home</span>
         </router-link>
       </li>
-      <li>
+      <li class="nav-item">
         <router-link
           to="/friends"
           :class="{ active: activeItem === 'Friends' }"
           @click="setActive('Friends')"
         >
-          <i class="fa-solid fa-user-group"></i
-          ><span class="nav-text">&nbsp; Friends</span>
+          <i class="fa-solid fa-user-group"></i>
+          <span class="nav-text">&nbsp; Friends</span>
         </router-link>
       </li>
-      <li>
+      <li class="nav-item">
         <router-link
           to="/groups"
           :class="{ active: activeItem === 'Groups' }"
           @click="setActive('Groups')"
         >
-          <i class="fa-solid fa-people-group"></i
-          ><span class="nav-text">&nbsp; Groups</span>
+          <i class="fa-solid fa-people-group"></i>
+          <span class="nav-text">&nbsp; Groups</span>
         </router-link>
       </li>
     </ul>
-    <div class="profile">
-      <router-link
-        to="/my-profile"
-        class="d-flex align-items-center link-dark text-decoration-none"
-        aria-expanded="false"
-      >
-        <img :src="profileUrl" alt="" class="rounded-circle me-2" />
-        <strong v-if="user">{{ user.name }}</strong>
-      </router-link>
+
+    <!-- Toggle button pinned to bottom -->
+    <div class="sidebar-toggle" @click="toggleSidebar()">
+      <i
+        :key="sidebarState.isCollapsed"
+        :class="
+          sidebarState.isCollapsed
+            ? 'bi bi-chevron-right'
+            : 'bi bi-chevron-left'
+        "
+      ></i>
+      <span class="nav-text">&nbsp; Collapse</span>
     </div>
   </div>
 </template>

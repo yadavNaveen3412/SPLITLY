@@ -3,7 +3,7 @@
     <div v-if="items.length === 0" class="empty-state">
       <div v-if="emptyIcon" class="empty-icon">{{ emptyIcon }}</div>
       <div class="empty-title">{{ emptyTitle }}</div>
-      <p class="empty-message text-muted">{{ emptyMessage }}</p>
+      <p class="empty-message text-muted-custom">{{ emptyMessage }}</p>
     </div>
 
     <div v-else class="selection-list custom-scrollbar">
@@ -30,8 +30,8 @@
 </template>
 
 <script>
-import { CLOUDINARY_BASE_URL } from "@/services/cloudinary.service";
 import { getInitials } from "@/utils/stringHelpers";
+import { mapGetters } from "vuex";
 
 export default {
   name: "BaseSelectionList",
@@ -55,11 +55,14 @@ export default {
     emptyIcon: String,
   },
   emits: ["update:selectedIds"],
+  computed: {
+    ...mapGetters("cloudinary", ["getCloudinaryBaseUrl"]),
+  },
   methods: {
     getInitials,
     getProfileUrl(item) {
       if (item.profilePic) {
-        return `${CLOUDINARY_BASE_URL}v${item.profilePicVersion}/${item.profilePic}`;
+        return `${this.getCloudinaryBaseUrl}v${item.profilePicVersion}/${item.profilePic}`;
       }
       return null;
     },

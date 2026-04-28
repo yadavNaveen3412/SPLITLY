@@ -21,18 +21,16 @@
   position: relative;
 }
 .expense-item:hover {
-  box-shadow: 0 2px 8px rgba(34, 87, 80, 0.15);
+  box-shadow: 0 2px 8px var(--color-shadow);
   transform: translateX(2px);
   cursor: pointer;
 }
 .expense-icon {
   width: 36px;
   height: 36px;
-  border-radius: 100%;
-  /* background: #225750;
-  color: white; */
-  background: #f0f0f0;
-  color: #225750;
+  border-radius: var(--radius-circle);
+  background: var(--color-bg-hover);
+  color: var(--color-primary);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -45,7 +43,7 @@
 .expense-info h6 {
   font-size: 0.9rem;
   font-weight: 600;
-  color: #2d3748;
+  color: var(--color-text-primary);
   margin: 0;
   white-space: nowrap;
   overflow: hidden;
@@ -53,7 +51,7 @@
 }
 .expense-date {
   font-size: 0.75rem;
-  color: #9ca3af;
+  color: var(--color-text-muted);
 }
 .expense-amounts-wrapper {
   display: flex;
@@ -65,50 +63,47 @@
 }
 
 .expense-amount-text h6 {
-  /* margin: 0; */
   font-size: 0.8rem;
   font-weight: 600;
-  /* color: #2d3748; */
   text-align: right;
 }
 
 .expense-amount {
   font-size: 0.9rem;
   font-weight: 600;
-  /* padding-top: 0.2rem; */
   text-align: right;
 }
 
 .expense-amount.owed {
-  color: #10b981;
+  color: var(--color-success);
 }
 
 .expense-amount.owe {
-  color: #ef4444;
+  color: var(--color-danger);
 }
 
 .expense-amount.not-involved,
 .expense-amount.no-balance {
   margin: 0;
-  color: #9ca3af;
-  font-size: 0.5 rem;
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
 }
 .btn-settle {
-  background: #f3f4f6;
-  color: #225750;
+  background: var(--color-bg-hover);
+  color: var(--color-primary);
 }
 .btn-settle:hover {
-  background: #e5e7eb;
+  background: var(--color-border);
   transform: translateY(-1px);
 }
 .btn-add-expense {
-  background: #225750;
+  background: var(--color-primary);
   color: white;
 }
 .btn-add-expense:hover {
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(34, 87, 80, 0.4);
-  color: #225750;
+  box-shadow: 0 4px 12px var(--color-shadow-heavy);
+  color: var(--color-primary);
 }
 .panel-footer {
   display: flex;
@@ -117,14 +112,14 @@
   width: 100%;
   padding: 1rem;
   background: white;
-  border-top: 1px solid #e9ecef;
+  border-top: 1px solid var(--color-border);
   gap: 0.5rem;
   flex-shrink: 0;
 }
 .panel-footer .btn {
   flex: 1;
   padding: 0.75rem;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   font-weight: 600;
   font-size: 0.85rem;
   border: none;
@@ -151,9 +146,6 @@
 }
 .empty-state p {
   margin: 0;
-  color: #9ca3af;
+  color: var(--color-text-muted);
   font-size: 0.9rem;
-}
-.text-muted {
-  color: rgba(255, 255, 255, 0.7);
 }

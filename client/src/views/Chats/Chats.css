@@ -1,11 +1,11 @@
 .friend-detail-panel {
   position: fixed;
-  top: 4rem;
+  top: 0;
   right: 0;
   width: 20rem;
-  height: calc(100vh - 4rem);
-  background: #ffffff;
-  box-shadow: -4px 0 12px rgba(0, 0, 0, 0.15);
+  height: 100vh;
+  background: var(--color-bg-card);
+  box-shadow: -4px 0 12px var(--color-shadow);
   display: flex;
   flex-direction: column;
   animation: slideIn 0.3s ease;
@@ -21,10 +21,9 @@
 }
 /* Header */
 .panel-header {
-  /* background: linear-gradient(135deg, #B0E7E0 0%, #225750 100%); */
-  background: #225750;
+  background: var(--color-primary);
   color: white;
-  padding: 1.5rem;
+  padding: 0.8rem 1rem;
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
@@ -39,7 +38,7 @@
 .avatar-large {
   width: 50px;
   height: 50px;
-  border-radius: 50%;
+  border-radius: var(--radius-circle);
   background: rgba(255, 255, 255, 0.2);
   color: white;
   display: flex;
@@ -69,22 +68,13 @@
   font-size: 0.85rem;
   font-weight: 500;
 }
-.text-success-custom {
-  color: #a7f3d0;
-}
-.text-danger-custom {
-  color: #fecaca;
-}
-.text-muted {
-  color: rgba(255, 255, 255, 0.7);
-}
 .btn-close-panel {
   background: rgba(255, 255, 255, 0.2);
   border: none;
   color: white;
   width: 32px;
   height: 32px;
-  border-radius: 50%;
+  border-radius: var(--radius-circle);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -99,8 +89,8 @@
 /* Tabs */
 .tabs-container {
   display: flex;
-  background: #f8f9fa;
-  border-bottom: 2px solid #e9ecef;
+  background: var(--color-bg-muted);
+  border-bottom: 2px solid var(--color-border);
   flex-shrink: 0;
 }
 .tab-btn {
@@ -108,7 +98,7 @@
   padding: 0.875rem;
   background: transparent;
   border: none;
-  color: #6b7280;
+  color: var(--color-text-secondary);
   font-weight: 500;
   font-size: 0.9rem;
   cursor: pointer;
@@ -119,7 +109,7 @@
   margin-right: 0.4rem;
 }
 .tab-btn.active {
-  color: #225750;
+  color: var(--color-primary);
   background: white;
 }
 .tab-btn.active::after {
@@ -129,17 +119,21 @@
   left: 0;
   right: 0;
   height: 2px;
-  background: linear-gradient(135deg, #b0e7e0 0%, #225750 100%);
+  background: linear-gradient(
+    135deg,
+    var(--color-accent) 0%,
+    var(--color-primary) 100%
+  );
 }
 .tab-btn:hover:not(.active) {
-  background: #ffffff;
-  color: #225750;
+  background: var(--color-bg-card);
+  color: var(--color-primary);
 }
 /* Content Area */
 .panel-content {
   flex: 1;
   overflow-y: auto;
-  background: #f8f9fa;
+  background: var(--color-bg-muted);
 }
 /* Expenses Tab */
 .expenses-tab {
@@ -161,15 +155,14 @@
   transition: all 0.2s ease;
 }
 .expense-item:hover {
-  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.15);
+  box-shadow: 0 2px 8px var(--color-shadow);
   transform: translateX(2px);
 }
 .expense-icon {
   width: 36px;
   height: 36px;
-  border-radius: 8px;
-  /* background: linear-gradient(135deg, #B0E7E0 0%, #225750 100%); */
-  background: #225750;
+  border-radius: var(--radius-md);
+  background: var(--color-primary);
   color: white;
   display: flex;
   align-items: center;
@@ -183,7 +176,7 @@
 .expense-info h6 {
   font-size: 0.9rem;
   font-weight: 600;
-  color: #2d3748;
+  color: var(--color-text-primary);
   margin: 0;
   white-space: nowrap;
   overflow: hidden;
@@ -191,7 +184,7 @@
 }
 .expense-date {
   font-size: 0.75rem;
-  color: #9ca3af;
+  color: var(--color-text-muted);
 }
 .expense-amount {
   font-size: 0.95rem;
@@ -199,10 +192,10 @@
   flex-shrink: 0;
 }
 .expense-amount.owed {
-  color: #10b981;
+  color: var(--color-success);
 }
 .expense-amount.owe {
-  color: #ef4444;
+  color: var(--color-danger);
 }
 /* Chats Tab */
 .chats-tab {
@@ -246,19 +239,17 @@
 .message-bubble {
   max-width: 75%;
   padding: 0.75rem;
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   word-wrap: break-word;
 }
 .message-sent .message-bubble {
-  /* background: linear-gradient(135deg, #225750 0%, #B0E7E0 100%); */
-  background: #225750;
-
+  background: var(--color-primary);
   color: white;
   border-bottom-right-radius: 4px;
 }
 .message-received .message-bubble {
   background: white;
-  color: #2d3748;
+  color: var(--color-text-primary);
   border-bottom-left-radius: 4px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
@@ -279,26 +270,25 @@
   gap: 0.5rem;
   padding: 1rem;
   background: white;
-  border-top: 1px solid #e9ecef;
+  border-top: 1px solid var(--color-border);
 }
 .message-input {
   flex: 1;
   padding: 0.75rem;
-  border: 2px solid #e9ecef;
+  border: 2px solid var(--color-border);
   border-radius: 20px;
   font-size: 0.9rem;
   outline: none;
   transition: border-color 0.2s ease;
 }
 .message-input:focus {
-  border-color: #225750;
+  border-color: var(--color-primary);
 }
 .btn-send {
   width: 40px;
   height: 40px;
-  border-radius: 50%;
-  /* background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); */
-  background: #225750;
+  border-radius: var(--radius-circle);
+  background: var(--color-primary);
   border: none;
   color: white;
   cursor: pointer;
@@ -309,7 +299,7 @@
 }
 .btn-send:hover:not(:disabled) {
   transform: scale(1.1);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  box-shadow: 0 4px 12px var(--color-shadow-heavy);
 }
 .btn-send:disabled {
   opacity: 0.5;
@@ -330,14 +320,14 @@
 }
 .empty-state p {
   margin: 0;
-  color: #9ca3af;
+  color: var(--color-text-muted);
   font-size: 0.9rem;
 }
 /* Footer */
 .panel-footer {
   padding: 1rem;
   background: white;
-  border-top: 1px solid #e9ecef;
+  border-top: 1px solid var(--color-border);
   display: flex;
   gap: 0.5rem;
   flex-shrink: 0;
@@ -346,7 +336,7 @@
 .panel-footer .btn {
   flex: 1;
   padding: 0.75rem;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   font-weight: 600;
   font-size: 0.85rem;
   border: none;
@@ -358,24 +348,6 @@
   gap: 0.4rem;
 }
 
-/* Scrollbar Styling */
-.panel-content::-webkit-scrollbar,
-.messages-container::-webkit-scrollbar {
-  width: 6px;
-}
-.panel-content::-webkit-scrollbar-track,
-.messages-container::-webkit-scrollbar-track {
-  background: #f1f1f1;
-}
-.panel-content::-webkit-scrollbar-thumb,
-.messages-container::-webkit-scrollbar-thumb {
-  background: #cbd5e0;
-  border-radius: 3px;
-}
-.panel-content::-webkit-scrollbar-thumb:hover,
-.messages-container::-webkit-scrollbar-thumb:hover {
-  background: #a0aec0;
-}
 /* Responsive */
 @media (max-width: 768px) {
   .friend-detail-panel {

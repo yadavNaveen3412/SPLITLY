@@ -40,11 +40,11 @@ export default {
 
     calculateShareAmount() {
       const totalShares = Object.values(this.allSplits).reduce(
-        (sum, shares) => sum + (parseInt(shares) || 1),
+        (sum, shares) => sum + (parseInt(shares) || 0),
         0
       );
       const amountPerShare = totalShares ? this.totalAmount / totalShares : 0;
-      return amountPerShare * (parseInt(this.amount) || 1);
+      return amountPerShare * (parseInt(this.amount) || 0);
     },
   },
 
@@ -57,32 +57,26 @@ export default {
     handleInput(event) {
       this.displayValue = event.target.value;
       const raw = parseFloat(event.target.value);
-      this.$emit("update", isNaN(raw) ? null : raw);
+      this.$emit("update", isNaN(raw) ? 0 : raw);
     },
 
-    handleFocus() {
+    handleFocus(event) {
       this.isFocused = true;
       this.displayValue =
         this.amount === null || this.amount === undefined
           ? ""
           : String(this.amount);
+
+      // Ensure selection happens after Vue updates the input value
+      if (event && event.target) {
+        setTimeout(() => {
+          event.target.select();
+        }, 0);
+      }
     },
 
     handleUpdate(value) {
       this.displayValue = value;
-
-      const numValue = parseFloat(value);
-
-      if (this.splitMethod === "percentage") {
-        if (numValue > 100) value = "100";
-        else if (numValue < 0) value = "0";
-      }
-
-      if (this.splitMethod === "unequal") {
-        if (numValue > this.totalAmount) value = this.totalAmount.toString();
-        else if (numValue < 0) value = "0";
-      }
-
       this.$emit("update", parseFloat(value) || 0);
     },
     
@@ -95,14 +89,27 @@ export default {
     },
 
     incrementShare() {
-      const currentValue = Math.round(this.amount) || 1;
+      const currentValue = Math.round(this.amount) || 0;
       this.$emit("update", currentValue + 1);
     },
 
     decrementShare() {
-      const currentValue = Math.round(this.amount) || 1;
-      if (currentValue > 1) {
+      const currentValue = Math.round(this.amount) || 0;
+      if (currentValue > 0) {
         this.$emit("update", currentValue - 1);
+      }
+    },
+
+    handleKeyDown(event) {
+      if (event.key === "ArrowUp") {
+        event.preventDefault();
+        const currentValue = parseFloat(this.amount) || 0;
+        this.$emit("update", currentValue + 1);
+      } else if (event.key === "ArrowDown") {
+        event.preventDefault();
+        const currentValue = parseFloat(this.amount) || 0;
+        const nextValue = Math.max(0, currentValue - 1);
+        this.$emit("update", nextValue);
       }
     },
   },

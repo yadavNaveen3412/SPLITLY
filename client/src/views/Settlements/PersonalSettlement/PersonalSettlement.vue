@@ -47,13 +47,13 @@
             <!-- GROUP TYPE -->
             <div v-if="item.groupType === 'GROUP'">
               <!-- You OWE -->
-              <span v-if="item.type === 'owe'" class="text-danger">
+              <span v-if="item.type === 'owe'" class="text-danger-custom">
                 You owe {{ friendName }} ₹{{ item.amount.toFixed(2) }} in
                 <strong>{{ item.groupTitle }}</strong>
               </span>
 
               <!-- You are OWED -->
-              <span v-else class="text-success">
+              <span v-else class="text-success-custom">
                 {{ friendName }} owe you ₹{{ item.amount.toFixed(2) }} in
                 <strong>{{ item.groupTitle }}</strong>
               </span>
@@ -62,13 +62,13 @@
             <!--NON GROUP TYPE -->
             <div v-else-if="item.groupType === 'NON_GROUP'">
               <!-- You OWE -->
-              <span v-if="item.type === 'owe'" class="text-danger">
+              <span v-if="item.type === 'owe'" class="text-danger-custom">
                 You owe ₹{{ item.amount.toFixed(2) }} to {{ friendName }} in
                 non-group expenses
               </span>
 
               <!-- You are OWED -->
-              <span v-else class="text-success">
+              <span v-else class="text-success-custom">
                 {{ friendName }} owes you ₹{{ item.amount.toFixed(2) }}
                 in non-group expenses
               </span>
@@ -77,13 +77,13 @@
             <!--PERSONAL TYPE -->
             <div v-else>
               <!-- You OWE -->
-              <span v-if="item.type === 'owe'" class="text-danger">
+              <span v-if="item.type === 'owe'" class="text-danger-custom">
                 You owe ₹{{ item.amount.toFixed(2) }} to
                 {{ friendName }} personally
               </span>
 
               <!-- You are OWED -->
-              <span v-else class="text-success">
+              <span v-else class="text-success-custom">
                 {{ friendName }} owes you ₹{{ item.amount.toFixed(2) }}
                 personally
               </span>
@@ -98,7 +98,9 @@
           </button>
         </li>
       </ul>
-      <p v-else class="text-success fw-bold">You are all settled up here 🎉</p>
+      <p v-else class="text-success-custom fw-bold">
+        You are all settled up here 🎉
+      </p>
 
       <ConfirmSettlement
         v-if="showConfirmModal"

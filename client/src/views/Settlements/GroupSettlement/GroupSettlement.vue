@@ -13,18 +13,24 @@
         Which balance do you want to settle?
       </h5>
 
-      <ul class="list-group mb-3" v-if="userBalances && userBalances.length>0">
+      <ul
+        class="list-group mb-3"
+        v-if="userBalances && userBalances.length > 0"
+      >
         <li
           class="list-group-item d-flex justify-content-between align-items-center"
           v-for="item in userBalances"
           :key="item"
         >
           <span>
-            <span v-if="item.type === 'owe'" class="text-danger fw-semibold">
+            <span
+              v-if="item.type === 'owe'"
+              class="text-danger-custom fw-semibold"
+            >
               You owe ₹{{ item.amount.toFixed(2) }} to
               {{ getUserName(item.person) }}
             </span>
-            <span v-else class="text-success fw-semibold">
+            <span v-else class="text-success-custom fw-semibold">
               {{ getUserName(item.person) }} owes you ₹{{
                 item.amount.toFixed(2)
               }}
@@ -39,7 +45,7 @@
           </button>
         </li>
       </ul>
-      <p v-else class="text-success fw-bold " >You are all settled up</p>
+      <p v-else class="text-success-custom fw-bold">You are all settled up</p>
       <ConfirmSettlement
         v-if="showConfirmModal"
         @close="closeConfirmationModal"

@@ -1,6 +1,11 @@
 import apolloClient from "@/apollo";
 import { authService } from "@/services/auth.service";
-import { updateUserDetails, userService } from "@/services/user.service";
+import {
+  updateUserDetails,
+  userService,
+  findUser,
+  getUserById,
+} from "@/services/user.service";
 
 const state = () => ({
   user: null,
@@ -118,6 +123,33 @@ const actions = {
       return updatedUser;
     } catch (error) {
       console.log("Updating user unsuccessful:", error);
+      throw error;
+    }
+  },
+
+  async findUser(_, input) {
+    try {
+      return await findUser(input);
+    } catch (error) {
+      console.log("Finding user unsuccessful:", error);
+      throw error;
+    }
+  },
+
+  async getUserById(_, id) {
+    try {
+      return await getUserById(id);
+    } catch (error) {
+      console.log("Error getting user by ID:", error);
+      throw error;
+    }
+  },
+
+  async checkUserExists(_, id) {
+    try {
+      return await userService.checkUserExists(id);
+    } catch (error) {
+      console.log(`Error checking user: ${error}`);
       throw error;
     }
   },

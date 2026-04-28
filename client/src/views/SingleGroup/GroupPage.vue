@@ -16,7 +16,7 @@
               </button>
 
               <h2 class="">{{ group?.title }}</h2>
-              <p class="text-muted" v-if="group?.description">
+              <p class="text-muted-custom" v-if="group?.description">
                 {{ group.description }}
               </p>
             </div>
@@ -58,13 +58,13 @@
               >
                 <span
                   v-if="item.type === 'owe'"
-                  class="text-danger fw-semibold"
+                  class="text-danger-custom fw-semibold"
                 >
                   You owe ₹{{ item.amount.toFixed(2) }} to
                   {{ getUserNamesById(item.person) }}
                 </span>
 
-                <span v-else class="text-success fw-semibold">
+                <span v-else class="text-success-custom fw-semibold">
                   {{ getUserNamesById(item.person) }} owes you ₹{{
                     item.amount.toFixed(2)
                   }}
@@ -73,14 +73,14 @@
 
               <div
                 v-if="remainingBalanceCount > 0"
-                class="text-muted small mt-1"
+                class="text-muted-custom small mt-1"
                 @click="showSettleUpModal"
                 style="cursor: pointer"
               >
                 + {{ remainingBalanceCount }} more…
               </div>
 
-              <div v-if="isAllSettled" class="text-muted">
+              <div v-if="isAllSettled" class="text-muted-custom">
                 🎉You are all settled up in this group.
               </div>
             </div>
@@ -139,7 +139,7 @@
                       </div>
                       <div>
                         <h6 class="mb-1 expense-title">{{ activity.title }}</h6>
-                        <small class="text-muted">
+                        <small class="text-muted-custom">
                           {{ getPaidBySummary(activity) }}
                         </small>
                       </div>
@@ -194,7 +194,7 @@
 
             <div
               v-if="showSettledSeparator"
-              class="text-center text-muted my-4"
+              class="text-center text-muted-custom my-4"
             >
               <p class="fw-semibold mb-1">Expenses before this are settled</p>
               <span
@@ -227,7 +227,7 @@
                           <h6 class="mb-1 expense-title">
                             {{ activity.title }}
                           </h6>
-                          <small class="text-muted">
+                          <small class="text-muted-custom">
                             {{ getPaidBySummary(activity) }}
                           </small>
                         </div>
@@ -280,7 +280,7 @@
           </div>
 
           <!-- if no expenses -->
-          <div v-else class="text-center text-muted py-4">
+          <div v-else class="text-center text-muted-custom py-4">
             <i class="fa-solid fa-receipt fa-2x mb-2"></i>
             <div>All settled up</div>
           </div>
@@ -353,11 +353,11 @@
             </div>
             <small
               v-if="emailInput && !isValidEmail(emailInput)"
-              class="text-danger"
+              class="text-danger-custom"
             >
               Please enter a valid email
             </small>
-            <small v-else-if="userExists === true" class="text-success">
+            <small v-else-if="userExists === true" class="text-success-custom">
               <i class="fa-solid fa-check"></i> User found
             </small>
             <small v-else-if="userExists === false" class="text-warning">
@@ -390,7 +390,9 @@
                     >
                       <div>
                         <div class="fw-bold">{{ friend.name }}</div>
-                        <small class="text-muted">{{ friend.email }}</small>
+                        <small class="text-muted-custom">{{
+                          friend.email
+                        }}</small>
                       </div>
                     </label>
                   </div>

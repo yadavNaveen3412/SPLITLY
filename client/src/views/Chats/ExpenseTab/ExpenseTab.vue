@@ -6,12 +6,8 @@
     "
     class="empty-state"
   >
-    <img
-      src="https://img.icons8.com/color/64/receipt.png"
-      alt="No Expenses"
-      class="mb-2 opacity-50"
-    />
-    <p class="text-muted">No expenses yet</p>
+    <img :src="ExpenseImage" alt="No Expenses" class="mb-2 opacity-50" />
+    <p class="text-muted-custom">No expenses yet</p>
   </div>
   <div v-else class="expenses-list">
     <div

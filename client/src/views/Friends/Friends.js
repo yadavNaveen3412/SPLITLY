@@ -1,4 +1,3 @@
-import { CLOUDINARY_BASE_URL } from "@/services/cloudinary.service";
 import { getInitials } from "@/utils/stringHelpers";
 import { mapGetters, mapActions } from "vuex";
 
@@ -13,6 +12,7 @@ export default {
 
   computed: {
     ...mapGetters("friends", ["getFriends", "isLoading"]),
+    ...mapGetters("cloudinary", ["getCloudinaryBaseUrl"]),
     friends() {
       return this.getFriends;
     },
@@ -40,7 +40,7 @@ export default {
     getInitials,
     profileUrl(friend) {
       if (friend.profilePic) {
-        return `${CLOUDINARY_BASE_URL}v${friend.profilePicVersion}/${friend.profilePic}`;
+        return `${this.getCloudinaryBaseUrl}v${friend.profilePicVersion}/${friend.profilePic}`;
       }
     },
 
@@ -53,12 +53,5 @@ export default {
 
   async created() {
     await this.loadFriends();
-    // console.log("Friend:", this.friends);
   },
-
-  // async updated() {
-  //   if (this.friends) {
-  //     this.friends.map();
-  //   }
-  // },
 };

@@ -134,49 +134,49 @@ const SETTLE_GROUP = gql`
 export const expenseService = {
   async getExpensesByGroup(groupId) {
     try {
-      const resp = await apolloClient.query({
+      const { data } = await apolloClient.query({
         query: GET_EXPENSES_BY_GROUP,
         variables: { groupId },
         fetchPolicy: "cache-first",
       });
-      return resp.data;
+      return data.getExpensesByGroup;
     } catch (error) {
       console.log("Service Error:", error);
     }
   },
   async getExpenseById(id) {
-    const resp = await apolloClient.query({
+    const { data } = await apolloClient.query({
       query: GET_EXPENSE_BY_ID,
       variables: { id },
       fetchPolicy: "cache-first",
     });
-    return resp.data;
+    return data.getExpenseById;
   },
   async deleteExpense(id) {
-    const resp = await apolloClient.mutate({
+    const { data } = await apolloClient.mutate({
       mutation: DELETE_EXPENSE,
       variables: { id },
       fetchPolicy: "no-cache",
     });
-    return resp.data.deleteExpense;
+    return data.deleteExpense;
   },
 
   async updateExpense(id, input) {
-    const resp = await apolloClient.mutate({
+    const { data } = await apolloClient.mutate({
       mutation: UPDATE_EXPENSE,
       variables: { id, input },
       fetchPolicy: "no-cache",
     });
-    return resp.data.updateExpense;
+    return data.updateExpense;
   },
 
   async settleGroup(groupId) {
-    const resp = await apolloClient.mutate({
+    const { data } = await apolloClient.mutate({
       mutation: SETTLE_GROUP,
       variables: { groupId },
       fetchPolicy: "no-cache",
     });
-    return resp.data;
+    return data.settleGroup;
   },
 };
 

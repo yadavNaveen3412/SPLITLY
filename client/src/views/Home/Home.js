@@ -1,6 +1,8 @@
-// import { computed } from "vue";
 import { userAllBalances } from "@/utils/settlements";
 import { mapActions, mapGetters } from "vuex";
+import FriendImage from "@/assets/images/FriendImage.jpeg";
+import GroupImage from "@/assets/images/GroupImage.png";
+import ExpenseImage from "@/assets/images/ExpenseImage.png";
 
 export default {
   name: "HomePage",
@@ -20,6 +22,9 @@ export default {
         owedToYou: 0, // from backend
         youOwe: 0, // from backend
       },
+      FriendImage,
+      GroupImage,
+      ExpenseImage,
     };
   },
 

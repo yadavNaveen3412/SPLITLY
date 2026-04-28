@@ -76,7 +76,7 @@ const getters = {
 
   checkFriendById: (state) => (friendId) => {
     const friend = state.friends.find((friend) => friend.id === friendId);
-    return friend.groupType === "PERSONAL";
+    return friend?.groupType === "PERSONAL" || false;
   },
 
   getFriendsByIds: (state) => (idArray) => {

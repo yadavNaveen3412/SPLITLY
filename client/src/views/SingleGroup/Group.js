@@ -1,10 +1,8 @@
 import { mapGetters, mapActions } from "vuex";
-import { userService } from "@/services/user.service";
-import { expenseService } from "@/services/expenses.service";
 import ExpenseDetail from "../ExpenseDetailModal/ExpenseDetail.vue";
 import GroupSettlement from "../Settlements/GroupSettlement/GroupSettlement.vue";
 import { calculateUserBalanceList } from "@/utils/settlements";
-import { settlementService } from "@/services/settlements.service";
+
 export default {
   name: "GroupPage",
   components: { ExpenseDetail, GroupSettlement },
@@ -140,6 +138,9 @@ export default {
   methods: {
     ...mapActions("friends", ["loadFriends"]),
     ...mapActions("group", ["addMembers", "fetchGroups", "fetchGroupDetails"]),
+    ...mapActions("auth", ["checkUserExists"]),
+    ...mapActions("expenses", ["getExpenseById", "getExpensesByGroup"]),
+    ...mapActions("settlements", ["getSettlementsByGroup"]),
 
     getUserNamesById(userId) {
       const member = this.group.members.find((m) => m.user.id === userId);
@@ -181,7 +182,7 @@ export default {
     },
 
     async openExpenseModal(expenseId) {
-      const { getExpenseById } = await expenseService.getExpenseById(expenseId);
+      const { getExpenseById } = await this.getExpenseById(expenseId);
       this.selectedExpense = getExpenseById;
       this.showExpenseModal = true;
     },
@@ -203,15 +204,13 @@ export default {
     async fetchAll() {
       await this.fetchGroupDetail();
 
-      const expRes = await expenseService.getExpensesByGroup(this.groupId);
+      const expRes = await this.getExpensesByGroup(this.groupId);
       this.expenses = expRes.getExpensesByGroup.map((e) => ({
         ...e,
         type: "EXPENSE",
       }));
 
-      const setRes = await settlementService.getSettlementsByGroup(
-        this.groupId,
-      );
+      const setRes = await this.getSettlementsByGroup(this.groupId);
       this.settlements = setRes.getSettlementsByGroup.map((s) => ({
         ...s,
         type: "SETTLEMENT",
@@ -230,7 +229,7 @@ export default {
       }
       this.checkUserTimeout = setTimeout(async () => {
         try {
-          const exists = await userService.checkUserExists(this.emailInput);
+          const exists = await this.checkUserExists(this.emailInput);
           this.userExists = exists;
         } catch (error) {
           console.error("Error checking user:", error);
@@ -303,9 +302,9 @@ export default {
     },
     getShareClass(expense) {
       const share = this.getAmountShared(expense);
-      if (share > 0) return "text-success";
-      if (share < 0) return "text-danger";
-      return "text-muted";
+      if (share > 0) return "text-success-custom";
+      if (share < 0) return "text-danger-custom";
+      return "text-muted-custom";
     },
     goBack() {
       this.$router.push(`/groups`);

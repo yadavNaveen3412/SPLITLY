@@ -1,36 +1,31 @@
-import MainLayout from "@/layouts/MainLayout.vue";
-import HomePage from "../views/Home/HomePage.vue";
-
-import FriendsPage from "@/views/Friends/FriendsPage.vue";
-import ChatsPage from "@/views/Chats/ChatsPage.vue";
-import GroupsPage from "@/views/Groups/GroupsPage.vue";
-import CreateGroupModal from "@/modals/CreateGroupModal/CreateGroupModal.vue";
-import GroupPage from "@/views/SingleGroup/GroupPage.vue";
-import EditGroup from "@/views/EditGroup/EditGroup.vue";
-import AddExpenseModal from "@/views/AddExpense/AddExpenseModal/AddExpenseModal.vue";
-import ProfilePage from "@/views/ProfilePage/ProfilePage.vue";
-// import SharedProfile from "@/views/SharedProfile/SharedProfile.vue";
-import AddFriendModal from "@/modals/AddFriendModal/AddFriendModal.vue";
-
-// const sharedProfileRoute = (name) => ({
-//   name,
-//   path: "/add-friend/:shareCode",
-//   component: SharedProfile,
-//   props: true,
-// });
+const MainLayout = () => import("@/layouts/MainLayout.vue");
+const HomePage = () => import("@/views/Home/HomePage.vue");
+const FriendsPage = () => import("@/views/Friends/FriendsPage.vue");
+const ChatsPage = () => import("@/views/Chats/ChatsPage.vue");
+const GroupsPage = () => import("@/views/Groups/GroupsPage.vue");
+const CreateGroupModal = () =>
+  import("@/modals/CreateGroupModal/CreateGroupModal.vue");
+const GroupPage = () => import("@/views/SingleGroup/GroupPage.vue");
+const EditGroup = () => import("@/views/EditGroup/EditGroup.vue");
+const AddExpenseModal = () =>
+  import("@/views/AddExpense/AddExpenseModal/AddExpenseModal.vue");
+const ProfilePage = () => import("@/views/ProfilePage/ProfilePage.vue");
+const AddFriendModal = () =>
+  import("@/modals/AddFriendModal/AddFriendModal.vue");
 
 export default {
-  path: "/home",
+  path: "",
   component: MainLayout,
+  redirect: { name: "Home" },
   children: [
     {
       name: "Home",
-      path: "/home",
+      path: "home",
       component: HomePage,
     },
     {
       name: "AddExpense",
-      path: "/add-expense",
+      path: "add-expense",
       component: AddExpenseModal,
       children: [
         {
@@ -42,7 +37,7 @@ export default {
     },
     {
       name: "Friends",
-      path: "/friends",
+      path: "friends",
       component: FriendsPage,
       children: [
         {
@@ -61,7 +56,7 @@ export default {
     },
     {
       name: "Groups",
-      path: "/groups",
+      path: "groups",
       component: GroupsPage,
       children: [
         {
@@ -77,16 +72,16 @@ export default {
         },
       ],
     },
-    { name: "Group", path: "/group/:id", component: GroupPage, props: true },
+    { name: "Group", path: "group/:id", component: GroupPage, props: true },
     {
       name: "EditGroup",
-      path: "/group/:id/edit",
+      path: "group/:id/edit",
       component: EditGroup,
       props: true,
     },
     {
       name: "ProfilePage",
-      path: "/my-profile",
+      path: "my-profile",
       component: ProfilePage,
       children: [
         {

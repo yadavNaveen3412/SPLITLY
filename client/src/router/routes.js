@@ -1,12 +1,23 @@
 import { createWebHistory, createRouter } from "vue-router";
-import RegisterPage from "../views/Register/RegisterPage.vue";
-import LandingPage from "../views/Landing/LandingPage.vue";
-import MainLayoutRoutes from "@/router/mainLayout.routes";
 import store from "@/store";
+import MainLayoutRoutes from "@/router/mainLayout.routes";
+
+const RegisterPage = () => import("../views/Register/RegisterPage.vue");
+const LandingPage = () => import("../views/Landing/LandingPage.vue");
 
 const routes = [
-  { name: "Register", path: "/register", component: RegisterPage },
-  { name: "Landing", path: "/", component: LandingPage },
+  {
+    name: "Register",
+    path: "/register",
+    component: RegisterPage,
+    meta: { public: true },
+  },
+  {
+    name: "Landing",
+    path: "/",
+    component: LandingPage,
+    meta: { public: true },
+  },
   MainLayoutRoutes,
 ];
 
@@ -19,8 +30,7 @@ router.beforeEach(async (to, from, next) => {
     await store.dispatch("auth/fetchUser");
   }
 
-  const isPublic =
-    to.name === "Register" || to.name === "Landing";
+  const isPublic = to.meta.public;
 
   if (!auth.user && !isPublic) {
     return next({ name: "Register" });

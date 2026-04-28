@@ -11,15 +11,15 @@
   align-items: center;
   gap: 12px;
   padding: 16px 24px;
-  border-bottom: 1px solid #e5e7eb;
-  background-color: #f9fafb;
+  border-bottom: 1px solid var(--color-border);
+  background-color: var(--color-bg-muted);
 }
 
 .back-btn-split {
   background: none;
   border: none;
   font-size: 20px;
-  color: #6b7280;
+  color: var(--color-text-secondary);
   cursor: pointer;
   width: 32px;
   height: 32px;
@@ -31,23 +31,23 @@
 }
 
 .back-btn-split:hover {
-  background-color: #e5e7eb;
+  background-color: var(--color-border);
 }
 
 .split-title {
   font-size: 16px;
   font-weight: 600;
-  color: #1f2937;
+  color: var(--color-text-primary);
   flex: 1;
 }
 
 .split-error {
   margin: 16px 24px 0;
   padding: 10px;
-  background-color: #fef2f2;
-  border: 1px solid #fecaca;
-  border-radius: 6px;
-  color: #dc2626;
+  background-color: var(--color-danger-light-bg);
+  border: 1px solid var(--color-danger-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-danger);
   font-size: 13px;
   text-align: center;
 }
@@ -79,7 +79,7 @@
 .disabled-message p {
   font-size: 16px;
   font-weight: 500;
-  color: #6b7280;
+  color: var(--color-text-secondary);
   margin: 0;
 }
 
@@ -92,8 +92,8 @@
 
 .method-card {
   padding: 20px;
-  border: 2px solid #e5e7eb;
-  border-radius: 12px;
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-lg);
   cursor: pointer;
   transition: all 0.2s;
   background-color: white;
@@ -105,8 +105,8 @@
 }
 
 .method-card:not(.disabled):hover {
-  border-color: #225750;
-  background-color: #f0f7f6;
+  border-color: var(--color-primary);
+  background-color: var(--color-primary-light);
 }
 
 .method-card.disabled {
@@ -117,13 +117,13 @@
 .method-icon {
   font-size: 32px;
   font-weight: 600;
-  color: #225750;
+  color: var(--color-primary);
 }
 
 .method-label {
   font-size: 14px;
   font-weight: 500;
-  color: #1f2937;
+  color: var(--color-text-primary);
 }
 
 .participation-split-view {
@@ -148,8 +148,8 @@
   align-items: center;
   padding: 12px;
   background-color: white;
-  border: 2px solid #e5e7eb;
-  border-radius: 8px;
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-md);
   gap: 12px;
 }
 
@@ -163,8 +163,8 @@
 .participant-avatar {
   width: 36px;
   height: 36px;
-  border-radius: 50%;
-  background-color: #225750;
+  border-radius: var(--radius-circle);
+  background-color: var(--color-primary);
   color: white;
   display: flex;
   align-items: center;
@@ -177,7 +177,7 @@
 .participant-name {
   font-size: 14px;
   font-weight: 500;
-  color: #1f2937;
+  color: var(--color-text-primary);
 }
 
 .participant-amount {
@@ -192,17 +192,17 @@
 }
 
 .participants-list::-webkit-scrollbar-track {
-  background: #f3f4f6;
+  background: var(--color-bg-hover);
   border-radius: 3px;
 }
 
 .participants-list::-webkit-scrollbar-thumb {
-  background: #d1d5db;
+  background: var(--color-border-input);
   border-radius: 3px;
 }
 
 .participants-list::-webkit-scrollbar-thumb:hover {
-  background: #9ca3af;
+  background: var(--color-text-muted);
 }
 
 /* Checkbox styling */
@@ -222,7 +222,7 @@
 .checkbox-custom {
   width: 20px;
   height: 20px;
-  border: 2px solid #d1d5db;
+  border: 2px solid var(--color-border-input);
   border-radius: 4px;
   background-color: white;
   display: flex;
@@ -232,8 +232,8 @@
 }
 
 .participant-checkbox input[type="checkbox"]:checked + .checkbox-custom {
-  background-color: #225750;
-  border-color: #225750;
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
 }
 
 .participant-checkbox input[type="checkbox"]:checked + .checkbox-custom::after {
@@ -244,19 +244,19 @@
 }
 
 .participant-checkbox:hover .checkbox-custom {
-  border-color: #225750;
+  border-color: var(--color-primary);
 }
 
 /* Excluded member state */
 .participant-item.excluded {
   opacity: 0.5;
-  background-color: #f9fafb;
+  background-color: var(--color-bg-muted);
 }
 
 .participant-item.excluded .participant-avatar {
-  background-color: #9ca3af;
+  background-color: var(--color-text-muted);
 }
 
 .participant-item.excluded .participant-name {
-  color: #9ca3af;
+  color: var(--color-text-muted);
 }

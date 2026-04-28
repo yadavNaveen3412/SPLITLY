@@ -2,7 +2,7 @@
   <div class="main">
     <div class="container mt-4">
       <button
-        class="btn btn-link text-muted p-0 mb-3"
+        class="btn btn-link text-muted-custom p-0 mb-3"
         @click="goBack"
         title="Groups"
       >
@@ -21,7 +21,7 @@
         <button @click="handleRenameGroup" class="btn btn-primary mt-2">
           Change Name
         </button>
-        <p v-if="errorMessage" class="text-danger small mt-1">
+        <p v-if="errorMessage" class="text-danger-custom small mt-1">
           {{ errorMessage }}
         </p>
       </div>

@@ -4,7 +4,7 @@ import ExpensePaidBy from "./ExpensePaidBy/ExpensePaidBy.vue";
 import { mapActions, mapGetters } from "vuex";
 import {
   distributeExactly,
-  calculateOwedAmounts,
+  // calculateOwedAmounts,
 } from "@splitly/expense-split-logic";
 
 export default {
@@ -45,6 +45,7 @@ export default {
       paidByError: "",
       splitError: "",
       manuallyEditedSplits: new Set(),
+      manuallyEditedPaidBy: new Set(),
       excludedMembersFromSplit: new Set(),
     };
   },
@@ -90,34 +91,45 @@ export default {
     initializeSplits() {
       const totalAmount = parseFloat(this.formData.amount) || 0;
       const method = this.formData.splitMethod;
+      const participants = this.allParticipants;
 
       this.manuallyEditedSplits.clear();
+      this.splits = {};
 
-      const participantsForLib = this.allParticipants.map((p) => {
-        let splitValue = 1;
-        if (method === "equal") {
-          splitValue = this.excludedMembersFromSplit.has(p.id) ? 0 : 1;
-        } else if (method === "percentage") {
-          splitValue = 100 / this.allParticipants.length;
-        } else if (method === "shares") {
-          splitValue = 1;
-        } else if (method === "unequal") {
-          splitValue = null;
+      if (method === "equal") {
+        const includedCount = participants.filter(
+          (p) => !this.excludedMembersFromSplit.has(p.id),
+        ).length;
+        const autoParticipants = participants.filter(
+          (p) => !this.excludedMembersFromSplit.has(p.id),
+        );
+
+        if (includedCount > 0) {
+          const amounts = distributeExactly(totalAmount, includedCount);
+          autoParticipants.forEach((p, i) => {
+            this.splits[p.id] = amounts[i];
+          });
+          participants.forEach((p) => {
+            if (this.excludedMembersFromSplit.has(p.id)) this.splits[p.id] = 0;
+          });
+        } else {
+          participants.forEach((p) => (this.splits[p.id] = 0));
         }
-        return { userId: p.id, splitValue };
-      });
-
-      const results = calculateOwedAmounts(
-        totalAmount,
-        method,
-        participantsForLib,
-      );
-      results.forEach((res) => {
-        this.splits[res.userId] = method === "unequal" ? null : res.owedAmount;
-      });
+      } else if (method === "percentage") {
+        if (participants.length > 0) {
+          const percentages = distributeExactly(100, participants.length);
+          participants.forEach((p, i) => {
+            this.splits[p.id] = percentages[i];
+          });
+        }
+      } else if (method === "shares" || method === "unequal") {
+        participants.forEach((p) => {
+          this.splits[p.id] = 0;
+        });
+      }
 
       this.splits = { ...this.splits };
-      this.initializePaidBy();
+      this.validateSplitTotals();
     },
 
     toggleMemberInSplit(participantId) {
@@ -135,12 +147,27 @@ export default {
       }
     },
 
-    initializePaidBy() {
-      if (this.hasAmount) {
+    initializePaidBy(forceReset = false) {
+      if (!this.hasAmount) return;
+
+      if (forceReset || this.selectedPaidBy.size === 0) {
         this.selectedPaidBy = new Set([this.currentUser.id]);
         this.paidBy = { [this.currentUser.id]: this.formData.amount };
+        this.manuallyEditedPaidBy.clear();
         this.paidByError = "";
+        return;
       }
+
+      // If single payer, keep them and update amount
+      if (this.selectedPaidBy.size === 1) {
+        const payerId = Array.from(this.selectedPaidBy)[0];
+        this.paidBy = { [payerId]: this.formData.amount };
+        this.paidByError = "";
+        return;
+      }
+
+      // Multi-payer: redistribute
+      this.redistributePaidBy();
     },
 
     redistributeUnequal(changedParticipantId) {
@@ -162,7 +189,10 @@ export default {
       );
 
       if (autoParticipants.length > 0) {
-        const amounts = distributeExactly(remaining, autoParticipants.length);
+        const amounts = distributeExactly(
+          Math.max(0, remaining),
+          autoParticipants.length,
+        );
         autoParticipants.forEach((p, i) => {
           this.splits[p.id] = amounts[i];
         });
@@ -190,7 +220,10 @@ export default {
       );
 
       if (autoParticipants.length > 0) {
-        const amounts = distributeExactly(remaining, autoParticipants.length);
+        const amounts = distributeExactly(
+          Math.max(0, remaining),
+          autoParticipants.length,
+        );
         autoParticipants.forEach((p, i) => {
           this.splits[p.id] = amounts[i];
         });
@@ -213,9 +246,8 @@ export default {
           (p) => !this.excludedMembersFromSplit.has(p.id),
         ).length;
 
-        if (includedCount < 2) {
-          this.splitError =
-            "At least two members must be included in the split";
+        if (includedCount < 1) {
+          this.splitError = "At least one member must be included in the split";
           return;
         }
       }
@@ -224,10 +256,22 @@ export default {
           return sum + (parseFloat(this.splits[p.id]) || 0);
         }, 0);
 
-        if (Math.abs(totalSplit - totalAmount) > 0.01) {
-          this.splitError = `Total split (₹${totalSplit.toFixed(
+        const invalidEntry = this.allParticipants.find(
+          (p) => (parseFloat(this.splits[p.id]) || 0) > totalAmount,
+        );
+
+        if (invalidEntry) {
+          this.splitError = `Amount should not exceed total amount ₹${totalAmount.toFixed(
             2,
-          )}) must equal expense amount (₹${totalAmount.toFixed(2)})`;
+          )}`;
+        } else if (Math.abs(totalSplit - totalAmount) > 0.01) {
+          if (totalSplit < totalAmount) {
+            const remaining = totalAmount - totalSplit;
+            this.splitError = `₹${remaining.toFixed(2)} left`;
+          } else {
+            const excess = totalSplit - totalAmount;
+            this.splitError = `₹${excess.toFixed(2)} extra`;
+          }
         } else {
           this.splitError = "";
         }
@@ -236,10 +280,20 @@ export default {
           return sum + (parseFloat(this.splits[p.id]) || 0);
         }, 0);
 
-        if (Math.abs(totalPercentage - 100) > 0.01) {
-          this.splitError = `Total percentage (${totalPercentage.toFixed(
-            2,
-          )}%) must equal 100%`;
+        const invalidEntry = this.allParticipants.find(
+          (p) => (parseFloat(this.splits[p.id]) || 0) > 100,
+        );
+
+        if (invalidEntry) {
+          this.splitError = "Percentage should not exceed 100%";
+        } else if (Math.abs(totalPercentage - 100) > 0.01) {
+          if (totalPercentage < 100) {
+            const remaining = 100 - totalPercentage;
+            this.splitError = `${remaining.toFixed(2)}% left`;
+          } else {
+            const excess = totalPercentage - 100;
+            this.splitError = `${excess.toFixed(2)}% extra`;
+          }
         } else {
           this.splitError = "";
         }
@@ -303,14 +357,13 @@ export default {
 
     handleSplitUpdate(participantId, value) {
       if (this.formData.splitMethod === "unequal") {
-        this.splits[participantId] =
-          value === "" || value === null ? null : parseFloat(value);
+        this.splits[participantId] = parseFloat(value) || 0;
         this.redistributeUnequal(participantId);
       } else if (this.formData.splitMethod === "percentage") {
         this.splits[participantId] = parseFloat(value) || 0;
         this.redistributePercentage(participantId);
       } else if (this.formData.splitMethod === "shares") {
-        this.splits[participantId] = parseInt(value) || 1;
+        this.splits[participantId] = parseInt(value) || 0;
         this.redistributeShares();
       }
     },
@@ -323,18 +376,72 @@ export default {
         const newPaidBy = { ...this.paidBy };
         delete newPaidBy[participantId];
         this.paidBy = newPaidBy;
+        this.manuallyEditedPaidBy.delete(participantId);
       } else {
         newSelectedPaidBy.add(participantId);
         if (!(participantId in this.paidBy)) {
-          this.paidBy = { ...this.paidBy, [participantId]: "" };
+          this.paidBy[participantId] = 0;
         }
       }
 
       this.selectedPaidBy = newSelectedPaidBy;
+
+      // If single payer remains, auto-fill with total amount
+      if (this.selectedPaidBy.size === 1) {
+        const payerId = Array.from(this.selectedPaidBy)[0];
+        this.paidBy = { [payerId]: this.formData.amount };
+        this.manuallyEditedPaidBy.clear(); // Reset manual status if only one payer
+      } else {
+        this.redistributePaidBy();
+      }
     },
 
-    updatePaidBy(newPaidBy) {
-      this.paidBy = { ...newPaidBy };
+    redistributePaidBy(changedParticipantId = null) {
+      const totalAmount = parseFloat(this.formData.amount) || 0;
+      if (changedParticipantId) {
+        this.manuallyEditedPaidBy.add(changedParticipantId);
+      }
+
+      const manualTotal = Array.from(this.selectedPaidBy).reduce((sum, id) => {
+        return (
+          sum +
+          (this.manuallyEditedPaidBy.has(id)
+            ? parseFloat(this.paidBy[id]) || 0
+            : 0)
+        );
+      }, 0);
+
+      const remaining = totalAmount - manualTotal;
+      const autoPayers = Array.from(this.selectedPaidBy).filter(
+        (id) => !this.manuallyEditedPaidBy.has(id),
+      );
+
+      if (autoPayers.length > 0) {
+        const amounts = distributeExactly(
+          Math.max(0, remaining),
+          autoPayers.length,
+        );
+        autoPayers.forEach((id, i) => {
+          this.paidBy[id] = amounts[i];
+        });
+      }
+
+      this.paidBy = { ...this.paidBy };
+    },
+
+    updatePaidBy(updatedPaidBy) {
+      // Find which payer was changed by comparing with current this.paidBy
+      const changedId = Object.keys(updatedPaidBy).find(
+        (id) =>
+          (parseFloat(updatedPaidBy[id]) || 0) !==
+          (parseFloat(this.paidBy[id]) || 0),
+      );
+
+      this.paidBy = { ...updatedPaidBy };
+
+      if (changedId) {
+        this.redistributePaidBy(changedId);
+      }
     },
 
     validatePaidTotal(error) {
@@ -431,6 +538,7 @@ export default {
 
   async mounted() {
     this.initializeSplits();
+    this.initializePaidBy();
     await this.loadCategories();
   },
 

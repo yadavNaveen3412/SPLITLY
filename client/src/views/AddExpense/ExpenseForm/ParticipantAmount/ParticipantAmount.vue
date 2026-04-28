@@ -14,9 +14,10 @@
         type="number"
         step="0.01"
         class="amount-input"
-        @focus="handleFocus"
+        @focus="handleFocus($event)"
         @input="handleInput"
         @blur="handleBlur"
+        @keydown="handleKeyDown"
         placeholder="0.00"
       />
     </div>
@@ -31,9 +32,10 @@
           max="100"
           step="0.01"
           class="amount-input"
-          @focus="handleFocus"
+          @focus="handleFocus($event)"
           @blur="handleBlur"
           @input="handleUpdate($event.target.value)"
+          @keydown="handleKeyDown"
           placeholder="0.00"
         />
         <span class="percentage-symbol">%</span>
@@ -50,11 +52,13 @@
           −
         </button>
         <input
-          :value="Math.round(amount) || 1"
+          :value="amount"
           type="number"
-          min="1"
+          min="0"
           class="share-input"
+          @focus="$event.target.select()"
           @input="handleUpdate($event.target.value)"
+          @keydown="handleKeyDown"
         />
         <button class="share-btn" @click="incrementShare" type="button">
           +

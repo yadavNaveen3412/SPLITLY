@@ -1,5 +1,4 @@
-import { expenseService } from "@/services/expenses.service";
-import { mapGetters } from "vuex";
+import { mapActions, mapGetters } from "vuex";
 
 export default {
   name: "ExpenseDetail",
@@ -45,9 +44,7 @@ export default {
     },
 
     shouldTruncate() {
-      return (
-        this.expense.description && this.expense.description.length > 100
-      );
+      return this.expense.description && this.expense.description.length > 100;
     },
 
     displayedDescription() {
@@ -58,6 +55,8 @@ export default {
     },
   },
   methods: {
+    ...mapActions("expenses", ["deleteExpenseById"]),
+
     formatDate(date) {
       return new Date(date).toLocaleString();
     },
@@ -71,9 +70,7 @@ export default {
       if (!confirm("Are you sure you want to delete this expense?")) return;
 
       try {
-        const { deleteExpense: success } = await expenseService.deleteExpense(
-          this.expense.id
-        );
+        const success = await this.deleteExpenseById(this.expense.id);
 
         if (success) {
           console.log("expense deleted");

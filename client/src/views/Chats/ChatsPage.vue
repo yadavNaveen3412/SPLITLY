@@ -18,14 +18,16 @@
             {{ friend ? friend.name : group ? group.title : "N A" }}
           </h4>
           <div class="balance-summary">
-            <span v-if="loadingNet" class="text-muted">loading net...</span>
+            <span v-if="loadingNet" class="text-muted-custom"
+              >loading net...</span
+            >
             <span v-else-if="net > 0" class="text-success-custom">
               you are owed ₹{{ Math.abs(net).toFixed(2) }}
             </span>
             <span v-else-if="net < 0" class="text-danger-custom">
               you owe ₹{{ Math.abs(net).toFixed(2) }}
             </span>
-            <span v-else class="text-muted">settled up</span>
+            <span v-else class="text-muted-custom">settled up</span>
           </div>
         </div>
       </div>

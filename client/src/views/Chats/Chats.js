@@ -3,7 +3,6 @@ import ChatTab from "./ChatTab/ChatTab.vue";
 import ExpenseTab from "./ExpenseTab/ExpenseTab.vue";
 import { getInitials } from "@/utils/stringHelpers";
 import { calculateNetWithFriend } from "@/utils/settlements";
-import { CLOUDINARY_BASE_URL } from "@/services/cloudinary.service";
 
 export default {
   name: "ChatsPage",
@@ -35,6 +34,7 @@ export default {
     ...mapGetters("friends", ["getFriends"]),
     ...mapGetters("group", ["getGroups"]),
     ...mapGetters("auth", ["getUser"]),
+    ...mapGetters("cloudinary", ["getCloudinaryBaseUrl"]),
     user() {
       return this.getUser;
     },
@@ -144,7 +144,7 @@ export default {
 
     profileUrl(friend) {
       if (friend.profilePic) {
-        return `${CLOUDINARY_BASE_URL}v${friend.profilePicVersion}/${friend.profilePic}`;
+        return `${this.getCloudinaryBaseUrl}v${friend.profilePicVersion}/${friend.profilePic}`;
       }
     },
   },

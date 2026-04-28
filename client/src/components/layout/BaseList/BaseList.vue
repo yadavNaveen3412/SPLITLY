@@ -10,14 +10,17 @@
           </div>
 
           <!-- Empty State -->
-          <div v-else-if="!items || items.length === 0" class="text-center py-5">
+          <div
+            v-else-if="!items || items.length === 0"
+            class="text-center py-5"
+          >
             <img
               v-if="emptyIcon"
               :src="emptyIcon"
               alt="No items"
               class="mb-3 opacity-50 empty-icon"
             />
-            <p class="text-muted">{{ emptyMessage }}</p>
+            <p class="text-muted-custom">{{ emptyMessage }}</p>
           </div>
 
           <!-- List Content -->
@@ -31,6 +34,7 @@
 </template>
 
 <script>
+import GroupImage from "@/assets/images/GroupImage.png";
 export default {
   name: "BaseList",
   props: {
@@ -52,7 +56,7 @@ export default {
     },
     emptyIcon: {
       type: String,
-      default: "https://img.icons8.com/color/96/group.png",
+      default: GroupImage,
     },
   },
 };

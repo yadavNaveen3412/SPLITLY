@@ -201,8 +201,10 @@ export const userResolvers = {
     updateUserDetails: requireAuth(async (_, { input }, { prisma, user }) => {
       const data = {};
       let { name, contact, profilePic, profilePicVersion } = input;
-      name = sanitizeString(name);
-      console.log(`Name: ${name.length}`);
+      if (name) {
+        name = sanitizeString(name);
+        console.log(`Name: ${name.length}`);
+      }
 
       if (name !== undefined && (name.length < 3 || name.length > 50)) {
         throw new Error("Name must be between 3 and 50 characters.");

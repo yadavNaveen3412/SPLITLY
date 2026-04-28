@@ -36,6 +36,7 @@
           min="0.01"
           max="1000000"
           class="form-input amount-input"
+          @focus="$event.target.select()"
           placeholder="0.00"
         />
       </div>

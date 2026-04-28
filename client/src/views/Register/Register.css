@@ -5,14 +5,14 @@
   justify-content: center;
   align-items: center;
   height: 100vh;
-  background: linear-gradient(to right, #225750, #b0e7e0);
+  background: linear-gradient(to right, var(--color-primary), var(--color-accent));
 }
 
 .register form {
   width: 400px;
   padding: 36px 32px;
-  background: #ffffff;
-  border-radius: 12px;
+  background: var(--color-bg-card);
+  border-radius: var(--radius-lg);
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
   text-align: center;
 }
@@ -20,16 +20,16 @@
 .register .heading {
   margin-bottom: 24px;
   font-weight: 600;
-  color: #225750;
+  color: var(--color-primary);
   font-size: 1.4rem;
 }
 
 .error-message {
-  background: #fee2e2;
-  color: #b91c1c;
-  border: 1px solid #fca5a5;
+  background: var(--color-danger-light-bg);
+  color: var(--color-danger);
+  border: 1px solid var(--color-danger-border);
   padding: 10px 14px;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   margin-bottom: 16px;
   font-size: 0.85rem;
   text-align: left;
@@ -42,8 +42,8 @@
 .form-input {
   width: 100%;
   padding: 12px 14px;
-  border: 1.5px solid #d1d5db;
-  border-radius: 8px;
+  border: 1.5px solid var(--color-border-input);
+  border-radius: var(--radius-md);
   font-size: 0.95rem;
   outline: none;
   transition: border-color 0.2s;
@@ -51,16 +51,16 @@
 }
 
 .form-input:focus {
-  border-color: #225750;
+  border-color: var(--color-primary);
 }
 
 .submit-btn {
   width: 100%;
   padding: 12px;
-  background: #225750;
+  background: var(--color-primary);
   color: #fff;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-md);
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
@@ -69,7 +69,7 @@
 }
 
 .submit-btn:hover:not(:disabled) {
-  background: #1a4540;
+  background: var(--color-primary-dark);
 }
 
 .submit-btn:disabled {
@@ -80,11 +80,11 @@
 .toggle-text {
   margin-top: 14px;
   font-size: 0.85rem;
-  color: #6b7280;
+  color: var(--color-text-secondary);
 }
 
 .toggle-text a {
-  color: #225750;
+  color: var(--color-primary);
   font-weight: 600;
   text-decoration: none;
 }
@@ -97,7 +97,7 @@
   display: flex;
   align-items: center;
   margin: 20px 0;
-  color: #9ca3af;
+  color: var(--color-text-muted);
   font-size: 0.85rem;
 }
 
@@ -106,7 +106,7 @@
   content: "";
   flex: 1;
   height: 1px;
-  background: #e5e7eb;
+  background: var(--color-border);
 }
 
 .divider span {

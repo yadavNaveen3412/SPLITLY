@@ -125,8 +125,6 @@ export const findUser = async (input) => {
       variables: { input },
       fetchPolicy: "no-cache",
     });
-
-    // console.log("data:", data.findUser);
     return data.findUser;
   } catch (error) {
     console.error("Error fetching user:\n", error);

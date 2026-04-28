@@ -1,18 +1,74 @@
+/* ── Root shell ─────────────────────────────────────────── */
 .main-layout {
   display: flex;
-  min-height: 100vh;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
 }
 
-.content,
-.expanded {
-  flex-grow: 1;
-  transition: margin-left 0.3s ease;
+/* ── Top bar (navbar lives here) ────────────────────────── */
+/* Sits to the RIGHT of the sidebar at all times            */
+.top-bar {
+  position: fixed;
+  top: 0;
+  right: 0;
+  left: 4rem; /* collapsed sidebar width */
+  height: 4rem;
+  z-index: 1000; /* sidebar is 1001 so it overlaps the bar edge */
+  transition: left 0.3s ease, right 0.3s ease;
+}
+.top-bar.sidebar-expanded {
+  left: 12rem; /* expanded sidebar width */
+}
+.top-bar.has-chat-panel {
+  right: 20rem; /* chat panel width */
 }
 
-.content {
-  margin-left: 4rem;
+/* ── Scrollable page area ───────────────────────────────── */
+/* Push content right of the fixed sidebar + below top-bar */
+.page-content {
+  position: fixed;
+  top: 4rem;
+  right: 0;
+  bottom: 0;
+  left: 4rem; /* collapsed sidebar width */
+  overflow-y: auto;
+  overflow-x: hidden;
+  transition: left 0.3s ease, right 0.3s ease;
+  background: var(--color-bg-page);
+}
+.page-content.sidebar-expanded {
+  left: 12rem; /* expanded sidebar width */
+}
+.page-content.has-chat-panel {
+  right: 20rem; /* chat panel width */
 }
 
-.expanded {
-  margin-left: 12rem;
+/* ══════════════════════════════════════════════════════════
+   Global Material-style custom scrollbar
+   ══════════════════════════════════════════════════════════ */
+.custom-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(34, 87, 80, 0.15) transparent;
+}
+.custom-scroll:hover,
+.custom-scroll:focus-within {
+  scrollbar-color: rgba(34, 87, 80, 0.45) transparent;
+}
+.custom-scroll::-webkit-scrollbar {
+  width: 5px;
+}
+.custom-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scroll::-webkit-scrollbar-thumb {
+  background: rgba(34, 87, 80, 0.15);
+  border-radius: 99px;
+}
+.custom-scroll:hover::-webkit-scrollbar-thumb,
+.custom-scroll:focus-within::-webkit-scrollbar-thumb {
+  background: rgba(34, 87, 80, 0.45);
+}
+.custom-scroll::-webkit-scrollbar-thumb:active {
+  background: rgba(34, 87, 80, 0.7);
 }

@@ -22,7 +22,6 @@ export default {
   },
   watch: {
     $route(to) {
-      // Only refetch when coming BACK to groups page
       if (to.name === "GroupsPage") {
         this.fetchGroupsWithBalances("GROUP");
       }

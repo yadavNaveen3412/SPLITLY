@@ -1,8 +1,7 @@
-.main {
-  min-height: 100vh;
-  background: #dcf1ee;
-  padding-top: 5rem;
-  padding-bottom: 3rem;
+.container {
+  height: calc(100vh - 4rem);
+  background: var(--color-bg-page);
+  padding-top: 4rem;
 }
 
 .card {
@@ -22,48 +21,48 @@
 }
 
 .balance-card-owed {
-  background-color: #d6ffe2;
+  background-color: var(--color-success-bg);
   cursor: default;
 }
 
 .balance-card-owe {
-  background-color: #ffd4d4;
+  background-color: var(--color-danger-bg);
   cursor: default;
 }
 
 .balance-title-owed {
-  color: #198754;
+  color: var(--color-success);
 }
 
 .balance-amount-owed {
-  color: #198754;
+  color: var(--color-success);
 }
 
 .balance-title-owe {
-  color: #dc3545;
+  color: var(--color-danger);
 }
 
 .balance-amount-owe {
-  color: #dc3545;
+  color: var(--color-danger);
 }
 
 .hover-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 6px 16px var(--color-shadow);
 }
 
 .card-title {
   font-weight: 600;
-  color: #333;
+  color: var(--color-text-primary);
 }
 
 .card-text {
   font-size: 0.9rem;
-  color: #666;
+  color: var(--color-text-secondary);
 }
 
 .add-expense-btn {
-  background-color: #225750;
+  background-color: var(--color-primary);
   color: white;
   position: fixed;
   width: auto;
@@ -82,6 +81,6 @@
   color: white;
   cursor: pointer;
   transform: scale(1.05);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
-  background-color: #225750;
+  box-shadow: 0 8px 20px var(--color-shadow-heavy);
+  background-color: var(--color-primary);
 }

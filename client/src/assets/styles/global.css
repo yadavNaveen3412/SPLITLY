@@ -1,15 +1,87 @@
+/* ===== SPLITLY Design Tokens ===== */
+:root {
+  --color-primary: #225750;
+  --color-primary-dark: #1a443e;
+  --color-primary-light: #f0f7f6;
+  --color-accent: #b0e7e0;
+  --color-accent-muted: rgba(176, 231, 224, 0.15);
+  --color-bg-page: #dcf1ee;
+  --color-bg-card: #ffffff;
+  --color-bg-muted: #f9fafb;
+  --color-bg-hover: #f3f4f6;
+  --color-success: #10b981;
+  --color-success-bg: #d6ffe2;
+  --color-danger: #ef4444;
+  --color-danger-bg: #ffd4d4;
+  --color-danger-light-bg: #fef2f2;
+  --color-danger-border: #fecaca;
+  --color-text-primary: #1f2937;
+  --color-text-secondary: #6b7280;
+  --color-text-muted: #9ca3af;
+  --color-border: #e5e7eb;
+  --color-border-input: #d1d5db;
+  --color-shadow: rgba(34, 87, 80, 0.15);
+  --color-shadow-heavy: rgba(34, 87, 80, 0.3);
+  --color-overlay: rgba(0, 0, 0, 0.5);
+
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-pill: 50px;
+  --radius-circle: 50%;
+}
+
+/* ===== Global Base Styles ===== */
 #app {
-  /* font-family: Avenir, Helvetica, Arial, sans-serif; */
-  /* -webkit-font-smoothing: antialiased; */
   -moz-osx-font-smoothing: grayscale;
-  color: #2c3e50;
+  color: var(--color-text-primary);
 }
 
 body {
   font-family: "Quicksand", sans-serif;
-  /* background: linear-gradient(to right, #225750, #b0e7e0); */
-  /* padding-top: 5rem; */
 }
 
+/* ===== Shared Scrollbar Styles ===== */
+.custom-scrollbar::-webkit-scrollbar,
+.panel-content::-webkit-scrollbar,
+.messages-container::-webkit-scrollbar {
+  width: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track,
+.panel-content::-webkit-scrollbar-track,
+.messages-container::-webkit-scrollbar-track {
+  background: var(--color-bg-hover);
+}
+.custom-scrollbar::-webkit-scrollbar-thumb,
+.panel-content::-webkit-scrollbar-thumb,
+.messages-container::-webkit-scrollbar-thumb {
+  background: var(--color-border-input);
+  border-radius: 3px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover,
+.panel-content::-webkit-scrollbar-thumb:hover,
+.messages-container::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-muted);
+}
 
+/* ===== Global Utility Classes ===== */
+.text-success-custom {
+  color: var(--color-success);
+}
 
+.text-danger-custom {
+  color: var(--color-danger);
+}
+
+.bg-success-light-custom {
+  background-color: var(--color-success-bg) !important;
+}
+
+.bg-danger-light-custom {
+  background-color: var(--color-danger-bg) !important;
+}
+
+.text-muted-custom {
+  color: var(--color-text-secondary) !important;
+}

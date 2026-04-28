@@ -1,6 +1,6 @@
 .main {
   min-height: 100vh;
-  background: #dcf1ee;
+  background: var(--color-bg-page);
   padding-top: 5rem;
   padding-bottom: 3rem;
 }
@@ -30,14 +30,14 @@
 .line {
   width: 10%;
   height: 2px;
-  background-color: #ccc;
+  background-color: var(--color-border-input);
   margin-right: 8px;
 }
 .person-dot {
   width: 6px;
   height: 6px;
-  background-color: #a0a1a2;
-  border-radius: 50%;
+  background-color: var(--color-text-muted);
+  border-radius: var(--radius-circle);
   margin-right: 8px;
 }
 .person-info {
@@ -47,7 +47,7 @@
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: var(--color-overlay);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -60,7 +60,7 @@
   max-width: 600px;
   width: 90%;
   position: relative;
-  overflow: hidden; /* Prevent container break */
+  overflow: hidden;
 }
 
 /* Title and Description Overflow Handling */
@@ -89,7 +89,7 @@
 }
 
 .description-text:hover {
-  color: #225750 !important;
+  color: var(--color-primary) !important;
 }
 
 .description-expanded {
@@ -97,11 +97,11 @@
 }
 
 .edit-expense-button{
-  color: #225750;
-  border: 1px solid #225750 ;
+  color: var(--color-primary);
+  border: 1px solid var(--color-primary);
 }
 
 .edit-expense-button:hover{
   color: white;
-  background-color: #225750 ;
+  background-color: var(--color-primary);
 }

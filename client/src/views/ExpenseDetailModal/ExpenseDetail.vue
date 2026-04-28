@@ -21,7 +21,7 @@
             <div class="min-w-0">
               <h4 class="mb-0 text-truncate-custom">{{ expense.title }}</h4>
               <small
-                class="text-muted d-block mb-2 description-text"
+                class="text-muted-custom d-block mb-2 description-text"
                 :class="{ 'description-expanded': isDescriptionExpanded }"
                 v-if="expense.description"
                 @click="toggleDescription"
@@ -33,22 +33,24 @@
               </small>
             </div>
           </div>
-          <h4 class="mb-0 align-items-center text-success flex-shrink-0 ms-3">
+          <h4
+            class="mb-0 align-items-center text-success-custom flex-shrink-0 ms-3"
+          >
             ₹{{ expense.totalAmount }}
           </h4>
         </div>
-        <p class="mb-1 text-muted">
+        <p class="mb-1 text-muted-custom">
           Added by <strong>{{ expense.createdByUser.name }}</strong> on
           {{ formatDate(expense.createdAt) }}
         </p>
-        <p class="text-muted mb-0" v-if="expense.updatedByUser">
+        <p class="text-muted-custom mb-0" v-if="expense.updatedByUser">
           Updated by {{ expense.updatedByUser.name }} on
           {{ formatDate(expense.updatedAt) }}
         </p>
 
         <!-- People Section  -->
         <div class="people-diagram mt-4">
-          <div class="total-amount text-success fw-bold">
+          <div class="total-amount text-success-custom fw-bold">
             ₹{{ expense.totalAmount }}
           </div>
           <div class="connections">

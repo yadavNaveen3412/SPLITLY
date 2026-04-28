@@ -28,8 +28,8 @@
 </template>
 
 <script>
-import { CLOUDINARY_BASE_URL } from "@/services/cloudinary.service";
 import { getInitials } from "@/utils/stringHelpers";
+import { mapGetters } from "vuex";
 
 export default {
   name: "GroupListItem",
@@ -44,12 +44,13 @@ export default {
     },
   },
   computed: {
+    ...mapGetters("cloudinary", ["getCloudinaryBaseUrl"]),
     initials() {
       return getInitials(this.item.displayName);
     },
     profileUrl() {
       if (this.item.profilePic) {
-        return `${CLOUDINARY_BASE_URL}v${this.item.profilePicVersion}/${this.item.profilePic}`;
+        return `${this.getCloudinaryBaseUrl}v${this.item.profilePicVersion}/${this.item.profilePic}`;
       }
       return null;
     },

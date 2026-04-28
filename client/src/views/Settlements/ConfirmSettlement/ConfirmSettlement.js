@@ -1,5 +1,4 @@
-import { settlementService } from "@/services/settlements.service";
-import { mapGetters } from "vuex";
+import { mapActions, mapGetters } from "vuex";
 
 export default {
   name: "ConfirmSettlement",
@@ -22,6 +21,8 @@ export default {
     },
   },
   methods: {
+    ...mapActions("settlements", ["createSettlement"]),
+
     getUserName(id) {
       if (!this.group || !Array.isArray(this.group.members)) {
         return "";
@@ -54,9 +55,7 @@ export default {
         amount: Number(this.selectedUser.amount),
       };
 
-      const createSettlement = await settlementService.createSettlement(
-        input
-      );
+      const createSettlement = await this.createSettlement(input);
       this.$emit("settlement", createSettlement);
       this.$emit("close");
     },
@@ -77,12 +76,12 @@ export default {
         }
 
         settlements.push(
-          settlementService.createSettlement({
+          this.createSettlement({
             group_id: tx.groupId,
             payer_id: payerId,
             receiver_id: receiverId,
             amount: Number(tx.amount),
-          })
+          }),
         );
       }
 

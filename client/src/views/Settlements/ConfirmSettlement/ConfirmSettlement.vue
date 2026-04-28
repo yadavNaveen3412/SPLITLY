@@ -19,9 +19,9 @@
                 selectedUser.friendName
               } owes you`
             : selectedUser.net < 0
-            ? `You are settling ₹${Math.abs(selectedUser.net).toFixed(2)} you owe to ${
-                selectedUser.friendName
-              }`
+            ? `You are settling ₹${Math.abs(selectedUser.net).toFixed(
+                2,
+              )} you owe to ${selectedUser.friendName}`
             : `You are already settled up with ${selectedUser.friendName}`
         }}
       </p>
@@ -29,15 +29,19 @@
         {{
           selectedUser.type === "owe"
             ? `You are settling ₹${selectedUser.amount.toFixed(
-                2
-              )} you owe to ${getUserName(selectedUser.person)} in ${selectedUser.groupTitle}`
+                2,
+              )} you owe to ${getUserName(selectedUser.person)} in ${
+                selectedUser.groupTitle
+              }`
             : `You are settling ₹${selectedUser.amount.toFixed(
-                2
-              )} ${getUserName(selectedUser.person)}  owe you in ${selectedUser.groupTitle}`
+                2,
+              )} ${getUserName(selectedUser.person)}  owe you in ${
+                selectedUser.groupTitle
+              }`
         }}
       </p>
 
-      <p class="text-muted text-center mb-3">
+      <p class="text-muted-custom text-center mb-3">
         Once confirmed, this balance will be marked as fully settled.
       </p>
 

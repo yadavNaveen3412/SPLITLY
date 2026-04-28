@@ -1,52 +1,71 @@
 <template>
-  <!-- Bootstrap icons CSS -->
-  <link
-    rel="stylesheet"
-    href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css"
-  />
-  <nav class="navbar navbar-expand-lg shadow-lg fixed-top">
-    <div class="container-fluid px-4">
-      <router-link class="navbar-brand fw-bold" to="/">
-        <span class="brand-icon"><i class="bi bi-wallet2"></i></span>
-        <span class="brand-name px-2">SplitLy</span>
-      </router-link>
-      <!-- <button
-        class="navbar-toggler"
-        type="button"
-        data-bs-toggle="collapse"
-        data-bs-target="#navbarNav"
-      > -->
-      <!-- <span class="navbar-toggler-icon"></span>
-      </button> -->
-      <!-- <div class="collapse navbar-collapse" id="navbarNav"> -->
-      <ul class="navbar-nav ms-auto">
-        <!-- Not logged in -->
-        <template v-if="!userLoggedIn">
-          <li class="nav-item">
-            <router-link class="nav-link" to="/register">
-              <span class="btn btn-primary login-btn">Login</span>
-            </router-link>
-          </li>
-          <li class="nav-item">
-            <router-link class="nav-link px-3" to="/register">
-              <span class="btn btn-primary signup">Sign Up</span>
-            </router-link>
-          </li>
-        </template>
-        <!-- Logged in -->
-        <template v-else>
-          <li class="nav-item">
-            <button
-              class="nav-link btn btn-primary-custom px-3 logout-btn"
-              @click="Logout"
+  <nav class="app-navbar shadow-sm">
+    <div class="navbar-inner">
+      <!-- Spacer so profile is pushed to the right -->
+      <div class="navbar-spacer"></div>
+
+      <!-- Right side: profile avatar + dropdown -->
+      <div class="profile-menu" ref="menuRef">
+        <button
+          class="avatar-btn"
+          @click="toggleMenu"
+          aria-label="Account menu"
+        >
+          <img
+            v-if="userProfileUrl"
+            :src="userProfileUrl"
+            class="avatar-img"
+            alt="profile"
+          />
+          <span v-else class="avatar-initials">{{ initials }}</span>
+          <span class="avatar-name">{{ userName }}</span>
+          <i class="bi bi-chevron-down chevron" :class="{ open: menuOpen }"></i>
+        </button>
+
+        <transition name="dropdown">
+          <div v-if="menuOpen" class="dropdown-panel">
+            <!-- User info header -->
+            <div class="dropdown-header">
+              <div class="dh-avatar">
+                <img v-if="userProfileUrl" :src="userProfileUrl" alt="" />
+                <span v-else>{{ initials }}</span>
+              </div>
+              <div class="dh-info">
+                <p class="dh-name">{{ userName }}</p>
+                <p class="dh-email">{{ userEmail }}</p>
+              </div>
+            </div>
+
+            <div class="dropdown-divider"></div>
+
+            <router-link
+              class="dropdown-item"
+              to="/my-profile"
+              @click="closeMenu"
             >
-              Log Out
+              <i class="bi bi-person-circle"></i>
+              <span>My Profile</span>
+            </router-link>
+
+            <router-link
+              class="dropdown-item"
+              to="/my-profile"
+              @click="closeMenu"
+            >
+              <i class="bi bi-share"></i>
+              <span>Share Account</span>
+            </router-link>
+
+            <div class="dropdown-divider"></div>
+
+            <button class="dropdown-item logout-item" @click="handleLogout">
+              <i class="bi bi-box-arrow-right"></i>
+              <span>Log Out</span>
             </button>
-          </li>
-        </template>
-      </ul>
+          </div>
+        </transition>
+      </div>
     </div>
-    <!-- </div> -->
   </nav>
 </template>
 

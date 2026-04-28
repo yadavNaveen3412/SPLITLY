@@ -1,5 +1,5 @@
-import { getUserById } from "@/services/user.service";
 import { mapActions, mapGetters } from "vuex";
+import ChatImage from "@/assets/images/ChatImage.png";
 
 export default {
   name: "ChatTab",
@@ -22,6 +22,7 @@ export default {
       isFriend: false,
       isCheckingFriend: false,
       userCache: {},
+      ChatImage,
     };
   },
 
@@ -82,6 +83,7 @@ export default {
     ]),
 
     ...mapActions("friends", ["createFriend"]),
+    ...mapActions("user", ["getUserById"]),
 
     formatDate(date) {
       return new Date(date).toLocaleDateString("en-US", {
@@ -167,7 +169,7 @@ export default {
       }
 
       try {
-        const user = await getUserById(senderId);
+        const user = await this.getUserById(senderId);
         const userName = user?.name || "Unknown User";
         this.userCache[senderId] = userName;
         return userName;

@@ -1,7 +1,7 @@
 <template>
   <div class="messages-container" ref="messagesContainer">
     <div v-if="page === 'friends' && isCheckingFriend" class="empty-state">
-      <p class="text-muted">Checking...</p>
+      <p class="text-muted-custom">Checking...</p>
     </div>
 
     <div
@@ -13,7 +13,7 @@
         alt="Start Chat"
         class="mb-2 opacity-50"
       />
-      <p class="text-muted mb-3">Start a conversation</p>
+      <p class="text-muted-custom mb-3">Start a conversation</p>
       <button class="btn-start-chat" @click="handleStartChat">
         Start Chat
       </button>
@@ -23,12 +23,8 @@
       v-else-if="(isFriend || page === 'groups') && !chats?.length"
       class="empty-state"
     >
-      <img
-        src="https://img.icons8.com/color/64/chat.png"
-        alt="No Messages"
-        class="mb-2 opacity-50"
-      />
-      <p class="text-muted">No messages yet</p>
+      <img :src="ChatImage" alt="No Messages" class="mb-2 opacity-50" />
+      <p class="text-muted-custom">No messages yet</p>
     </div>
 
     <div

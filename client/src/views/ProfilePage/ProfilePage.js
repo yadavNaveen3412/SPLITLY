@@ -1,7 +1,3 @@
-import {
-  CLOUDINARY_BASE_URL,
-  uploadAvatar,
-} from "@/services/cloudinary.service";
 import { getInitials } from "@/utils/stringHelpers";
 import { mapActions, mapGetters } from "vuex";
 import QRcodeVue from "qrcode.vue";
@@ -44,7 +40,7 @@ export default {
 
   computed: {
     ...mapGetters("auth", ["getUser"]),
-
+    ...mapGetters("cloudinary", ["getCloudinaryBaseUrl"]),
     user() {
       return this.getUser;
     },
@@ -79,7 +75,7 @@ export default {
         return null;
       }
 
-      return `${CLOUDINARY_BASE_URL}v${this.profileData.profilePicVersion}/${this.profileData.profilePic}`;
+      return `${this.getCloudinaryBaseUrl}v${this.profileData.profilePicVersion}/${this.profileData.profilePic}`;
     },
 
     shareUrl() {
@@ -89,6 +85,7 @@ export default {
 
   methods: {
     ...mapActions("auth", ["updateUserProfile"]),
+    ...mapActions("cloudinary", ["uploadAvatar"]),
 
     getInitials,
 
@@ -208,10 +205,12 @@ export default {
       }
 
       if (this.photoFile) {
-        const { public_id, version } = await uploadAvatar(this.photoFile);
+        const { public_id, version } = await this.uploadAvatar(this.photoFile);
         payload.profilePic = public_id;
         payload.profilePicVersion = version.toString();
       }
+
+      console.log(`Update Payload:`, payload);
 
       return payload;
     },
@@ -230,6 +229,7 @@ export default {
         if (!Object.keys(payload).length) return;
 
         this.loadingText = "Saving Changes...";
+        console.log(`Update User Profile`);
         await this.updateUserProfile(payload);
         this.previewProfileUrl = null;
         this.loadProfileData();

@@ -68,9 +68,14 @@ export const expensesResolvers = {
 
   Query: {
     getExpensesByGroup: requireGroupMember(
-      async (_, { groupId }, { prisma }) => {
+      async (_, { groupId }, { prisma, user }) => {
         return await prisma.expense.findMany({
-          where: { groupId },
+          where: {
+            groupId,
+            participants: {
+              some: { userId: user.id },
+            },
+          },
           orderBy: { createdAt: "desc" },
           include: {
             category: true,
@@ -138,6 +143,9 @@ export const expensesResolvers = {
         const expenses = await prisma.expense.findMany({
           where: {
             groupId: { in: groupIds },
+            participants: {
+              some: { userId: user.id },
+            },
           },
           include: {
             category: true,

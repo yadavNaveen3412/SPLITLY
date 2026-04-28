@@ -1,6 +1,3 @@
-import { CLOUDINARY_BASE_URL } from "@/services/cloudinary.service";
-import { groupService } from "@/services/groups.service";
-import { findUser } from "@/services/user.service";
 import { getInitials } from "@/utils/stringHelpers";
 import { mapActions, mapGetters } from "vuex";
 
@@ -17,7 +14,6 @@ export default {
       errorMessage: "",
       searching: false,
       adding: false,
-      // initialShareCode: "",
       isOpen: true,
       isFriend: false,
     };
@@ -25,6 +21,8 @@ export default {
 
   computed: {
     ...mapGetters("auth", ["getUser"]),
+    ...mapGetters("cloudinary", ["getCloudinaryBaseUrl"]),
+    ...mapGetters("friends", ["checkFriendById"]),
 
     currentUser() {
       return this.getUser;
@@ -36,8 +34,6 @@ export default {
         contact: "fa-solid fa-phone",
         shareCode: "fa-solid fa-qrcode",
       };
-      // console.log("InputIcon:", icons[this.searchType]);
-
       return icons[this.searchType];
     },
 
@@ -71,12 +67,13 @@ export default {
 
   methods: {
     ...mapActions("friends", ["createFriend", "loadFriends"]),
+    ...mapActions("auth", ["findUser"]),
 
     getInitials,
 
     getProfileUrl(user) {
       if (!user.profilePic) return null;
-      return `${CLOUDINARY_BASE_URL}v${user.profilePicVersion}/${user.profilePic}`;
+      return `${this.getCloudinaryBaseUrl}v${user.profilePicVersion}/${user.profilePic}`;
     },
 
     changeSearchType(type) {
@@ -150,14 +147,14 @@ export default {
 
       try {
         let response;
-        // console.log("c type:", typeof this.searchQuery);
-
         if (this.searchType === "email") {
-          response = await findUser({ email: this.searchQuery.toLowerCase() });
+          response = await this.findUser({
+            email: this.searchQuery.toLowerCase(),
+          });
         } else if (this.searchType === "contact") {
-          response = await findUser({ contact: this.searchQuery });
+          response = await this.findUser({ contact: this.searchQuery });
         } else if (this.searchType === "shareCode") {
-          response = await findUser({
+          response = await this.findUser({
             shareCode: this.searchQuery.toUpperCase(),
           });
         }
@@ -167,10 +164,8 @@ export default {
           alert("User not found!!");
           return;
         }
-        const groupId = await groupService.getPersonalGroupId(response.id);
-        if (groupId) {
-          this.isFriend = true;
-        }
+        this.isFriend = this.checkFriendById(response.id);
+
         this.searchResult = response;
       } catch (error) {
         console.error("Search error:", error);

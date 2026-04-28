@@ -34,7 +34,11 @@
       </div>
 
       <div class="modal-content-wrapper">
-        <transition name="slide-content" mode="out-in">
+        <transition
+          :name="isBackward ? 'slide-content-backward' : 'slide-content'"
+          mode="out-in"
+          appear
+        >
           <!-- Step 1: Groups/Friends Selection -->
           <div v-if="currentStep === 1" key="step-1" class="modal-content">
             <SelectionList
