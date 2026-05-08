@@ -175,39 +175,6 @@ export default {
         this.searching = false;
       }
     },
-    //   // TODO: Replace with actual API endpoint
-    //   // Example: await axios.post('/api/users/search', { searchType, query })
-
-    //   // Mock API response for development
-    //   return new Promise((resolve) => {
-    //     setTimeout(() => {
-    //       // Simulate user found
-    //       if (
-    //         query === "test@example.com" ||
-    //         query === "9876543210" ||
-    //         query.toUpperCase() === "SPLIT-YAM-12345-C"
-    //       ) {
-    //         resolve({
-    //           success: true,
-    //           user: {
-    //             id: "mock-user-id",
-    //             name: "John Doe",
-    //             email: "test@example.com",
-    //             contact: "9876543210",
-    //             shareCode: "SPLIT-YAM-12345-C",
-    //             profilePic: null,
-    //             profilePicVersion: null,
-    //           },
-    //         });
-    //       } else {
-    //         resolve({
-    //           success: false,
-    //           message: "No user found with this information",
-    //         });
-    //       }
-    //     }, 1000);
-    //   });
-    // },
 
     searchAnother() {
       this.searchResult = null;
@@ -220,14 +187,12 @@ export default {
       if (!this.searchResult) return;
 
       this.adding = true;
+      this.errorMessage = "";
 
       try {
-        // console.log("SID:", this.searchResult.id);
-
         const groupId = await this.createFriend(this.searchResult.id);
         if (groupId) {
           this.isFriend = true;
-          this.loadFriends();
           this.closeModal();
           alert(`${this.searchResult.name} has been added to your friends!`);
         } else {

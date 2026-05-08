@@ -55,6 +55,10 @@ export default {
       return null;
     },
   },
+
+  // mounted() {
+  //   console.log(`itmes:`, this.item);
+  // },
 };
 </script>
 

@@ -21,7 +21,7 @@
       </div>
       <div class="expense-info">
         <h6 class="mb-1">{{ expense.title }}</h6>
-        <span class="expense-date">{{ formatDate(expense.date) }}</span>
+        <span class="expense-date">{{ formatDate(expense.createdAt) }}</span>
       </div>
       <div class="expense-amount-wrapper">
         <div class="expense-amount" :class="expense.type">

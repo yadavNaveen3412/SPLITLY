@@ -1,9 +1,13 @@
 import gql from "graphql-tag";
 import apolloClient from "@/apollo";
 
-const REQUEST_AVATAR_UPLOAD = gql`
-  mutation RequestAvatarUpload {
-    requestAvatarUpload {
+const REQUEST_UPLOAD_SIGNATURE = gql`
+  mutation Mutation($dirName: String!, $groupId: ID, $fileName: String!) {
+    requestUploadSignature(
+      dirName: $dirName
+      groupId: $groupId
+      fileName: $fileName
+    ) {
       signature
       timestamp
       public_id
@@ -13,17 +17,19 @@ const REQUEST_AVATAR_UPLOAD = gql`
   }
 `;
 
-export const getCloudinarySignature = async () => {
+const getCloudinarySignature = async (payload) => {
+  console.log(`Cloud service payload: `, payload);
   const { data } = await apolloClient.mutate({
-    mutation: REQUEST_AVATAR_UPLOAD,
+    mutation: REQUEST_UPLOAD_SIGNATURE,
+    variables: payload,
   });
 
-  return data.requestAvatarUpload;
+  return data.requestUploadSignature;
 };
 
-export const uploadAvatar = async (file) => {
+export const uploadImage = async (file, dirName, fileName, groupId = null) => {
   const { signature, timestamp, public_id, cloud_name, api_key } =
-    await getCloudinarySignature();
+    await getCloudinarySignature({ dirName, fileName, groupId });
 
   const formData = new FormData();
 
@@ -40,7 +46,7 @@ export const uploadAvatar = async (file) => {
     {
       method: "POST",
       body: formData,
-    }
+    },
   );
 
   if (!res.ok) {

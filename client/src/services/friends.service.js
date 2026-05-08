@@ -21,29 +21,30 @@ const CREATE_FRIEND_MUTATION = gql`
   mutation CreateFriend($friendId: ID!) {
     createFriend(friendId: $friendId) {
       id
-      title
-      type
+      name
+      email
+      contact
+      groupId
+      groupTitle
+      groupType
+      profilePic
+      profilePicVersion
     }
   }
 `;
 
 export const fetchFriends = async () => {
-  try {
-    const { data } = await apolloClient.query({
-      query: GET_ALL_FRIENDS,
-      fetchPolicy: "cache-first",
-    });
-
-    return data.getAllFriends;
-  } catch (error) {
-    console.error("Error fetching friends' data: ", error);
-  }
+  const { data } = await apolloClient.query({
+    query: GET_ALL_FRIENDS,
+    fetchPolicy: "cache-first",
+  });
+  return data.getAllFriends;
 };
 
 export const createFriend = async (friendId) => {
-  const resp = await apolloClient.mutate({
+  const { data } = await apolloClient.mutate({
     mutation: CREATE_FRIEND_MUTATION,
     variables: { friendId },
   });
-  return resp.data.createFriend;
+  return data.createFriend;
 };

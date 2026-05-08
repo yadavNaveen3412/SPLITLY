@@ -4,6 +4,15 @@
       <!-- Spacer so profile is pushed to the right -->
       <div class="navbar-spacer"></div>
 
+      <!-- Add Expense Button -->
+      <button
+        class="btn-add-expense"
+        @click="goToAddExpense"
+        title="Add Expense"
+      >
+        <i class="fa-solid fa-plus"></i> Add Expense
+      </button>
+
       <!-- Right side: profile avatar + dropdown -->
       <div class="profile-menu" ref="menuRef">
         <button
@@ -19,7 +28,10 @@
           />
           <span v-else class="avatar-initials">{{ initials }}</span>
           <span class="avatar-name">{{ userName }}</span>
-          <i class="bi bi-chevron-down chevron" :class="{ open: menuOpen }"></i>
+          <i
+            class="fa-solid fa-chevron-down chevron"
+            :class="{ open: menuOpen }"
+          ></i>
         </button>
 
         <transition name="dropdown">
@@ -43,7 +55,7 @@
               to="/my-profile"
               @click="closeMenu"
             >
-              <i class="bi bi-person-circle"></i>
+              <i class="fa-solid fa-circle-user"></i>
               <span>My Profile</span>
             </router-link>
 
@@ -52,14 +64,14 @@
               to="/my-profile"
               @click="closeMenu"
             >
-              <i class="bi bi-share"></i>
+              <i class="fa-solid fa-share-nodes"></i>
               <span>Share Account</span>
             </router-link>
 
             <div class="dropdown-divider"></div>
 
             <button class="dropdown-item logout-item" @click="handleLogout">
-              <i class="bi bi-box-arrow-right"></i>
+              <i class="fa-solid fa-arrow-right-from-bracket"></i>
               <span>Log Out</span>
             </button>
           </div>

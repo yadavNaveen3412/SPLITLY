@@ -8,6 +8,6 @@ export const cloudinaryTypeDefs = `#graphql
     }
 
     type Mutation {
-        requestAvatarUpload: CloudinarySignature!
+        requestUploadSignature(dirName: String!, groupId: ID, fileName: String!): CloudinarySignature!
     }
 `;

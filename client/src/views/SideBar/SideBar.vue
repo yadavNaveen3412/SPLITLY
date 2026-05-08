@@ -63,15 +63,11 @@
       </li>
     </ul>
 
-    <!-- Toggle button pinned to bottom -->
+    <!-- Toggle Sidebar Button -->
     <div class="sidebar-toggle" @click="toggleSidebar()">
       <i
-        :key="sidebarState.isCollapsed"
-        :class="
-          sidebarState.isCollapsed
-            ? 'bi bi-chevron-right'
-            : 'bi bi-chevron-left'
-        "
+        class="fa-solid fa-chevron-right chevron"
+        :class="{ open: !sidebarState.isCollapsed }"
       ></i>
       <span class="nav-text">&nbsp; Collapse</span>
     </div>

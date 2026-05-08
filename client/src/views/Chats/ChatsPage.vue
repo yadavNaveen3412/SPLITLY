@@ -7,6 +7,9 @@
           <div v-if="friend && friend.profilePic">
             <img :src="profileUrl(friend)" alt="Profile" />
           </div>
+          <div v-else-if="group && group.profilePic">
+            <img :src="profileUrl(group)" alt="Profile" />
+          </div>
           <div v-else>
             {{
               getInitials(friend ? friend.name : group ? group.title : "N A")

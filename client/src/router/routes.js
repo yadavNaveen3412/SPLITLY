@@ -4,6 +4,7 @@ import MainLayoutRoutes from "@/router/mainLayout.routes";
 
 const RegisterPage = () => import("../views/Register/RegisterPage.vue");
 const LandingPage = () => import("../views/Landing/LandingPage.vue");
+const NotFound = () => import("../views/NotFound/NotFound.vue");
 
 const routes = [
   {
@@ -19,6 +20,12 @@ const routes = [
     meta: { public: true },
   },
   MainLayoutRoutes,
+  {
+    name: "NotFound",
+    path: "/:pathMatch(.*)*",
+    component: NotFound,
+    meta: { public: true },
+  },
 ];
 
 const router = createRouter({ history: createWebHistory(), routes });
@@ -37,6 +44,10 @@ router.beforeEach(async (to, from, next) => {
   }
 
   if (auth.user && isPublic) {
+    // Allow navigation to 404 page even if authenticated
+    if (to.name === "NotFound") {
+      return next();
+    }
     return next({ name: "Home" });
   }
 

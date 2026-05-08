@@ -79,7 +79,7 @@ export const settlementsResolvers = {
     myAllBalances: requireAuth(async (_, { userId }, { prisma, user }) => {
       const resolvedUserId = userId || user.id;
       const settlement = settlementService(prisma);
-      return settlement.userAllBalances(resolvedUserId);
+      return await settlement.userAllBalances(resolvedUserId);
     }),
 
     myFriendBalance: requireAuth(

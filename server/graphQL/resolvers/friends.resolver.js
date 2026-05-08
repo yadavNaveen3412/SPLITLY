@@ -65,7 +65,29 @@ export const friendsResolvers = {
   Mutation: {
     createFriend: requireAuth(async (_, { friendId }, { prisma, user }) => {
       const gService = groupService(prisma);
-      return gService.createFriend(friendId, user);
+      const personalGroup = await gService.createFriend(friendId, user);
+
+      // Convert Group object to Friend object
+      // The friend should be the other user in this personal group
+      const friend = personalGroup.members.find(
+        (m) => m.userId !== user.id,
+      )?.user;
+
+      if (!friend) {
+        throw new Error("Friend not found after creating personal group");
+      }
+
+      return {
+        id: friend.id,
+        name: friend.name,
+        email: friend.email,
+        contact: friend.contact,
+        profilePic: friend.profilePic,
+        profilePicVersion: friend.profilePicVersion,
+        groupId: personalGroup.id,
+        groupTitle: personalGroup.title,
+        groupType: personalGroup.type,
+      };
     }),
   },
 };

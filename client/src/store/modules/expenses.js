@@ -1,117 +1,224 @@
-import {
-  createExpense,
-  expenseService,
-  getExpenseByFriendId,
-} from "@/services/expenses.service";
-import { getCommonGroups } from "@/services/groups.service";
-import { calculateUserBalanceList } from "@/utils/settlements";
+import { expenseService } from "@/services/expenses.service";
 
 const state = () => ({
-  expenses: [],
-  groupExpensesByFriend: [],
+  groupExpenses: [],
+  friendExpenses: {
+    directExpenses: [],
+    groupSummaries: [],
+  },
 });
 
 const mutations = {
-  SET_EXPENSES(state, expenses) {
-    state.expenses = expenses;
+  SET_GROUP_EXPENSES(state, expenses) {
+    state.groupExpenses = Array.isArray(expenses) ? [...expenses] : [];
   },
 
-  SET_GROUP_EXPENSES_BY_FRIEND(state, payload) {
-    state.groupExpensesByFriend = payload;
+  SET_FRIEND_EXPENSES(state, payload) {
+    state.friendExpenses = {
+      directExpenses: payload?.directExpenses
+        ? [...payload.directExpenses]
+        : [],
+      groupSummaries: payload?.groupSummaries
+        ? [...payload.groupSummaries]
+        : [],
+    };
+  },
+
+  ADD_OR_UPDATE_EXPENSE(state, { expense, source }) {
+    if (source === "group") {
+      const index = state.groupExpenses.findIndex(
+        (e) =>
+          e.id === expense.id ||
+          (expense.clientId && e.clientId === expense.clientId),
+      );
+      if (index !== -1) {
+        state.groupExpenses.splice(index, 1, {
+          ...state.groupExpenses[index],
+          ...expense,
+        });
+      } else {
+        state.groupExpenses = [expense, ...state.groupExpenses];
+      }
+    } else {
+      const index = state.friendExpenses.directExpenses.findIndex(
+        (e) =>
+          e.id === expense.id ||
+          (expense.clientId && e.clientId === expense.clientId),
+      );
+      if (index !== -1) {
+        state.friendExpenses.directExpenses.splice(index, 1, {
+          ...state.friendExpenses.directExpenses[index],
+          ...expense,
+        });
+      } else {
+        state.friendExpenses = {
+          ...state.friendExpenses,
+          directExpenses: [expense, ...state.friendExpenses.directExpenses],
+        };
+      }
+    }
+  },
+
+  REMOVE_EXPENSE(state, { expenseId, source }) {
+    if (source === "group") {
+      state.groupExpenses = state.groupExpenses.filter(
+        (e) => e.id !== expenseId,
+      );
+    } else {
+      state.friendExpenses = {
+        ...state.friendExpenses,
+        directExpenses: state.friendExpenses.directExpenses.filter(
+          (e) => e.id !== expenseId,
+        ),
+      };
+    }
   },
 };
 
 const actions = {
-  async loadExpenses({ commit, rootGetters }, payload) {
+  async fetchGroupExpenses({ commit }, groupId) {
     try {
-      const { type, id } = payload;
-      const userId = rootGetters["auth/getUserId"];
-
-      if (type === "friends") {
-        const [commonGroups, data] = await Promise.all([
-          getCommonGroups(id),
-          getExpenseByFriendId(id),
-        ]);
-
-        const expenses = data || [];
-
-        const groupTransactionsList = await Promise.all(
-          commonGroups.map(async (group) => {
-            const transactions = await calculateUserBalanceList(
-              userId,
-              group.id,
-            );
-
-            return transactions
-              .filter((t) => t.person === id)
-              .map((t) => ({
-                ...t,
-                groupId: group.id,
-                groupType: group.type,
-                groupTitle: group.title,
-              }));
-          }),
-        );
-        const groupExpenses = groupTransactionsList.flat() || [];
-
-        commit("SET_EXPENSES", expenses);
-        commit("SET_GROUP_EXPENSES_BY_FRIEND", groupExpenses);
-        return;
-      }
-
-      if (type === "groups") {
-        const { getExpensesByGroup } = await expenseService.getExpensesByGroup(
-          id,
-        );
-        const expenses = SimplifyExpenses(getExpensesByGroup, userId);
-        commit("SET_EXPENSES", expenses);
-      }
+      const expenses = await expenseService.getGroupExpenses(groupId);
+      commit("SET_GROUP_EXPENSES", expenses);
     } catch (error) {
-      console.error("loadExpenses error:", error);
+      console.error("fetchGroupExpenses error:", error);
     }
   },
 
-  async createExpense(_, payload) {
+  async fetchFriendExpenses({ commit }, friendId) {
     try {
-      return await createExpense(payload);
+      const expenses = await expenseService.getFriendExpenses(friendId);
+      commit("SET_FRIEND_EXPENSES", expenses);
+    } catch (error) {
+      console.error("fetchFriendExpenses error:", error);
+    }
+  },
+
+  async createExpense({ commit, rootGetters, dispatch }, payload) {
+    const clientId = `temp_${Date.now()}`;
+    const userId = rootGetters["auth/getUserId"];
+    const source = payload.source || (payload.groupId ? "group" : "friend");
+    console.log(`Payload:`, payload);
+
+    // Create optimistic expense object
+    const tempExpense = {
+      id: clientId,
+      clientId,
+      title: payload.title,
+      totalAmount: payload.totalAmount,
+      createdAt: new Date().toISOString(),
+      categoryId: payload.categoryId,
+      category: rootGetters["categories/getCategoryById"](payload.categoryId),
+      participants: payload.participants.map((p) => ({
+        ...p,
+        user: { id: p.userId, name: "Loading..." },
+      })),
+      createdByUser: { id: userId, name: "You" },
+      amount: 0,
+      type: "no-balance",
+    };
+
+    // Calculate derived fields optimistically
+    const userParticipant = payload.participants.find(
+      (p) => p.userId === userId,
+    );
+    if (userParticipant) {
+      const paid = userParticipant.paidAmount || 0;
+      const estimatedOwed = payload.totalAmount / payload.participants.length;
+      const net = paid - estimatedOwed;
+      tempExpense.amount = net;
+      tempExpense.type = net > 0 ? "owed" : net < 0 ? "owe" : "no-balance";
+    }
+
+    try {
+      commit("ADD_OR_UPDATE_EXPENSE", { expense: tempExpense, source });
+
+      // Strip out non-schema fields (like source) before sending to server
+      const {
+        title,
+        description,
+        groupId,
+        totalAmount,
+        categoryId,
+        splitMethod,
+        participants,
+      } = payload;
+
+      const cleanedInput = {
+        title,
+        description,
+        groupId,
+        totalAmount,
+        categoryId,
+        splitMethod,
+        participants: participants.map((p) => ({
+          userId: p.userId,
+          paidAmount: p.paidAmount,
+          splitValue: p.splitValue,
+        })),
+      };
+
+      const result = await expenseService.createExpense(cleanedInput);
+      if (result) {
+        commit("ADD_OR_UPDATE_EXPENSE", {
+          expense: { ...result, clientId },
+          source,
+        });
+
+        // Trigger global balance refresh
+        dispatch("friends/loadFriends", null, { root: true });
+        dispatch("group/fetchGroupsWithBalances", "GROUP", { root: true });
+      }
+      return result;
     } catch (error) {
       console.error("createExpense error:", error);
-      return false;
+      commit("REMOVE_EXPENSE", { expenseId: clientId, source });
+      throw error;
     }
   },
 
-  async getExpenseById(_, id) {
+  async updateExpense({ commit, dispatch }, { id, input, source }) {
     try {
-      return await expenseService.getExpenseById(id);
+      const result = await expenseService.updateExpense(id, input);
+      commit("ADD_OR_UPDATE_EXPENSE", { expense: result, source });
+
+      // Trigger global balance refresh
+      dispatch("friends/loadFriends", null, { root: true });
+      dispatch("group/fetchGroupsWithBalances", "GROUP", { root: true });
+
+      return result;
     } catch (error) {
-      console.error("getExpenseById error:", error);
-      return false;
+      console.error("updateExpense error:", error);
+      throw error;
     }
   },
 
-  async deleteExpenseById(_, id) {
+  async deleteExpenseById({ commit, dispatch }, { id, source }) {
     try {
-      return await expenseService.deleteExpense(id);
+      commit("REMOVE_EXPENSE", { expenseId: id, source });
+      await expenseService.deleteExpense(id);
+
+      // Trigger global balance refresh
+      dispatch("friends/loadFriends", null, { root: true });
+      dispatch("group/fetchGroupsWithBalances", "GROUP", { root: true });
+
+      return true;
     } catch (error) {
       console.error("deleteExpense error:", error);
-      return false;
-    }
-  },
-
-  async getExpensesByGroup(_, id) {
-    try {
-      return await expenseService.getExpensesByGroup(id);
-    } catch (error) {
-      console.error("getExpenseByGroup error:", error);
-      return false;
+      throw error;
     }
   },
 };
 
 const getters = {
-  getExpenses: (state) => state.expenses,
-  getGroupExpensesByFriend: (state) => state.groupExpensesByFriend,
-  getTotal: (state) => state.total,
+  getGroupExpenses: (state) => state.groupExpenses,
+  getFriendExpenses: (state) => state.friendExpenses,
+  getExpenseById: (state) => (id) => {
+    return (
+      state.groupExpenses.find((e) => e.id === id) ||
+      state.friendExpenses.directExpenses.find((e) => e.id === id)
+    );
+  },
 };
 
 export default {
@@ -121,46 +228,3 @@ export default {
   actions,
   getters,
 };
-
-function SimplifyExpenses(data, userId) {
-  return data.map((e) => {
-    const userParticipant = e.participants.find((p) => p.userId === userId);
-
-    const amountPaid = userParticipant?.paidAmount || 0;
-    const amountOwed = userParticipant?.owedAmount || 0;
-
-    const isPaidByUser = amountPaid > 0;
-    const isSharedByUser = amountOwed > 0;
-
-    const amount = amountPaid - amountOwed;
-
-    let type;
-
-    // Case 1: User not involved at all
-    if (!isPaidByUser && !isSharedByUser) {
-      type = "not-involved";
-    }
-    // Case 2: User involved but net zero
-    else if (amount === 0) {
-      type = "no-balance";
-    }
-    // Case 3: User owes money
-    else if (amount < 0) {
-      type = "owe";
-    }
-    // Case 4: User is owed money
-    else {
-      type = "owed";
-    }
-
-    return {
-      id: e.id,
-      title: e.title,
-      date: e.createdAt,
-      category: e.category,
-      totalAmount: e.totalAmount,
-      amount,
-      type,
-    };
-  });
-}

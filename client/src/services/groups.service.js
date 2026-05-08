@@ -21,11 +21,13 @@ const GET_GROUPS = gql`
 `;
 
 const CREATE_GROUP_MUTATION = gql`
-  mutation CreateGroup($title: String!, $type: GroupType, $members: [String]) {
-    createGroup(title: $title, type: $type, members: $members) {
+  mutation CreateGroup($input: GroupInput!) {
+    createGroup(input: $input) {
       type
       title
       id
+      profilePic
+      profilePicVersion
     }
   }
 `;
@@ -51,9 +53,19 @@ const GET_GROUP_DETAILS = gql`
   }
 `;
 
-const RENAME_GROUP = gql`
-  mutation RenameGroup($groupId: String!, $title: String!) {
-    renameGroup(groupId: $groupId, title: $title) {
+const EDIT_GROUP_DETAILS = gql`
+  mutation EditGroupDetails(
+    $groupId: String!
+    $title: String!
+    $profilePic: String
+    $profilePicVersion: String
+  ) {
+    editGroupDetails(
+      groupId: $groupId
+      title: $title
+      profilePic: $profilePic
+      profilePicVersion: $profilePicVersion
+    ) {
       id
       createdById
       title
@@ -132,14 +144,14 @@ export const groupService = {
     return resp.data.getGroups;
   },
 
-  async createGroup(title, type, members = []) {
-    const resp = await apolloClient.mutate({
+  async createGroup(input) {
+    const { data } = await apolloClient.mutate({
       mutation: CREATE_GROUP_MUTATION,
-      variables: { title, type, members },
-      refetchQueries: [{ query: GET_GROUPS, variables: { type } }],
+      variables: { input },
+      refetchQueries: [{ query: GET_GROUPS, variables: { type: input.type } }],
       awaitRefetchQueries: true,
     });
-    return resp.data;
+    return data.createGroup;
   },
 
   async getGroupDetails(id) {
@@ -151,10 +163,10 @@ export const groupService = {
     return resp.data;
   },
 
-  async renameGroup(groupId, title) {
+  async editGroupDetails(payload) {
     const resp = await apolloClient.mutate({
-      mutation: RENAME_GROUP,
-      variables: { groupId, title },
+      mutation: EDIT_GROUP_DETAILS,
+      variables: payload,
       fetchPolicy: "no-cache",
     });
     return resp.data;

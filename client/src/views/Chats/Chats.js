@@ -31,8 +31,8 @@ export default {
   },
 
   computed: {
-    ...mapGetters("friends", ["getFriends"]),
-    ...mapGetters("group", ["getGroups"]),
+    ...mapGetters("friends", ["getFriends", "getFriendById"]),
+    ...mapGetters("group", ["getGroups", "getGroupById"]),
     ...mapGetters("auth", ["getUser"]),
     ...mapGetters("cloudinary", ["getCloudinaryBaseUrl"]),
     user() {
@@ -55,29 +55,28 @@ export default {
   },
 
   watch: {
+    id: {
+      immediate: true,
+      async handler() {
+        if (this.id) {
+          await this.loadCurrentResource();
+        }
+      },
+    },
     friendsData: {
       async handler(newVal) {
-        if (newVal?.length && this.id) {
-          await this.loadFriendData();
+        if (newVal?.length && this.currentPage === "friends") {
+          this.loadFriendData();
           await this.calculateNet();
         }
       },
       deep: true,
     },
-    id: {
-      immediate: true,
-      async handler() {
-        if (this.id) {
-          await this.loadFriendData();
-          await this.loadGroupData();
-          await this.calculateNet();
-        }
-      },
-    },
     groupsData: {
       async handler(newVal) {
-        if (newVal?.length && this.id) {
-          await this.loadGroupData();
+        if (newVal?.length && this.currentPage === "groups") {
+          this.loadGroupData();
+          await this.calculateNet();
         }
       },
       deep: true,
@@ -86,34 +85,44 @@ export default {
 
   methods: {
     ...mapActions("chats", ["loadChats"]),
+    ...mapActions("friends", ["loadFriends"]),
+    ...mapActions("group", ["fetchGroupsWithBalances"]),
 
-    goToDetails() {
-      if (this.group) {
-        this.$router.push({ name: "Group", params: { id: this.id } });
+    async loadCurrentResource() {
+      this.setLoading(true);
+      try {
+        if (this.currentPage === "friends") {
+          if (!this.friendsData.length) {
+            await this.loadFriends();
+          }
+          this.loadFriendData();
+        } else {
+          if (!this.groupsData.length) {
+            await this.fetchGroupsWithBalances("GROUP");
+          }
+          this.loadGroupData();
+        }
+        await this.calculateNet();
+      } catch (error) {
+        console.error("Error loading resource:", error);
+      } finally {
+        this.setLoading(false);
       }
     },
 
     loadFriendData() {
-      this.setLoading(true);
-      try {
-        const friend = this.friendsData.find((f) => f.id === this.id);
-        this.friend = friend ? { ...friend } : null;
-      } catch (error) {
-        console.error("Error loading friend data:", error);
-      } finally {
-        this.setLoading(false);
+      const friend = this.getFriendById(this.id);
+      this.friend = friend ? { ...friend } : null;
+      if (this.friend) {
+        this.group = null; // Ensure group is null if we are in friend chat
       }
     },
 
     loadGroupData() {
-      this.setLoading(true);
-      try {
-        const group = this.groupsData.find((g) => g.id === this.id);
-        this.group = group ? { ...group } : null;
-      } catch (error) {
-        console.error("Error loading group data:", error);
-      } finally {
-        this.setLoading(false);
+      const group = this.getGroupById(this.id);
+      this.group = group ? { ...group } : null;
+      if (this.group) {
+        this.friend = null; // Ensure friend is null if we are in group chat
       }
     },
 
@@ -142,9 +151,15 @@ export default {
       this.loadingNet = false;
     },
 
-    profileUrl(friend) {
-      if (friend.profilePic) {
-        return `${this.getCloudinaryBaseUrl}v${friend.profilePicVersion}/${friend.profilePic}`;
+    profileUrl(entity) {
+      if (entity.profilePic) {
+        return `${this.getCloudinaryBaseUrl}v${entity.profilePicVersion}/${entity.profilePic}`;
+      }
+    },
+
+    goToDetails() {
+      if (this.group) {
+        this.$router.push({ name: "Group", params: { id: this.id } });
       }
     },
   },

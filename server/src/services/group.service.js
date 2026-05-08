@@ -1,16 +1,20 @@
 import { sanitizeString } from "../middleware/sanitizeUserInput.js";
 
 export const groupService = (prisma) => {
-  const createGroup = async (title, type, memberIds = [], user) => {
-    const groupType = type || "GROUP";
-    const sanitizedTitle = sanitizeString(title);
+  const createGroup = async (input, user) => {
+    const groupType = input.type || "GROUP";
+    const sanitizedTitle = sanitizeString(input.title);
 
-    if (!sanitizedTitle || sanitizedTitle.length < 3 || sanitizedTitle.length > 50) {
+    if (
+      !sanitizedTitle ||
+      sanitizedTitle.length < 3 ||
+      sanitizedTitle.length > 50
+    ) {
       throw new Error("Group title must be between 3 and 50 characters.");
     }
 
     // Ensure current user is included in members
-    const allMemberIds = [...new Set([user.id, ...memberIds])];
+    const allMemberIds = [...new Set([user.id, ...input.members])];
 
     return prisma.$transaction(async (tx) => {
       const group = await tx.group.create({
@@ -21,6 +25,8 @@ export const groupService = (prisma) => {
           members: {
             create: allMemberIds.map((userId) => ({ userId })),
           },
+          profilePic: input.profilePic,
+          profilePicVersion: input.profilePicVersion,
         },
         include: {
           members: { include: { user: true } },
@@ -30,7 +36,11 @@ export const groupService = (prisma) => {
     });
   };
 
-  const addMembersToGroup = async (groupId, userIds, prismaContext = prisma) => {
+  const addMembersToGroup = async (
+    groupId,
+    userIds,
+    prismaContext = prisma,
+  ) => {
     const added = [];
     const alreadyMembers = [];
     const invited = []; // Placeholder for future invite logic
@@ -79,8 +89,13 @@ export const groupService = (prisma) => {
       const friendName = friend.name.split(" ")[0];
       const title = `${userName}_${friendName}`;
 
+      console.log(`Title: ${title}`);
+
       // 3. Create PERSONAL group
-      return createGroup(title, "PERSONAL", [friendId], user);
+      return createGroup(
+        { title, type: "PERSONAL", members: [friendId] },
+        user,
+      );
     });
   };
 

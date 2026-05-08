@@ -3,7 +3,6 @@ import prisma from "../loaders/prisma.js";
 
 export const findUser = async (token) => {
   if (!token) {
-    console.log("no token is found");
     return null;
   }
 

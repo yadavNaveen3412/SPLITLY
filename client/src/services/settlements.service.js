@@ -44,20 +44,20 @@ const GET_SETTLEMENTS_BY_GROUP = gql`
 
 export const settlementService = {
   async createSettlement(input) {
-    const resp = await apolloClient.mutate({
+    const { data } = await apolloClient.mutate({
       mutation: CREATE_SETTLEMENT,
       variables: { input },
       fetchPolicy: "no-cache",
     });
-    return resp.data.createSettlement;
+    return data.createSettlement;
   },
 
   async getSettlementsByGroup(group_id) {
-    const resp = await apolloClient.query({
+    const { data } = await apolloClient.query({
       query: GET_SETTLEMENTS_BY_GROUP,
       variables: { group_id },
       fetchPolicy: "cache-first",
     });
-    return resp.data;
+    return data.getSettlementsByGroup;
   },
 };

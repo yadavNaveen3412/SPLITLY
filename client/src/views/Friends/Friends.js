@@ -52,6 +52,8 @@ export default {
   },
 
   async created() {
-    await this.loadFriends();
+    if (this.friends.length === 0) {
+      await this.loadFriends();
+    }
   },
 };

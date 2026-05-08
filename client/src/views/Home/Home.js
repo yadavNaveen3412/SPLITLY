@@ -29,10 +29,10 @@ export default {
   },
 
   methods: {
-    ...mapActions("group", ["fetchGroups"]),
+    ...mapActions("group", ["fetchGroupsWithBalances"]),
     goToGroups() {
       this.$router.push({ name: "Groups" });
-      this.fetchGroups();
+      this.fetchGroupsWithBalances();
     },
     goToFriend() {
       this.$router.push({ name: "Friends" });
@@ -42,9 +42,6 @@ export default {
     },
     goToAnalysis() {
       this.$router.push("/analysis");
-    },
-    goToAddExpense() {
-      this.$router.push({ name: "AddExpense" });
     },
     async calculateOverallBalance() {
       let owed = 0;
@@ -62,12 +59,10 @@ export default {
 
       this.balances.owedToYou = Number(owed).toFixed(2);
       this.balances.youOwe = Number(owe).toFixed(2);
-      console.log("transactions", transactions);
     },
   },
   async mounted() {
     const storedUser = this.getUserId;
-    console.log("mounting home");
 
     if (!storedUser) {
       this.$router.push({ name: "Register" });

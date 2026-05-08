@@ -21,8 +21,8 @@ export default {
   },
   methods: {
     getUserName(id) {
-      const user = this.group.members.find((p) => p.user.id === id);
-      return user.user.name;
+      const user = this.group.members.find((p) => p.id === id);
+      return user.name;
     },
     openConfirmationModal(item) {
       this.showConfirmModal = true;
@@ -32,12 +32,10 @@ export default {
       this.showConfirmModal = false;
       this.selectedUserItem = {};
     },
-    handleSettlement(payload){
-      this.$emit("settlement",payload)
-      this.$emit('close')
-    }
+    handleSettlement(payload) {
+      this.$emit("settlement", payload);
+      this.$emit("close");
+    },
   },
-  mounted() {
-  },
+  mounted() {},
 };
-

@@ -83,7 +83,35 @@
 .chevron.open {
   transform: rotate(180deg);
 }
+/* ── Add Expense Button ─────────────────────────────────── */
+.btn-add-expense {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 0.5rem;
+  padding: 0.5rem 1rem;
+  color: white;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-right: 1rem;
+}
 
+.btn-add-expense:hover {
+  background: rgba(255, 255, 255, 0.25);
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.btn-add-expense:active {
+  transform: scale(0.98);
+}
+
+.btn-add-expense i {
+  font-size: 1rem;
+}
 /* ── Dropdown panel ─────────────────────────────────────── */
 .dropdown-panel {
   position: absolute;

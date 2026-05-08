@@ -4,6 +4,7 @@ import {
   requireGroupMember,
 } from "../../src/middleware/guards.js";
 import { groupService } from "../../src/services/group.service.js";
+import { sanitizeString } from "../../src/middleware/sanitizeUserInput.js";
 
 export const groupResolvers = {
   Query: {
@@ -86,12 +87,10 @@ export const groupResolvers = {
     }),
   },
   Mutation: {
-    createGroup: requireAuth(
-      async (_, { title, type, members = [] }, { prisma, user }) => {
-        const gService = groupService(prisma);
-        return gService.createGroup(title, type, members, user);
-      },
-    ),
+    createGroup: requireAuth(async (_, { input }, { prisma, user }) => {
+      const gService = groupService(prisma);
+      return gService.createGroup(input, user);
+    }),
 
     addMemberToGroup: requireGroupMember(
       async (_, { groupId, userIds }, { prisma }) => {
@@ -100,8 +99,12 @@ export const groupResolvers = {
       },
     ),
 
-    renameGroup: requireGroupMember(
-      async (_, { groupId, title }, { prisma }) => {
+    editGroupDetails: requireGroupMember(
+      async (
+        _,
+        { groupId, title, profilePic, profilePicVersion },
+        { prisma },
+      ) => {
         title = sanitizeString(title);
 
         if (!title || title.length < 3 || title.length > 50) {
@@ -110,7 +113,7 @@ export const groupResolvers = {
 
         return prisma.group.update({
           where: { id: groupId },
-          data: { title },
+          data: { title, profilePic, profilePicVersion },
           include: { members: { include: { user: true } } },
         });
       },

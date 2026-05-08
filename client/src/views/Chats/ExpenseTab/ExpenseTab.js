@@ -16,18 +16,33 @@ export default {
       isCheckingFriend: true,
       isShowSettleUpModal: false,
       showExpenseModal: false,
+      selectedExpense: null,
       ExpenseImage,
     };
   },
 
   computed: {
-    ...mapGetters("expenses", ["getExpenses", "getGroupExpensesByFriend"]),
+    ...mapGetters("expenses", [
+      "getFriendExpenses",
+      "getGroupExpenses",
+      "getExpenseById",
+    ]),
+    ...mapGetters("friends", ["checkFriendById"]),
     expenses() {
-      return this.getExpenses;
+      if (this.page === "friends") {
+        return this.getFriendExpenses.directExpenses;
+      }
+      return this.getGroupExpenses;
     },
 
     groupExpenses() {
-      return this.getGroupExpensesByFriend;
+      if (this.page === "friends") {
+        return this.getFriendExpenses.groupSummaries.map((s) => ({
+          ...s,
+          groupTitle: s.groupName,
+        }));
+      }
+      return [];
     },
   },
 
@@ -35,16 +50,22 @@ export default {
     id: {
       immediate: true,
       async handler(newVal) {
-        await this.loadExpenses({ type: this.page, id: newVal });
+        if (!newVal) return;
+        if (this.page === "friends") {
+          await this.fetchFriendExpenses(newVal);
+        } else {
+          await this.fetchGroupExpenses(newVal);
+        }
       },
     },
   },
 
   methods: {
-    ...mapActions("friends", ["createFriend", "checkFriendById"]),
-    ...mapActions("expenses", ["loadExpenses", "getExpenseById"]),
+    ...mapActions("friends", ["createFriend"]),
+    ...mapActions("expenses", ["fetchFriendExpenses", "fetchGroupExpenses"]),
 
     formatDate(date) {
+      if (!date) return "";
       return new Date(date).toLocaleDateString("en-US", {
         month: "short",
         day: "numeric",
@@ -93,8 +114,8 @@ export default {
       }
     },
 
-    async openExpenseModal(expenseId) {
-      const expense = await this.getExpenseById(expenseId);
+    openExpenseModal(expenseId) {
+      const expense = this.getExpenseById(expenseId);
       this.selectedExpense = expense;
       this.showExpenseModal = true;
     },
@@ -105,7 +126,7 @@ export default {
     },
 
     goToGroup(id) {
-      this.$router.push({ name: "Group", params: { id } });
+      this.$router.push({ name: "GroupChats", params: { id } });
     },
   },
 };

@@ -28,8 +28,8 @@ export default {
         return "";
       }
 
-      const user = this.group.members.find((p) => p.user.id === id);
-      return user?.user?.name || "";
+      const user = this.group.members.find((p) => p.id === id);
+      return user?.name || "";
     },
     async confirmSettlement() {
       if (this.isOverall) {

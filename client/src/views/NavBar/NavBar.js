@@ -45,6 +45,44 @@ export default {
   methods: {
     ...mapActions("auth", ["logout"]),
 
+    getAddExpenseRoute() {
+      const currentPath = this.$route.path;
+      const currentName = this.$route.name;
+
+      // Check if we're in a chat context
+      if (currentPath.includes("/chats/")) {
+        const id = this.$route.params.id;
+        if (currentPath.includes("/friends/")) {
+          // Friend chat
+          return {
+            name: "AddExpense",
+            query: { source: "friend", friendId: id },
+          };
+        } else if (currentPath.includes("/groups/")) {
+          // Group chat
+          return {
+            name: "AddExpense",
+            query: { source: "group", groupId: id },
+          };
+        }
+      }
+
+      // Check page context
+      if (currentName === "Friends") {
+        return { name: "AddExpense", query: { source: "friends" } };
+      } else if (currentName === "Groups") {
+        return { name: "AddExpense", query: { source: "groups" } };
+      }
+
+      // Default: Home or no special context
+      return { name: "AddExpense" };
+    },
+
+    goToAddExpense() {
+      const route = this.getAddExpenseRoute();
+      this.$router.push(route);
+    },
+
     toggleMenu() {
       this.menuOpen = !this.menuOpen;
     },

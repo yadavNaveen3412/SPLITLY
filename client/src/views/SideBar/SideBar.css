@@ -177,6 +177,15 @@
   transform: scale(1.08);
 }
 
+.chevron {
+  font-size: 0.7rem;
+  color: rgba(176, 231, 224, 0.7);
+  transition: transform 0.25s ease;
+}
+.chevron.open {
+  transform: rotate(180deg);
+}
+
 /* ══════════════════════════════════════════════════════════
    Material scrollbar
    ══════════════════════════════════════════════════════════ */

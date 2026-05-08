@@ -30,6 +30,22 @@ scalar DateTime
         group: Group
         createdByUser: User!
         updatedByUser: User
+
+        # Context-aware fields
+        amount: Float
+        type: String
+    }
+
+    type GroupSummary {
+        groupId: ID!
+        groupName: String!
+        amount: Float!
+        type: String!
+    }
+
+    type FriendExpensesPayload {
+        directExpenses: [Expense!]!
+        groupSummaries: [GroupSummary!]!
     }
 
     input ParticipantInput {
@@ -59,9 +75,8 @@ scalar DateTime
     }
 
     type Query {
-        getExpensesByGroup(groupId: String!): [Expense!]!
-        getExpenseById(id: String!): Expense!
-        getExpenseByFriendId(friendId: String!): [FriendExpense!]!
+        getGroupExpenses(groupId: ID!): [Expense!]!
+        getFriendExpenses(friendId: ID!): FriendExpensesPayload!
     }
 
     type BalanceEntry {
@@ -81,15 +96,4 @@ scalar DateTime
         settleGroup(groupId: String!): SettleGroupPayload!
     }
 
-    type FriendExpense {
-        id: ID
-        title: String
-        amount: Float
-        type: String
-        date: DateTime
-        createdByUser: User
-        category: Category
-        groupId: ID
-        groupType: GroupType
-    }
 `;

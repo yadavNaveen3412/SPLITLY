@@ -4,7 +4,7 @@ export const friendsTypeDefs = `#graphql
     }
 
     type Mutation {
-        createFriend(friendId: ID!): Group!
+        createFriend(friendId: ID!): Friend!
     }
 
     type Friend {

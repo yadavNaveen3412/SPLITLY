@@ -1,116 +1,87 @@
 import gql from "graphql-tag";
 import apolloClient from "@/apollo";
 
-const GET_EXPENSES_BY_GROUP = gql`
-  query GetExpensesByGroup($groupId: String!) {
-    getExpensesByGroup(groupId: $groupId) {
+const EXPENSE_FRAGMENT = gql`
+  fragment ExpenseFields on Expense {
+    id
+    title
+    description
+    totalAmount
+    amount
+    type
+    cycleId
+    createdAt
+    updatedAt
+    categoryId
+    category {
       id
-      title
-      description
-      cycleId
-      totalAmount
-      category {
-        name
-        icon
-      }
-      participants {
-        userId
-        paidAmount
-        owedAmount
-        user {
-          id
-          name
-        }
-      }
-      createdAt
+      name
+      icon
     }
-  }
-`;
-
-const GET_EXPENSE_BY_ID = gql`
-  query GetExpenseById($id: String!) {
-    getExpenseById(id: $id) {
+    participants {
       id
-      category {
-        icon
-        name
-      }
-      createdAt
-      createdByUser {
+      userId
+      paidAmount
+      owedAmount
+      user {
         id
         name
       }
-      description
-      participants {
-        userId
-        paidAmount
-        owedAmount
-        user {
-          id
-          name
-        }
-      }
-      title
-      totalAmount
-      updatedAt
-      updatedByUser {
-        id
-        name
-      }
-      groupId
-      group {
-        title
-        members {
-          user {
-            name
-            id
-          }
-        }
-      }
     }
-  }
-`;
-
-const GET_EXPENSE_BY_FRIEND_ID = gql`
-  query GetExpenseByFriendId($friendId: String!) {
-    getExpenseByFriendId(friendId: $friendId) {
+    createdByUser {
+      id
+      name
+    }
+    group {
       id
       title
       type
-      groupId
-      groupType
-      date
-      amount
-      category {
-        icon
-        id
+    }
+  }
+`;
+
+const GET_GROUP_EXPENSES = gql`
+  query GetGroupExpenses($groupId: ID!) {
+    getGroupExpenses(groupId: $groupId) {
+      ...ExpenseFields
+    }
+  }
+  ${EXPENSE_FRAGMENT}
+`;
+
+const GET_FRIEND_EXPENSES = gql`
+  query GetFriendExpenses($friendId: ID!) {
+    getFriendExpenses(friendId: $friendId) {
+      directExpenses {
+        ...ExpenseFields
+      }
+      groupSummaries {
+        groupId
+        groupName
+        amount
+        type
       }
     }
   }
+  ${EXPENSE_FRAGMENT}
 `;
 
 const CREATE_EXPENSE = gql`
   mutation CreateExpense($input: CreateExpenseInput!) {
     createExpense(input: $input) {
-      title
-      totalAmount
-      participants {
-        userId
-        paidAmount
-        owedAmount
-      }
+      ...ExpenseFields
     }
   }
+  ${EXPENSE_FRAGMENT}
 `;
 
 const UPDATE_EXPENSE = gql`
   mutation UpdateExpense($id: String!, $input: UpdateExpenseInput!) {
     updateExpense(id: $id, input: $input) {
-      id
-      title
-      totalAmount
+      ...ExpenseFields
     }
   }
+  ${EXPENSE_FRAGMENT}
 `;
 
 const DELETE_EXPENSE = gql`
@@ -132,77 +103,85 @@ const SETTLE_GROUP = gql`
 `;
 
 export const expenseService = {
-  async getExpensesByGroup(groupId) {
+  async getGroupExpenses(groupId) {
     try {
       const { data } = await apolloClient.query({
-        query: GET_EXPENSES_BY_GROUP,
+        query: GET_GROUP_EXPENSES,
         variables: { groupId },
-        fetchPolicy: "cache-first",
+        fetchPolicy: "network-only",
       });
-      return data.getExpensesByGroup;
+      return data.getGroupExpenses;
     } catch (error) {
-      console.log("Service Error:", error);
+      console.log("Error fetching group expenses:", error);
+      throw error;
     }
   },
-  async getExpenseById(id) {
-    const { data } = await apolloClient.query({
-      query: GET_EXPENSE_BY_ID,
-      variables: { id },
-      fetchPolicy: "cache-first",
-    });
-    return data.getExpenseById;
+
+  async getFriendExpenses(friendId) {
+    try {
+      const { data } = await apolloClient.query({
+        query: GET_FRIEND_EXPENSES,
+        variables: { friendId },
+        fetchPolicy: "network-only",
+      });
+      return data.getFriendExpenses;
+    } catch (error) {
+      console.log("Error fetching friend expenses:", error);
+      throw error;
+    }
   },
-  async deleteExpense(id) {
-    const { data } = await apolloClient.mutate({
-      mutation: DELETE_EXPENSE,
-      variables: { id },
-      fetchPolicy: "no-cache",
-    });
-    return data.deleteExpense;
+
+  async createExpense(input) {
+    console.log(`inout:`, input);
+    try {
+      const { data } = await apolloClient.mutate({
+        mutation: CREATE_EXPENSE,
+        variables: { input },
+      });
+      console.log(`Created expense:`, data.createExpense);
+      return data.createExpense;
+    } catch (error) {
+      console.log("Error creating expense:", error);
+      throw error;
+    }
   },
 
   async updateExpense(id, input) {
-    const { data } = await apolloClient.mutate({
-      mutation: UPDATE_EXPENSE,
-      variables: { id, input },
-      fetchPolicy: "no-cache",
-    });
-    return data.updateExpense;
+    try {
+      const { data } = await apolloClient.mutate({
+        mutation: UPDATE_EXPENSE,
+        variables: { id, input },
+      });
+      return data.updateExpense;
+    } catch (error) {
+      console.log("Error updating expense:", error);
+      throw error;
+    }
+  },
+
+  async deleteExpense(id) {
+    try {
+      const { data } = await apolloClient.mutate({
+        mutation: DELETE_EXPENSE,
+        variables: { id },
+      });
+      return data.deleteExpense;
+    } catch (error) {
+      console.log("Error deleting expense:", error);
+      throw error;
+    }
   },
 
   async settleGroup(groupId) {
-    const { data } = await apolloClient.mutate({
-      mutation: SETTLE_GROUP,
-      variables: { groupId },
-      fetchPolicy: "no-cache",
-    });
-    return data.settleGroup;
+    try {
+      const { data } = await apolloClient.mutate({
+        mutation: SETTLE_GROUP,
+        variables: { groupId },
+      });
+      return data.settleGroup;
+    } catch (error) {
+      console.log("Error settling group:", error);
+      throw error;
+    }
   },
-};
-
-export const createExpense = async (input) => {
-  try {
-    const { data } = await apolloClient.mutate({
-      mutation: CREATE_EXPENSE,
-      variables: { input },
-    });
-
-    return data.createExpense;
-  } catch (error) {
-    console.log("Error Adding Expense:", error);
-  }
-};
-
-export const getExpenseByFriendId = async (friendId) => {
-  try {
-    const { data } = await apolloClient.query({
-      query: GET_EXPENSE_BY_FRIEND_ID,
-      variables: { friendId },
-      fetchPolicy: "no-cache",
-    });
-
-    return data.getExpenseByFriendId;
-  } catch (error) {
-    console.log("Error fetching friend Expenses:", error);
-  }
 };

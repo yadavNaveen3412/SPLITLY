@@ -1,4 +1,5 @@
 import { fetchFriends, createFriend } from "@/services/friends.service";
+import { getUserById } from "@/services/user.service";
 
 const state = () => ({
   friends: [],
@@ -7,10 +8,28 @@ const state = () => ({
 
 const mutations = {
   SET_FRIENDS(state, friends) {
-    state.friends = friends;
+    state.friends = Array.isArray(friends) ? friends : [];
   },
   SET_LOADING(state, status) {
     state.loading = status;
+  },
+  ADD_FRIEND(state, friend) {
+    if (friend.clientId) {
+      const index = state.friends.findIndex(
+        (f) => f.clientId === friend.clientId,
+      );
+      if (index !== -1) {
+        state.friends.splice(index, 1, { ...state.friends[index], ...friend });
+        return;
+      }
+    }
+    const exists = state.friends.some((f) => f.id === friend.id);
+    if (!exists) {
+      state.friends.push(friend);
+    }
+  },
+  REMOVE_FRIEND(state, friendId) {
+    state.friends = state.friends.filter((f) => f.id !== friendId);
   },
 };
 
@@ -42,7 +61,6 @@ const actions = {
           netBalance: net, // > 0: owes you, < 0: you owe
         };
       });
-      console.log(`friendsWithNet`, friendsWithNet);
       commit("SET_FRIENDS", friendsWithNet);
     } catch (error) {
       console.error("Error loading friends: ", error);
@@ -52,15 +70,43 @@ const actions = {
     }
   },
 
-  async createFriend({ dispatch }, friendId) {
+  async createFriend({ commit, state }, friendId) {
+    let friendData = state.friends.find((friend) => friend.id === friendId);
+
+    if (!friendData) {
+      friendData = await getUserById(friendId);
+    }
+    const { name, email, profilePic, profilePicVersion } = friendData;
+    const clientId = `temp_${Date.now()}`;
+
+    const tempFriend = {
+      id: friendId,
+      clientId,
+      name,
+      displayName: name,
+      email,
+      profilePic,
+      profilePicVersion,
+      netBalance: 0,
+      groupId: clientId,
+      groupType: "PERSONAL",
+    };
+
     try {
-      const group = await createFriend(friendId);
-      await dispatch("group/fetchGroupsWithBalances", "PERSONAL", {
-        root: true,
+      commit("ADD_FRIEND", tempFriend);
+      const friend = await createFriend(friendId);
+
+      // Update the friend with the real group ID
+      commit("ADD_FRIEND", {
+        ...tempFriend,
+        groupId: friend.groupId,
+        clientId,
       });
-      return group.id;
+      return friend.groupId;
     } catch (error) {
       console.log("Error creating Friend", error);
+      commit("REMOVE_FRIEND", friendId);
+      throw error;
     }
   },
 };
@@ -88,6 +134,11 @@ const getters = {
 
       return selectedFriends;
     }
+  },
+
+  getFriendById: (state) => (id) => {
+    const friend = state.friends.find((friend) => friend.id === id);
+    return friend;
   },
 };
 

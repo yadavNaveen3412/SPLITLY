@@ -83,7 +83,7 @@ export default {
     ]),
 
     ...mapActions("friends", ["createFriend"]),
-    ...mapActions("user", ["getUserById"]),
+    ...mapActions("auth", ["getUserById"]),
 
     formatDate(date) {
       return new Date(date).toLocaleDateString("en-US", {
@@ -139,13 +139,12 @@ export default {
 
     async handleStartChat() {
       try {
-        await this.createFriend(this.id);
-        await this.checkIfFriend();
-        if (this.isFriend) {
+        const friend = await this.createFriend(this.id);
+        if (friend) {
+          this.isFriend = true;
           await this.loadChats({ id: this.id, type: this.page });
           await this.subscribeToChats();
         }
-        console.log("Friend Created successfully");
       } catch (error) {
         console.log("Error creating friend", error);
       }

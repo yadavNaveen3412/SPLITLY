@@ -139,7 +139,6 @@ const actions = {
     const { id, type } = payload;
     if (type === "friends") {
       const groupId = rootGetters["friends/getGroupIdByFriendId"](id);
-      console.log(`GID CHAT STORE: ${groupId}`);
       commit("SET_GROUP_ID", groupId);
     } else {
       commit("SET_GROUP_ID", id);

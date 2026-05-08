@@ -14,7 +14,7 @@ const BCRYPT_ROUNDS = 10;
 
 function issueJwtCookie(res, userId) {
   const appToken = jwt.sign({ userId }, process.env.JWT_SECRET, {
-    expiresIn: "3d",
+    expiresIn: "30d",
   });
 
   res.cookie("jwt", appToken, {

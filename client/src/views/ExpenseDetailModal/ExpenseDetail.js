@@ -70,12 +70,18 @@ export default {
       if (!confirm("Are you sure you want to delete this expense?")) return;
 
       try {
-        const success = await this.deleteExpenseById(this.expense.id);
+        const source =
+          this.expense.group?.type === "GROUP" ? "group" : "friend";
+        const success = await this.deleteExpenseById({
+          id: this.expense.id,
+          source,
+        });
 
         if (success) {
-          console.log("expense deleted");
-          console.log("groupid", this.expense.groupId);
+          // console.log("expense deleted");
+          // console.log("groupid", this.expense.groupId);
           this.$emit("deleted");
+          this.$emit("close");
         } else {
           console.error("Error deleting expense");
         }
@@ -83,9 +89,5 @@ export default {
         console.error("Server error while deleting expense:", error);
       }
     },
-  },
-  mounted() {
-    console.log("expense detail mounted");
-    console.log("expense", this.expense);
   },
 };

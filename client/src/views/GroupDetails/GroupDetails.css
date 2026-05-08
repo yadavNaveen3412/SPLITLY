@@ -1,0 +1,213 @@
+.main {
+  padding: 0;
+}
+
+.group-header {
+  background: white;
+  border-radius: 8px;
+  padding: 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Group Avatar and Header */
+.group-avatar-section {
+  flex: 1;
+}
+.avatar-large {
+  width: 60px;
+  height: 60px;
+  border-radius: var(--radius-circle);
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  cursor: pointer;
+  overflow: hidden;
+}
+
+.avatar-large img {
+  width: 60px;
+  height: 60px;
+  object-fit: cover;
+}
+
+.group-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background-color: #225750;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.group-header h2 {
+  font-size: 24px;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0;
+}
+
+/* Action Buttons */
+.btn-action-icon {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  background: white;
+  color: #6b7280;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.btn-action-icon:hover {
+  background: #f3f4f6;
+  border-color: #d1d5db;
+  color: #225750;
+}
+
+.btn-action-icon.btn-danger-subtle {
+  color: #dc2626;
+}
+
+.btn-action-icon.btn-danger-subtle:hover {
+  background: #fee2e2;
+  border-color: #fca5a5;
+  color: #b91c1c;
+}
+
+/* Balances Section */
+.balances-section {
+  background: #f9fafb;
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 24px;
+}
+
+.balance-info {
+  flex: 1;
+}
+
+.balance-item {
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* Members Section */
+.group-members-section {
+  margin-top: 24px;
+}
+
+.group-members-section h5 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.members-list {
+  background: #f9fafb;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.list-group-item {
+  padding: 12px 16px;
+  border-bottom: 1px solid #e5e7eb;
+  background: white;
+  transition: background 0.2s;
+}
+
+.list-group-item:last-child {
+  border-bottom: none;
+}
+
+.list-group-item:hover {
+  background: #f9fafb;
+}
+
+.member-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: #225750;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.member-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: #1f2937;
+}
+
+.badge {
+  font-size: 12px;
+  padding: 4px 8px;
+}
+
+/* Settle Up Button */
+.btn-outline-primary {
+  border-color: #225750;
+  color: #225750;
+}
+
+.btn-outline-primary:hover:not(:disabled) {
+  background-color: #f0f7f6;
+  border-color: #225750;
+}
+
+.btn-outline-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .group-header {
+    padding: 16px;
+  }
+
+  .group-avatar-section {
+    min-width: 0;
+  }
+
+  .group-header h2 {
+    font-size: 20px;
+  }
+
+  .btn-action-icon {
+    width: 32px;
+    height: 32px;
+    font-size: 14px;
+  }
+
+  .balances-section {
+    padding: 12px;
+  }
+
+  .d-flex.justify-content-between.align-items-start {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .ms-auto {
+    margin-left: 0 !important;
+  }
+}

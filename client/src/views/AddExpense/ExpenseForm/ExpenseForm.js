@@ -539,7 +539,9 @@ export default {
   async mounted() {
     this.initializeSplits();
     this.initializePaidBy();
-    await this.loadCategories();
+    if (this.categories.length === 0) {
+      await this.loadCategories();
+    }
   },
 
   watch: {

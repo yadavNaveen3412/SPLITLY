@@ -22,13 +22,15 @@ export default {
   },
   watch: {
     $route(to) {
-      if (to.name === "GroupsPage") {
+      if (to.name === "Groups") {
         this.fetchGroupsWithBalances("GROUP");
       }
     },
   },
 
   async created() {
-    await this.fetchGroupsWithBalances("GROUP");
+    if (!this.groups || this.groups.length === 0) {
+      await this.fetchGroupsWithBalances("GROUP");
+    }
   },
 };

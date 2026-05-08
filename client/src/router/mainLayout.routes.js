@@ -5,8 +5,11 @@ const ChatsPage = () => import("@/views/Chats/ChatsPage.vue");
 const GroupsPage = () => import("@/views/Groups/GroupsPage.vue");
 const CreateGroupModal = () =>
   import("@/modals/CreateGroupModal/CreateGroupModal.vue");
-const GroupPage = () => import("@/views/SingleGroup/GroupPage.vue");
-const EditGroup = () => import("@/views/EditGroup/EditGroup.vue");
+const GroupDetails = () => import("@/views/GroupDetails/GroupDetails.vue");
+const EditGroupModal = () =>
+  import("@/modals/EditGroupModal/EditGroupModal.vue");
+const MemberSelectorModal = () =>
+  import("@/modals/MemberSelectorModal/MemberSelectorModal.vue");
 const AddExpenseModal = () =>
   import("@/views/AddExpense/AddExpenseModal/AddExpenseModal.vue");
 const ProfilePage = () => import("@/views/ProfilePage/ProfilePage.vue");
@@ -29,11 +32,12 @@ export default {
       component: AddExpenseModal,
       children: [
         {
-          name: "AddFriend",
+          name: "AddExpense-AddFriend",
           path: "add-friend",
           component: AddFriendModal,
         },
       ],
+      props: true,
     },
     {
       name: "Friends",
@@ -69,15 +73,35 @@ export default {
           name: "CreateGroup",
           path: "create",
           component: CreateGroupModal,
+          children: [
+            {
+              name: "CreateGroupAddMembers",
+              path: "add-members",
+              component: MemberSelectorModal,
+            },
+          ],
         },
       ],
     },
-    { name: "Group", path: "group/:id", component: GroupPage, props: true },
     {
-      name: "EditGroup",
-      path: "group/:id/edit",
-      component: EditGroup,
+      name: "Group",
+      path: "group/:id",
+      component: GroupDetails,
       props: true,
+      children: [
+        {
+          name: "EditGroup",
+          path: "edit",
+          component: EditGroupModal,
+          props: true,
+        },
+        {
+          name: "AddGroupMembers",
+          path: "add-members",
+          component: MemberSelectorModal,
+          // props: true,
+        },
+      ],
     },
     {
       name: "ProfilePage",

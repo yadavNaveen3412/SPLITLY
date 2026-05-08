@@ -59,6 +59,26 @@ export const expensesResolvers = {
 
   Expense: {
     totalAmount: (parent) => Number(parent.totalAmount),
+    amount: (parent, _, { user }) => {
+      if (!user) return 0;
+      const participant = parent.participants?.find(
+        (p) => p.userId === user.id,
+      );
+      if (!participant) return 0;
+      return Number(participant.paidAmount) - Number(participant.owedAmount);
+    },
+    type: (parent, _, { user }) => {
+      if (!user) return "not-involved";
+      const participant = parent.participants?.find(
+        (p) => p.userId === user.id,
+      );
+      if (!participant) return "not-involved";
+      const amount =
+        Number(participant.paidAmount) - Number(participant.owedAmount);
+      if (amount > 0) return "owed";
+      if (amount < 0) return "owe";
+      return "no-balance";
+    },
   },
 
   ExpenseParticipant: {
@@ -67,7 +87,7 @@ export const expensesResolvers = {
   },
 
   Query: {
-    getExpensesByGroup: requireGroupMember(
+    getGroupExpenses: requireGroupMember(
       async (_, { groupId }, { prisma, user }) => {
         return await prisma.expense.findMany({
           where: {
@@ -87,78 +107,70 @@ export const expensesResolvers = {
       },
     ),
 
-    getExpenseById: requireExpenseAccess(async (_, { id }, { prisma }) => {
-      const expense = await prisma.expense.findUnique({
-        where: { id },
-        include: {
-          category: true,
-          createdByUser: {
-            select: { id: true, name: true },
-          },
-          updatedByUser: {
-            select: { id: true, name: true },
-          },
-          group: {
-            include: {
-              members: {
-                include: {
-                  user: {
-                    select: { id: true, name: true },
-                  },
-                },
-              },
-            },
-          },
-          ...PARTICIPANT_INCLUDE,
-        },
-      });
-
-      if (!expense) return null;
-      return expense;
-    }),
-
-    getExpenseByFriendId: requireAuth(
+    getFriendExpenses: requireAuth(
       async (_, { friendId }, { prisma, user }) => {
+        // 1. Find groups shared between user and friend
         const sharedGroups = await prisma.group.findMany({
           where: {
-            type: { in: ["PERSONAL", "NON_GROUP"] },
-            members: {
-              some: { userId: user.id },
-            },
-            AND: {
-              members: {
-                some: { userId: friendId },
-              },
-            },
+            members: { some: { userId: user.id } },
+            AND: { members: { some: { userId: friendId } } },
           },
-          select: {
-            id: true,
+          include: {
+            members: {
+              include: { user: { select: { id: true, name: true } } },
+            },
           },
         });
 
-        if (sharedGroups.length === 0) return [];
+        if (sharedGroups.length === 0) {
+          return { directExpenses: [], groupSummaries: [] };
+        }
 
-        const groupIds = sharedGroups.map((g) => g.id);
+        const directGroupIds = sharedGroups
+          .filter((g) => g.type === "PERSONAL" || g.type === "NON_GROUP")
+          .map((g) => g.id);
 
-        const expenses = await prisma.expense.findMany({
+        const formalGroupIds = sharedGroups
+          .filter((g) => g.type === "GROUP")
+          .map((g) => g.id);
+
+        // 2. Fetch direct expenses
+        const directExpenses = await prisma.expense.findMany({
           where: {
-            groupId: { in: groupIds },
-            participants: {
-              some: { userId: user.id },
-            },
+            groupId: { in: directGroupIds },
+            participants: { some: { userId: user.id } },
           },
           include: {
             category: true,
             group: true,
             createdByUser: true,
-            ...PARTICIPANT_INCLUDE,
+            participants: {
+              include: { user: { select: { id: true, name: true } } },
+            },
           },
-          orderBy: {
-            createdAt: "desc",
-          },
+          orderBy: { createdAt: "desc" },
         });
 
-        return simplifyExpensesByFriendId(expenses, user.id, friendId);
+        // 3. Calculate summary for formal GROUPs
+        const bService = balanceService(prisma);
+        const allBalances = await bService.getUserBalances(user.id);
+
+        const groupSummaries = allBalances
+          .filter(
+            (b) =>
+              b.friendId === friendId && formalGroupIds.includes(b.groupId),
+          )
+          .map((b) => {
+            const group = sharedGroups.find((g) => g.id === b.groupId);
+            return {
+              groupId: b.groupId,
+              groupName: group.title,
+              amount: Math.abs(b.amount),
+              type: b.amount > 0 ? "owe" : "owed",
+            };
+          });
+
+        return { directExpenses, groupSummaries };
       },
     ),
   },

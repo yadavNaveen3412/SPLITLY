@@ -78,7 +78,7 @@ export default {
 
   methods: {
     ...mapActions("group", [
-      "fetchGroups",
+      "fetchGroupsWithBalances",
       "getNonGroupId",
       "getPersonalGroupId",
     ]),
@@ -90,8 +90,13 @@ export default {
       this.selectedFriendIds = [];
       this.selectedMembers = [];
       this.activeTab = "groups";
-      this.fetchGroups("GROUP");
-      this.loadFriends();
+
+      if (this.$store.state.group.groups.length === 0) {
+        this.fetchGroupsWithBalances("GROUP");
+      }
+      if (this.$store.state.friends.friends.length === 0) {
+        this.loadFriends();
+      }
     },
 
     goToNextStep() {
@@ -118,9 +123,17 @@ export default {
       this.$router.back();
     },
 
+    handleTabChange(tab) {
+      if (this.activeTab === tab) return;
+      this.activeTab = tab;
+      this.selectedGroupId = null;
+      this.selectedFriendIds = [];
+      this.selectedMembers = [];
+    },
+
     handleAddNew() {
       if (this.activeTab === "friends") {
-        this.$router.push({ name: "AddFriend" });
+        this.$router.push({ name: "AddExpense-AddFriend" });
       }
       if (this.activeTab === "groups") {
         this.$router.push({ name: "CreateGroup" });
@@ -146,9 +159,11 @@ export default {
 
     async handleSubmit(expenseData) {
       this.expenseData = { ...expenseData };
+      let source = "group";
 
       if (this.selectedGroupId) {
         this.expenseData.groupId = this.selectedGroupId;
+        source = "group";
       } else if (
         this.selectedFriendIds &&
         this.selectedFriendIds.length === 1
@@ -156,17 +171,21 @@ export default {
         this.expenseData.groupId = await this.getPersonalGroupId(
           this.selectedFriendIds[0],
         );
+        source = "friend";
       } else {
         this.expenseData.groupId = await this.getNonGroupId([
           ...this.selectedFriendIds,
           this.currentUser.id,
         ]);
+        source = "friend";
       }
 
-      console.log("Expense Data:", this.expenseData);
+      const payload = {
+        ...JSON.parse(JSON.stringify(this.expenseData)),
+        source,
+      };
 
-      await this.createExpense(JSON.parse(JSON.stringify(this.expenseData)));
-
+      await this.createExpense(payload);
       this.closeModal();
     },
   },
@@ -175,30 +194,20 @@ export default {
     isOpen(val) {
       if (val) this.initialize();
     },
-
-    activeTab() {
-      this.selectedGroupId = null;
-      this.selectedFriendIds = [];
-      this.selectedMembers = [];
-    },
   },
 
-  mounted() {
-    this.initialize();
-    document.body.style.overflow = "hidden";
-
+  created() {
     const { source, groupId, friendId } = this.$route.query;
-
     if (source === "group" && groupId) {
       // Preselect group
+      this.activeTab = "groups";
       this.selectedGroupId = groupId;
       this.currentStep = 2; // Skip to member selection
-      this.activeTab = "groups";
     } else if (source === "friend" && friendId) {
       // Preselect friend
+      this.activeTab = "friends";
       this.selectedFriendIds = [friendId];
       this.currentStep = 3; // Skip to expense form
-      this.activeTab = "friends";
     } else if (source === "friends") {
       // Open friends tab
       this.activeTab = "friends";
@@ -208,29 +217,12 @@ export default {
       this.activeTab = "groups";
       this.currentStep = 1;
     }
-  },
 
-  created() {
-    const { source, groupId, friendId } = this.$route.query;
-
-    if (source === "group" && groupId) {
-      // Preselect group
-      this.selectedGroupId = groupId;
-      this.currentStep = 2; // Skip to member selection
-      this.activeTab = "groups";
-    } else if (source === "friend" && friendId) {
-      // Preselect friend
-      this.selectedFriendIds = [friendId];
-      this.currentStep = 3; // Skip to expense form
-      this.activeTab = "friends";
-    } else if (source === "friends") {
-      // Open friends tab
-      this.activeTab = "friends";
-      this.currentStep = 1;
-    } else {
-      // Default: groups tab
-      this.activeTab = "groups";
-      this.currentStep = 1;
+    if (this.$store.state.group.groups.length === 0) {
+      this.fetchGroupsWithBalances("GROUP");
+    }
+    if (this.$store.state.friends.friends.length === 0) {
+      this.loadFriends();
     }
   },
 };

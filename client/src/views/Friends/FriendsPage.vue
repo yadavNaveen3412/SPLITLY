@@ -9,11 +9,6 @@
             icon="fa-solid fa-user-plus"
             @click="openAddFriendModal"
           />
-          <BaseButton
-            label="Add Expense"
-            icon="fa-solid fa-plus"
-            :to="{ name: 'AddExpense', query: { source: 'friends' } }"
-          />
         </template>
       </BaseHeader>
 

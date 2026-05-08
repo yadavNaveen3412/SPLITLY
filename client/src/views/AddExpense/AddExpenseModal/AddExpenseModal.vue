@@ -21,13 +21,13 @@
       <div v-if="currentStep === 1" class="tabs">
         <button
           :class="['tab', { active: activeTab === 'groups' }]"
-          @click="activeTab = 'groups'"
+          @click="handleTabChange('groups')"
         >
           Groups
         </button>
         <button
           :class="['tab', { active: activeTab === 'friends' }]"
-          @click="activeTab = 'friends'"
+          @click="handleTabChange('friends')"
         >
           Friends
         </button>

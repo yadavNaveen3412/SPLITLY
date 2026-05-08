@@ -34,6 +34,10 @@ const getters = {
   getCategories: (state) => {
     return state.categories;
   },
+
+  getCategoryById: (state) => (id) => {
+    return state.categories.find((category) => category.id === id);
+  },
   isLoading: (state) => state.loading,
 };
 

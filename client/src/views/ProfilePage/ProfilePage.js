@@ -85,7 +85,7 @@ export default {
 
   methods: {
     ...mapActions("auth", ["updateUserProfile"]),
-    ...mapActions("cloudinary", ["uploadAvatar"]),
+    ...mapActions("cloudinary", ["uploadUserAvatar"]),
 
     getInitials,
 
@@ -205,7 +205,9 @@ export default {
       }
 
       if (this.photoFile) {
-        const { public_id, version } = await this.uploadAvatar(this.photoFile);
+        const { public_id, version } = await this.uploadUserAvatar(
+          this.photoFile,
+        );
         payload.profilePic = public_id;
         payload.profilePicVersion = version.toString();
       }

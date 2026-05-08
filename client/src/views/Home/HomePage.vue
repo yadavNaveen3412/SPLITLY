@@ -85,10 +85,6 @@
       </div>
     </div>
 
-    <!-- Floating Add Expense Button -->
-    <button class="btn add-expense-btn rounded-pill" @click="goToAddExpense">
-      <i class="fa-solid fa-plus"></i> Add Expense
-    </button>
     <router-view></router-view>
   </div>
 </template>

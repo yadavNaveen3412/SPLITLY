@@ -2,10 +2,10 @@
   <div class="member-selection-container">
     <div class="group-info">
       <div class="group-avatar">
-        {{ groupData.name.charAt(0).toUpperCase() }}
+        {{ groupData.title.charAt(0).toUpperCase() }}
       </div>
       <div class="group-details">
-        <div class="group-name">{{ groupData.name }}</div>
+        <div class="group-name">{{ groupData.title }}</div>
         <div class="group-meta">{{ groupData.members.length }} members</div>
       </div>
     </div>
@@ -37,7 +37,10 @@
       <div
         v-for="member in groupData.members"
         :key="member.id"
-        :class="['member-item', { selected: isSelected(member.id), disabled: member.name === 'You' }]"
+        :class="[
+          'member-item',
+          { selected: isSelected(member.id), disabled: member.name === 'You' },
+        ]"
         @click="member.name !== 'You' && toggleMember(member.id)"
       >
         <div class="member-avatar">
