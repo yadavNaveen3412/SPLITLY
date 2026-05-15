@@ -60,6 +60,7 @@
 
         <!-- CENTER COLUMN: Form -->
         <div class="profile-form">
+          <ErrorWrapper :message="generalError" />
           <div class="form-group">
             <label class="form-label">
               <i class="fa-solid fa-user"></i>
@@ -121,7 +122,7 @@
                 :class="{ editing: isEditing.contact }"
                 :disabled="!isEditing.contact"
                 placeholder="Enter mobile number"
-                maxlength="10"
+                maxlength="13"
               />
               <button
                 v-if="!isEditing.contact"
@@ -193,5 +194,5 @@
   </div>
 </template>
 
-<script src="./ProfilePage.js"></script>
-<style src="./ProfilePage.css" scoped></style>
+<script src="./ProfilePage.js" />
+<style src="./ProfilePage.css" scoped />

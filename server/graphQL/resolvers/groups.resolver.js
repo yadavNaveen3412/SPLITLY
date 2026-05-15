@@ -4,11 +4,19 @@ import {
   requireGroupMember,
 } from "../../src/middleware/guards.js";
 import { groupService } from "../../src/services/group.service.js";
-import { sanitizeString } from "../../src/middleware/sanitizeUserInput.js";
+import {
+  validateGroupTitle,
+  validateGroupType,
+  validateProfilePic,
+  validateProfilePicVersion,
+  validateUUID,
+} from "../../src/utils/validation.js";
+import { AppError } from "../../src/utils/AppError.js";
 
 export const groupResolvers = {
   Query: {
     getGroups: requireAuth((_, { type }, { prisma, user }) => {
+      type = validateGroupType(type);
       return prisma.group.findMany({
         where: {
           AND: [
@@ -30,8 +38,9 @@ export const groupResolvers = {
     }),
 
     getGroupDetails: requireGroupMember((_, { id }, { prisma, user }) => {
+      const groupId = validateUUID(id);
       return prisma.group.findUnique({
-        where: { id: String(id) },
+        where: { id: groupId },
         include: {
           members: { include: { user: true } },
         },
@@ -40,12 +49,16 @@ export const groupResolvers = {
 
     getPersonalGroupId: requireAuth(
       async (_, { otherUserId }, { prisma, user }) => {
-        const currentUserId = user.id;
+        otherUserId = validateUUID(otherUserId);
         if (!otherUserId) {
-          throw new Error("otherUserId required");
+          throw new AppError(
+            400,
+            "VALIDATION_ERROR",
+            "Other user ID is required",
+          );
         }
 
-        if (currentUserId === otherUserId) {
+        if (user.id === otherUserId) {
           return null;
         }
 
@@ -54,7 +67,7 @@ export const groupResolvers = {
         FROM groups g
         JOIN group_members gm ON gm."groupId" = g.id
         WHERE g.type = 'PERSONAL'
-          AND gm."userId" IN (${currentUserId}, ${otherUserId})
+          AND gm."userId" IN (${user.id}, ${otherUserId})
         GROUP BY g.id
         HAVING COUNT(DISTINCT gm."userId") = 2
           AND COUNT(*) = 2
@@ -66,6 +79,7 @@ export const groupResolvers = {
     ),
 
     getCommonGroups: requireAuth(async (_, { friendId }, { prisma, user }) => {
+      friendId = validateUUID(friendId);
       const groups = await prisma.group.findMany({
         where: {
           type: "GROUP",
@@ -93,7 +107,18 @@ export const groupResolvers = {
     }),
 
     addMemberToGroup: requireGroupMember(
-      async (_, { groupId, userIds }, { prisma }) => {
+      async (_, { groupId, userIds }, { prisma, user }) => {
+        groupId = validateUUID(groupId);
+
+        userIds = [...new Set(userIds)].map(validateUUID);
+
+        if (!userIds.length) {
+          throw new AppError(
+            400,
+            "VALIDATION_ERROR",
+            "At least one member is required",
+          );
+        }
         const gService = groupService(prisma);
         return gService.addMembersToGroup(groupId, userIds);
       },
@@ -103,13 +128,12 @@ export const groupResolvers = {
       async (
         _,
         { groupId, title, profilePic, profilePicVersion },
-        { prisma },
+        { prisma, user },
       ) => {
-        title = sanitizeString(title);
-
-        if (!title || title.length < 3 || title.length > 50) {
-          throw new Error("Group title must be between 3 and 50 characters.");
-        }
+        title = validateGroupTitle(title);
+        groupId = validateUUID(groupId);
+        profilePic = validateProfilePic(profilePic);
+        profilePicVersion = validateProfilePicVersion(profilePicVersion);
 
         return prisma.group.update({
           where: { id: groupId },
@@ -119,16 +143,29 @@ export const groupResolvers = {
       },
     ),
 
-    deleteGroup: requireGroupMember(async (_, { groupId }, { prisma }) => {
-      const deletedG = await prisma.group.delete({
-        where: { id: groupId },
-      });
-      return !!deletedG;
-    }),
+    deleteGroup: requireGroupMember(
+      async (_, { groupId }, { prisma, user }) => {
+        groupId = validateUUID(groupId);
+        const deletedG = await prisma.group.delete({
+          where: { id: groupId },
+        });
+        return !!deletedG;
+      },
+    ),
 
     getOrCreateNonGroup: requireAuth(
       async (_, { memberIds }, { prisma, user }) => {
-        const normalizedMemberIds = [...new Set(memberIds)].sort();
+        const normalizedMemberIds = [...new Set([memberIds, user.id])]
+          .map(validateUUID)
+          .sort();
+
+        if (normalizedMemberIds.length < 2) {
+          throw new AppError(
+            400,
+            "VALIDATION_ERROR",
+            "At least 2 members are required",
+          );
+        }
         const groups = await prisma.group.findMany({
           where: {
             type: "NON_GROUP",

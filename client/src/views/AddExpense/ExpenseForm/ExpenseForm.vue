@@ -5,6 +5,8 @@
       :form-data="formData"
       :categories="categories"
       :is-form-valid="isFormValid"
+      :backend-error="backendError"
+      :general-error="generalError"
       @update:form-data="updateFormData"
       @amount-change="handleAmountChange"
       @cancel="$emit('cancel')"
@@ -63,5 +65,5 @@
   </div>
 </template>
 
-<script src="./ExpenseForm.js"></script>
-<style src="./ExpenseForm.css"></style>
+<script src="./ExpenseForm.js" />
+<style src="./ExpenseForm.css" scoped />

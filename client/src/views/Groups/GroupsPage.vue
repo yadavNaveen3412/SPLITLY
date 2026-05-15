@@ -31,22 +31,5 @@
   </div>
 </template>
 
-<script>
-import BaseHeader from "@/components/layout/BaseHeader/BaseHeader.vue";
-import BaseButton from "@/components/ui/BaseButton/BaseButton.vue";
-import BaseList from "@/components/layout/BaseList/BaseList.vue";
-import GroupListItem from "@/components/features/GroupListItem/GroupListItem.vue";
-import GroupsLogic from "./Groups.js";
-
-export default {
-  ...GroupsLogic,
-  components: {
-    BaseHeader,
-    BaseButton,
-    BaseList,
-    GroupListItem,
-  },
-};
-</script>
-
+<script src="./Groups.js" />
 <style src="./Groups.css" scoped />

@@ -1,6 +1,7 @@
 import { mapGetters, mapActions } from "vuex";
 import ConfirmSettlement from "../ConfirmSettlement/ConfirmSettlement.vue";
 import { calculateNetWithFriend, userFriendBalance } from "@/utils/settlements";
+import { handleApolloError } from "@/utils/errorHandler";
 
 export default {
   name: "PersonalFriendSettlement",
@@ -48,22 +49,30 @@ export default {
     ...mapActions("auth", ["getUserById"]),
 
     async getUserName() {
-      const user = await this.getUserById(this.friendId);
-      this.friendName = user.name;
+      try {
+        const user = await this.getUserById(this.friendId);
+        this.friendName = user.name;
+      } catch (error) {
+        handleApolloError(error);
+      }
     },
 
     async openConfirmationModal(item) {
-      this.selectedUserItem = item;
-      if (item.overall) {
-        this.group = {};
+      try {
+        this.selectedUserItem = item;
+        if (item.overall) {
+          this.group = {};
+
+          this.showConfirmModal = true;
+          return;
+        }
+
+        this.group = await this.fetchGroupDetails(item.groupId);
 
         this.showConfirmModal = true;
-        return;
+      } catch (error) {
+        handleApolloError(error);
       }
-
-      this.group = await this.fetchGroupDetails(item.groupId);
-
-      this.showConfirmModal = true;
     },
     closeConfirmationModal() {
       this.showConfirmModal = false;
@@ -77,9 +86,9 @@ export default {
   async mounted() {
     await this.getUserName();
     this.friendTransaction = await userFriendBalance(
-      this.user.id,
+      // this.user.id,
       this.friendId,
     );
-    this.net = await calculateNetWithFriend(this.user.id, this.friendId);
+    this.net = await calculateNetWithFriend(this.friendId);
   },
 };

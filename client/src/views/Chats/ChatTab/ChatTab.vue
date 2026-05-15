@@ -64,6 +64,7 @@
     v-if="page === 'groups' || shouldShowMessageBar"
     class="message-input-container"
   >
+    <ErrorWrapper :message="generalError" />
     <input
       v-model="newMessage"
       type="text"

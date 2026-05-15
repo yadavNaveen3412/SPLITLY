@@ -3,14 +3,27 @@ import {
   requireAuth,
   requireGroupMember,
 } from "../../src/middleware/guards.js";
+import { AppError } from "../../src/utils/AppError.js";
+import {
+  sanitizeString,
+  validateFilename,
+  validateUUID,
+} from "../../src/utils/validation.js";
 
 export const cloudinaryResolvers = {
   Mutation: {
     requestUploadSignature: requireAuth(
       async (_, { dirName, groupId, fileName }, context) => {
+        dirName = sanitizeString(dirName);
+        fileName = validateFilename(fileName);
         if (dirName === "groups") {
+          groupId = validateUUID(groupId);
           if (!groupId)
-            throw new Error("groupId is required for group uploads");
+            throw new AppError(
+              400,
+              "VALIDATION_ERROR",
+              "Group ID is required for group uploads",
+            );
           return requireGroupMember(async () => {
             return generateCloudinarySignature(dirName, groupId, fileName);
           })(_, { dirName, groupId, fileName }, context);
@@ -18,7 +31,11 @@ export const cloudinaryResolvers = {
 
         if (dirName === "users") {
           if (groupId)
-            throw new Error("groupId should not be provided for user uploads");
+            throw new AppError(
+              400,
+              "VALIDATION_ERROR",
+              "Group ID should not be provided for user uploads",
+            );
           return generateCloudinarySignature(
             dirName,
             context.user.id,
@@ -26,7 +43,11 @@ export const cloudinaryResolvers = {
           );
         }
 
-        throw new Error("Invalid dirName. Must be 'users' or 'groups'.");
+        throw new AppError(
+          400,
+          "VALIDATION_ERROR",
+          "Invalid Upload Directory. Must be 'users' or 'groups'.",
+        );
       },
     ),
   },

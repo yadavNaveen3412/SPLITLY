@@ -15,18 +15,7 @@
       <!-- Body -->
       <div class="modal-body">
         <!-- Error Alert -->
-        <div
-          v-if="error"
-          class="alert alert-danger alert-dismissible fade show"
-          role="alert"
-        >
-          {{ error }}
-          <button
-            type="button"
-            class="btn-close"
-            @click="$emit('clear-error')"
-          ></button>
-        </div>
+        <ErrorWrapper :message="error" />
 
         <!-- Success Message -->
         <div
@@ -86,7 +75,7 @@
             >
               <div class="member-info">
                 <div class="member-avatar">
-                  {{ member.name.charAt(0).toUpperCase() }}
+                  {{ member?.name?.charAt(0).toUpperCase() }}
                 </div>
                 <div class="member-details">
                   <div class="member-name">{{ member.name }}</div>
@@ -141,7 +130,7 @@
               @click="$emit('add-friend', friend)"
             >
               <div class="friend-avatar">
-                {{ friend.name.charAt(0).toUpperCase() }}
+                {{ friend?.name?.charAt(0).toUpperCase() }}
               </div>
               <div class="friend-details">
                 <div class="friend-name">{{ friend.name }}</div>
@@ -191,4 +180,4 @@
 </template>
 
 <script src="./MemberSelectorModal.js" />
-<style scoped src="./MemberSelectorModal.css" />
+<style src="./MemberSelectorModal.css" scoped />

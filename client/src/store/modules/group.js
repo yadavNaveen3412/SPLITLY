@@ -1,4 +1,5 @@
 import { groupService, getOrCreateNonGroup } from "@/services/groups.service";
+import { handleApolloError } from "@/utils/errorHandler";
 
 const state = () => ({
   groups: [],
@@ -52,15 +53,14 @@ const actions = {
   //   }
   // },
 
-  async fetchGroupsWithBalances({ commit, rootGetters }, type) {
+  async fetchGroupsWithBalances({ commit }, type) {
     commit("SET_LOADING", true);
     try {
       const groups = await groupService.getGroups(type);
-      const userId = rootGetters["auth/getUserId"];
       const { userAllBalances } = await import("@/utils/settlements");
 
       // Single call to get all balances for the user
-      const allBalances = await userAllBalances(userId);
+      const allBalances = await userAllBalances();
 
       // Create a map of groupId -> netAmount for quick lookup
       const groupBalanceMap = {};
@@ -79,8 +79,10 @@ const actions = {
       });
 
       commit("SET_GROUPS", groupsWithBalances);
-    } catch (err) {
-      console.error("Failed to fetch groups with balances", err);
+    } catch (error) {
+      handleApolloError(error);
+
+      commit("SET_GROUPS", []);
     } finally {
       commit("SET_LOADING", false);
     }
@@ -109,78 +111,61 @@ const actions = {
 
     try {
       commit("ADD_GROUP", tempGroup);
+
       const group = await groupService.createGroup(payload);
+
       commit("ADD_GROUP", { ...group, clientId });
+
       return group;
-    } catch (e) {
-      console.log("failed to create group", e);
+    } catch (error) {
       commit("DELETE_GROUP", clientId);
-      throw e;
+
+      throw error;
     }
   },
 
   async addMembers({ commit }, { groupId, userIds }) {
-    try {
-      const { addMemberToGroup, updatedGroup } =
-        await groupService.addMemberToGroup(groupId, userIds);
-      if (updatedGroup) {
-        commit("UPDATE_GROUP", updatedGroup);
-      }
-      return addMemberToGroup;
-    } catch (e) {
-      console.log("failed to add members", e);
-      throw e;
+    const addMemberToGroup = await groupService.addMemberToGroup(
+      groupId,
+      userIds,
+    );
+    const updatedGroup = addMemberToGroup?.updatedGroup;
+
+    if (updatedGroup) {
+      commit("UPDATE_GROUP", updatedGroup);
     }
+
+    return addMemberToGroup;
   },
 
   async fetchGroupDetails({ commit }, groupId) {
-    try {
-      const { getGroupDetails } = await groupService.getGroupDetails(groupId);
-      commit("ADD_GROUP", getGroupDetails); // Use ADD_GROUP which handles existing groups
-      return getGroupDetails;
-    } catch (e) {
-      console.log("failed to fetch group details", e);
-      throw e;
-    }
+    const getGroupDetails = await groupService.getGroupDetails(groupId);
+
+    commit("ADD_GROUP", getGroupDetails);
+
+    return getGroupDetails;
   },
 
   async editGroupDetails({ commit }, payload) {
-    try {
-      const updatedGroup = await groupService.editGroupDetails(payload);
-      commit("UPDATE_GROUP", updatedGroup);
-      // return renameGroup;
-    } catch (e) {
-      console.log("failed to rename group", e);
-      throw e;
-    }
+    const updatedGroup = await groupService.editGroupDetails(payload);
+
+    commit("UPDATE_GROUP", updatedGroup);
   },
 
   async deleteGroup({ commit }, { groupId }) {
-    try {
-      await groupService.deleteGroup(groupId);
-      commit("DELETE_GROUP", groupId);
-    } catch (e) {
-      console.log("failed to delete group", e);
-      throw e;
-    }
+    await groupService.deleteGroup(groupId);
+
+    commit("DELETE_GROUP", groupId);
   },
 
   async getPersonalGroupId(_, otherUserId) {
-    try {
-      return await groupService.getPersonalGroupId(otherUserId);
-    } catch (e) {
-      console.log("failed to get personal group id", e);
-      throw e;
-    }
+    return await groupService.getPersonalGroupId(otherUserId);
   },
 
   async getNonGroupId(_, friendIdsArray) {
-    try {
-      const { id } = await getOrCreateNonGroup(friendIdsArray);
-      return id;
-    } catch (error) {
-      console.log("Error creating non group", error);
-    }
+    const { id } = await getOrCreateNonGroup(friendIdsArray);
+
+    return id;
   },
 };
 const getters = {

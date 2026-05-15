@@ -1,5 +1,5 @@
 <template>
-  <div v-if="isOpen" class="modal-overlay">
+  <div class="modal-overlay">
     <div
       :class="[
         'modal-container',
@@ -67,8 +67,10 @@
             <ExpenseForm
               :participants="finalParticipants"
               :current-user="currentUser"
+              :backend-error="backendError"
               @submit="handleSubmit"
               @cancel="closeModal"
+              @clear-backend-error="backendError = ''"
             />
           </div>
         </transition>
@@ -88,5 +90,5 @@
   </div>
 </template>
 
-<script src="./AddExpenseModal.js"></script>
-<style src="./AddExpenseModal.css"></style>
+<script src="./AddExpenseModal.js" />
+<style src="./AddExpenseModal.css" scoped />

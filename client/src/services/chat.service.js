@@ -1,5 +1,5 @@
 import gql from "graphql-tag";
-import apolloClient from "@/apollo";
+import apolloClient from "@/apollo/client";
 
 const GET_CHATS = gql`
   query GetChats($group_id: ID!) {
@@ -47,32 +47,23 @@ const MESSAGE_SUBSCRIPTION = gql`
 `;
 
 export const getChats = async (group_id) => {
-  try {
-    const { data } = await apolloClient.query({
-      query: GET_CHATS,
-      variables: { group_id },
-      fetchPolicy: "cache-first",
-    });
+  const { data } = await apolloClient.query({
+    query: GET_CHATS,
+    variables: { group_id },
+    fetchPolicy: "cache-first",
+  });
 
-    return data.getChats;
-  } catch (error) {
-    console.error("Error occured:: ", error);
-    throw error;
-  }
+  return data.getChats;
 };
 
 export const sendChat = async (payload) => {
-  try {
-    const { group_id, chatMessage, clientId } = payload;
-    const { data } = await apolloClient.mutate({
-      mutation: SEND_CHAT,
-      variables: { group_id, chatMessage, clientId },
-    });
-    return data.sendChat;
-  } catch (error) {
-    console.log("Error:", error);
-    throw error;
-  }
+  const { group_id, chatMessage, clientId } = payload;
+  const { data } = await apolloClient.mutate({
+    mutation: SEND_CHAT,
+    variables: { group_id, chatMessage, clientId },
+  });
+
+  return data.sendChat;
 };
 
 export const subscribeToMessage = (groupId, callback) => {
@@ -87,7 +78,7 @@ export const subscribeToMessage = (groupId, callback) => {
         callback(data.messageAdded);
       }
     },
-    error: (err) => console.error("Subscription Error:", err),
+    error: () => {},
   });
 
   return subscription;

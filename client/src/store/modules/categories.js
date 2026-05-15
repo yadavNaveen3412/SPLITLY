@@ -1,4 +1,5 @@
 import { categoryService } from "@/services/categories.service";
+import { handleApolloError } from "@/utils/errorHandler";
 
 const state = () => ({
   categories: [],
@@ -20,9 +21,11 @@ const actions = {
 
     try {
       const categories = await categoryService.getCategories();
+
       commit("SET_CATEGORIES", categories);
     } catch (error) {
-      console.error("Error loading categories: ", error);
+      handleApolloError(error);
+
       commit("SET_CATEGORIES", []);
     } finally {
       commit("SET_LOADING", false);

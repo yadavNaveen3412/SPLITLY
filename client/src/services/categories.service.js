@@ -1,5 +1,5 @@
 import gql from "graphql-tag";
-import apolloClient from "@/apollo";
+import apolloClient from "@/apollo/client";
 
 const GET_ALL_CATEGORIES = gql`
   query GetAllCategories {
@@ -13,15 +13,10 @@ const GET_ALL_CATEGORIES = gql`
 
 export const categoryService = {
   getCategories: async () => {
-    try {
-      const { data } = await apolloClient.query({
-        query: GET_ALL_CATEGORIES,
-        fetchPolicy: "cache-first",
-      });
-      return data.getAllCategories;
-    } catch (error) {
-      console.error("Error fetching categories' data: ", error);
-      throw error;
-    }
+    const { data } = await apolloClient.query({
+      query: GET_ALL_CATEGORIES,
+      fetchPolicy: "cache-first",
+    });
+    return data.getAllCategories;
   },
 };

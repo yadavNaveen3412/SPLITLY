@@ -3,6 +3,7 @@ import {
   sendChat,
   subscribeToMessage,
 } from "@/services/chat.service";
+import { handleApolloError } from "@/utils/errorHandler";
 
 const state = () => ({
   chats: [],
@@ -54,34 +55,31 @@ const mutations = {
 
 const actions = {
   async loadChats({ commit, state, dispatch, rootGetters }, payload) {
+    if (!state.groupId) return;
+
     commit("SET_LOADING", true);
+
     try {
       await dispatch("setGroupId", payload);
-
-      if (!state.groupId) {
-        commit("SET_CHATS", []);
-        return;
-      }
 
       const rawChats = await getChats(state.groupId);
       const chats = rawChats.map((chat) => ({
         ...chat,
         sentByYou: chat.senderId === rootGetters["auth/getUserId"],
       }));
+
       commit("SET_CHATS", chats);
-    } catch (err) {
-      console.log("An error occured:", err);
+    } catch (error) {
+      handleApolloError(error);
     } finally {
       commit("SET_LOADING", false);
     }
   },
 
   async sendChat({ commit, state, rootGetters }, payload) {
+    if (!state.groupId) return;
+
     commit("SET_LOADING", true);
-    if (!state.groupId) {
-      console.log("Not a friend");
-      return;
-    }
 
     const clientId = `temp_${Date.now()}`;
     const tempMessage = {
@@ -97,17 +95,19 @@ const actions = {
 
     try {
       commit("ADD_CHAT", tempMessage);
+
       await sendChat({
         group_id: state.groupId,
         chatMessage: payload.chatMessage,
         clientId,
       });
-    } catch (err) {
+    } catch (error) {
       commit(
         "SET_CHATS",
         state.chats.filter((c) => c.clientId !== clientId),
       );
-      console.log("An error occured:", err);
+
+      throw error;
     } finally {
       commit("SET_LOADING", false);
     }

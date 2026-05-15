@@ -1,8 +1,8 @@
 import gql from "graphql-tag";
-import apolloClient from "@/apollo";
+import apolloClient from "@/apollo/client";
 
 const GET_GROUPS = gql`
-  query GetGroups($type: String) {
+  query GetGroups($type: String!) {
     getGroups(type: $type) {
       title
       id
@@ -136,12 +136,13 @@ const GET_OR_CREATE_NON_GROUP = gql`
 
 export const groupService = {
   async getGroups(type) {
-    const resp = await apolloClient.query({
+    const { data } = await apolloClient.query({
       query: GET_GROUPS,
       variables: { type },
       fetchPolicy: "cache-first",
     });
-    return resp.data.getGroups;
+
+    return data.getGroups;
   },
 
   async createGroup(input) {
@@ -151,69 +152,69 @@ export const groupService = {
       refetchQueries: [{ query: GET_GROUPS, variables: { type: input.type } }],
       awaitRefetchQueries: true,
     });
+
     return data.createGroup;
   },
 
   async getGroupDetails(id) {
-    const resp = await apolloClient.query({
+    const { data } = await apolloClient.query({
       query: GET_GROUP_DETAILS,
       variables: { id },
       fetchPolicy: "cache-first",
     });
-    return resp.data;
+
+    return data.getGroupDetails;
   },
 
   async editGroupDetails(payload) {
-    const resp = await apolloClient.mutate({
+    const { data } = await apolloClient.mutate({
       mutation: EDIT_GROUP_DETAILS,
       variables: payload,
       fetchPolicy: "no-cache",
     });
-    return resp.data;
+
+    return data.editGroupDetails;
   },
 
   async deleteGroup(groupId) {
-    const resp = await apolloClient.mutate({
+    const { data } = await apolloClient.mutate({
       mutation: DELETE_GROUP,
       variables: { groupId },
       fetchPolicy: "no-cache",
     });
-    return resp.data;
+
+    return data.deleteGroup;
   },
 
   async addMemberToGroup(groupId, userIds) {
-    const resp = await apolloClient.mutate({
+    const { data } = await apolloClient.mutate({
       mutation: ADD_MEMBER_TO_GROUP,
       variables: { groupId, userIds },
       fetchPolicy: "no-cache",
     });
-    return resp.data;
+
+    return data.addMemberToGroup;
   },
 
   async getPersonalGroupId(otherUserId) {
-    const resp = await apolloClient.query({
+    const { data } = await apolloClient.query({
       query: GET_PERSONAL_GROUP_ID,
       variables: { otherUserId },
       fetchPolicy: "no-cache",
     });
 
-    return resp.data.getPersonalGroupId;
+    return data.getPersonalGroupId;
   },
 };
 
 export const getCommonGroups = async (friendId) => {
-  try {
-    const { data } = await apolloClient.query({
-      query: GET_COMMON_GROUPS,
-      variables: { friendId },
-      fetchPolicy: "no-cache",
-    });
+  const { data } = await apolloClient.query({
+    query: GET_COMMON_GROUPS,
+    variables: { friendId },
+    fetchPolicy: "no-cache",
+  });
 
-    // console.log("Common groups", data.getCommonGroups);
-    return data.getCommonGroups;
-  } catch (error) {
-    console.log("Error getting common groups:", error);
-  }
+  return data.getCommonGroups;
 };
 
 export const getOrCreateNonGroup = async (memberIds) => {

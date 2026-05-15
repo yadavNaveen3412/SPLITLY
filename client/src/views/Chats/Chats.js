@@ -2,7 +2,7 @@ import { mapActions, mapGetters } from "vuex";
 import ChatTab from "./ChatTab/ChatTab.vue";
 import ExpenseTab from "./ExpenseTab/ExpenseTab.vue";
 import { getInitials } from "@/utils/stringHelpers";
-import { calculateNetWithFriend } from "@/utils/settlements";
+import { handleApolloError } from "@/utils/errorHandler";
 
 export default {
   name: "ChatsPage",
@@ -104,7 +104,7 @@ export default {
         }
         await this.calculateNet();
       } catch (error) {
-        console.error("Error loading resource:", error);
+        handleApolloError(error);
       } finally {
         this.setLoading(false);
       }
@@ -143,12 +143,11 @@ export default {
     getInitials,
 
     async calculateNet() {
-      if (this.currentPage !== "friends" || !this.id || !this.user?.id) {
-        return;
+      if (this.currentPage === "friends") {
+        this.net = this.friend?.netBalance;
+      } else {
+        this.net = this.group?.netBalance;
       }
-      this.loadingNet = true;
-      this.net = await calculateNetWithFriend(this.user.id, this.id);
-      this.loadingNet = false;
     },
 
     profileUrl(entity) {

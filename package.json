@@ -9,6 +9,10 @@
   "scripts": {
     "dev:client": "npm run serve --workspace=client",
     "dev:server": "npm start --workspace=server",
-    "install:all": "npm install"
+    "install:all": "npm install",
+    "build": "npm run build --workspace=client"
+  },
+  "dependencies": {
+    "zod": "^4.4.3"
   }
 }

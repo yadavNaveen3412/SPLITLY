@@ -55,6 +55,10 @@
         </option>
       </select>
     </div>
+    <div class="error-padding">
+      <ErrorWrapper :message="backendError" />
+      <ErrorWrapper :message="generalError" />
+    </div>
 
     <div class="form-actions">
       <button class="btn btn-secondary" @click="$emit('cancel')">Cancel</button>
@@ -69,5 +73,5 @@
   </div>
 </template>
 
-<script src="./ExpenseDetails.js"></script>
-<style src="./ExpenseDetails.css" scoped></style>
+<script src="./ExpenseDetails.js" />
+<style src="./ExpenseDetails.css" scoped />

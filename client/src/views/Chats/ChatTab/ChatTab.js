@@ -1,8 +1,13 @@
 import { mapActions, mapGetters } from "vuex";
 import ChatImage from "@/assets/images/ChatImage.png";
+import { handleApolloError } from "@/utils/errorHandler";
+import ErrorWrapper from "@/components/ui/ErrorWrapper/ErrorWrapper.vue";
 
 export default {
   name: "ChatTab",
+  components: {
+    ErrorWrapper,
+  },
 
   props: {
     id: {
@@ -23,6 +28,7 @@ export default {
       isCheckingFriend: false,
       userCache: {},
       ChatImage,
+      generalError: "",
     };
   },
 
@@ -44,6 +50,10 @@ export default {
   },
 
   watch: {
+    newMessage() {
+      this.generalError = "";
+    },
+
     chats: {
       async handler() {
         // Load sender names for group chats
@@ -109,7 +119,7 @@ export default {
       if (!text) return;
 
       if (text.length > 1000) {
-        alert("Message must not exceed 1000 characters.");
+        this.generalError = "Message must not exceed 1000 characters.";
         return;
       }
       const message = {
@@ -118,14 +128,18 @@ export default {
         type: this.page,
       };
 
-      await this.sendChat(message);
-      this.newMessage = "";
+      try {
+        await this.sendChat(message);
+        this.newMessage = "";
 
-      this.$nextTick(() => {
-        setTimeout(() => {
-          this.scrollToBottom({ smooth: true });
-        }, 30);
-      });
+        this.$nextTick(() => {
+          setTimeout(() => {
+            this.scrollToBottom({ smooth: true });
+          }, 30);
+        });
+      } catch (error) {
+        handleApolloError(error);
+      }
     },
 
     scrollToBottom() {
@@ -146,7 +160,7 @@ export default {
           await this.subscribeToChats();
         }
       } catch (error) {
-        console.log("Error creating friend", error);
+        handleApolloError(error);
       }
     },
 

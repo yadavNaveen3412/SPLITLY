@@ -1,4 +1,5 @@
 import { settlementService } from "@/services/settlements.service";
+import { handleApolloError } from "@/utils/errorHandler";
 
 const state = () => ({
   settlements: [],
@@ -50,17 +51,21 @@ const actions = {
 
     try {
       commit("ADD_SETTLEMENT", tempSettlement);
+
       const result = await settlementService.createSettlement(payload);
+
       commit("ADD_SETTLEMENT", { ...result, clientId });
 
       // Trigger global balance refresh
-      dispatch("friends/loadFriends", null, { root: true });
-      dispatch("group/fetchGroupsWithBalances", "GROUP", { root: true });
+      await Promise.all([
+        dispatch("friends/loadFriends", null, { root: true }),
+        dispatch("group/fetchGroupsWithBalances", "GROUP", { root: true }),
+      ]);
 
       return result;
     } catch (error) {
-      console.log(`Error creating settlement: ${error}`);
       commit("REMOVE_SETTLEMENT", clientId);
+
       throw error;
     }
   },
@@ -71,12 +76,14 @@ const actions = {
       const settlements = await settlementService.getSettlementsByGroup(
         groupId,
       );
+
       commit("SET_SETTLEMENTS", settlements);
+
       return settlements;
     } catch (error) {
-      console.log(`Error getting settlements: ${error}`);
+      handleApolloError(error);
+
       commit("SET_SETTLEMENTS", []);
-      throw error;
     } finally {
       commit("SET_LOADING", false);
     }

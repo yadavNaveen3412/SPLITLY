@@ -1,5 +1,10 @@
+import ErrorWrapper from "@/components/ui/ErrorWrapper/ErrorWrapper.vue";
+
 export default {
   name: "MemberSelectorModal",
+  components: {
+    ErrorWrapper,
+  },
   props: {
     friends: {
       type: Array,

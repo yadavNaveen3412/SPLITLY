@@ -1,8 +1,19 @@
 import { mapGetters, mapActions } from "vuex";
 import { getInitials } from "@/utils/stringHelpers";
+import BaseHeader from "@/components/layout/BaseHeader/BaseHeader.vue";
+import BaseButton from "@/components/ui/BaseButton/BaseButton.vue";
+import BaseList from "@/components/layout/BaseList/BaseList.vue";
+import GroupListItem from "@/components/features/GroupListItem/GroupListItem.vue";
+import { handleApolloError } from "@/utils/errorHandler";
 
 export default {
   name: "GroupsPage",
+  components: {
+    BaseHeader,
+    BaseButton,
+    BaseList,
+    GroupListItem,
+  },
   computed: {
     ...mapGetters("group", ["getGroups", "isLoading"]),
     groups() {
@@ -21,16 +32,24 @@ export default {
     },
   },
   watch: {
-    $route(to) {
+    async $route(to) {
       if (to.name === "Groups") {
-        this.fetchGroupsWithBalances("GROUP");
+        try {
+          await this.fetchGroupsWithBalances("GROUP");
+        } catch (error) {
+          handleApolloError(error);
+        }
       }
     },
   },
 
   async created() {
-    if (!this.groups || this.groups.length === 0) {
-      await this.fetchGroupsWithBalances("GROUP");
+    try {
+      if (!this.groups || this.groups.length === 0) {
+        await this.fetchGroupsWithBalances("GROUP");
+      }
+    } catch (error) {
+      handleApolloError(error);
     }
   },
 };

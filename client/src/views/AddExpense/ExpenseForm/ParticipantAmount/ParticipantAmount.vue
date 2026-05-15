@@ -71,5 +71,5 @@
   </div>
 </template>
 
-<script src="./ParticipantAmount.js"></script>
-<style src="./ParticipantAmount.css"></style>
+<script src="./ParticipantAmount.js" />
+<style src="./ParticipantAmount.css" scoped />

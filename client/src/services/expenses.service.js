@@ -1,5 +1,5 @@
 import gql from "graphql-tag";
-import apolloClient from "@/apollo";
+import apolloClient from "@/apollo/client";
 
 const EXPENSE_FRAGMENT = gql`
   fragment ExpenseFields on Expense {
@@ -104,84 +104,58 @@ const SETTLE_GROUP = gql`
 
 export const expenseService = {
   async getGroupExpenses(groupId) {
-    try {
-      const { data } = await apolloClient.query({
-        query: GET_GROUP_EXPENSES,
-        variables: { groupId },
-        fetchPolicy: "network-only",
-      });
-      return data.getGroupExpenses;
-    } catch (error) {
-      console.log("Error fetching group expenses:", error);
-      throw error;
-    }
+    const { data } = await apolloClient.query({
+      query: GET_GROUP_EXPENSES,
+      variables: { groupId },
+      fetchPolicy: "network-only",
+    });
+
+    return data.getGroupExpenses;
   },
 
   async getFriendExpenses(friendId) {
-    try {
-      const { data } = await apolloClient.query({
-        query: GET_FRIEND_EXPENSES,
-        variables: { friendId },
-        fetchPolicy: "network-only",
-      });
-      return data.getFriendExpenses;
-    } catch (error) {
-      console.log("Error fetching friend expenses:", error);
-      throw error;
-    }
+    const { data } = await apolloClient.query({
+      query: GET_FRIEND_EXPENSES,
+      variables: { friendId },
+      fetchPolicy: "network-only",
+    });
+
+    return data.getFriendExpenses;
   },
 
   async createExpense(input) {
-    console.log(`inout:`, input);
-    try {
-      const { data } = await apolloClient.mutate({
-        mutation: CREATE_EXPENSE,
-        variables: { input },
-      });
-      console.log(`Created expense:`, data.createExpense);
-      return data.createExpense;
-    } catch (error) {
-      console.log("Error creating expense:", error);
-      throw error;
-    }
+    const { data } = await apolloClient.mutate({
+      mutation: CREATE_EXPENSE,
+      variables: { input },
+    });
+
+    return data.createExpense;
   },
 
   async updateExpense(id, input) {
-    try {
-      const { data } = await apolloClient.mutate({
-        mutation: UPDATE_EXPENSE,
-        variables: { id, input },
-      });
-      return data.updateExpense;
-    } catch (error) {
-      console.log("Error updating expense:", error);
-      throw error;
-    }
+    const { data } = await apolloClient.mutate({
+      mutation: UPDATE_EXPENSE,
+      variables: { id, input },
+    });
+
+    return data.updateExpense;
   },
 
   async deleteExpense(id) {
-    try {
-      const { data } = await apolloClient.mutate({
-        mutation: DELETE_EXPENSE,
-        variables: { id },
-      });
-      return data.deleteExpense;
-    } catch (error) {
-      console.log("Error deleting expense:", error);
-      throw error;
-    }
+    const { data } = await apolloClient.mutate({
+      mutation: DELETE_EXPENSE,
+      variables: { id },
+    });
+
+    return data.deleteExpense;
   },
 
   async settleGroup(groupId) {
-    try {
-      const { data } = await apolloClient.mutate({
-        mutation: SETTLE_GROUP,
-        variables: { groupId },
-      });
-      return data.settleGroup;
-    } catch (error) {
-      console.log("Error settling group:", error);
-      throw error;
-    }
+    const { data } = await apolloClient.mutate({
+      mutation: SETTLE_GROUP,
+      variables: { groupId },
+    });
+
+    return data.settleGroup;
   },
 };

@@ -4,6 +4,8 @@ import {
   requireAuth,
   requireGroupMember,
 } from "../../src/middleware/guards.js";
+import { validateAmount, validateUUID } from "../../src/utils/validation.js";
+import { AppError } from "../../src/utils/AppError.js";
 
 export const settlementsResolvers = {
   Settlement: {
@@ -11,45 +13,59 @@ export const settlementsResolvers = {
   },
 
   Mutation: {
-    createSettlement: requireAuth(async (_, { input }, { prisma, user }) => {
-      const { group_id, payer_id, receiver_id, amount } = input;
+    createSettlement: requireGroupMember(
+      async (_, { input }, { prisma, user }) => {
+        const group_id = validateUUID(input.group_id);
+        const payer_id = validateUUID(input.payer_id);
+        const receiver_id = validateUUID(input.receiver_id);
+        const amount = validateAmount(input.amount);
 
-      const group = await prisma.group.findUnique({
-        where: { id: group_id },
-        select: { currentCycleId: true },
-      });
+        if (payer_id === receiver_id) {
+          throw new AppError(
+            400,
+            "VALIDATION_ERROR",
+            "Payer and receiver cannot be the same",
+          );
+        }
 
-      if (!group) throw new Error("Group not found");
-
-      const bService = balanceService(prisma);
-
-      return await prisma.$transaction(async (tx) => {
-        const settlement = await tx.settlement.create({
-          data: {
-            group_id,
-            payer_id,
-            receiver_id,
-            amount: Number(amount),
-            created_by: user.id,
-            cycleId: group.currentCycleId,
-          },
-          include: {
-            group: true,
-            payer: true,
-            receiver: true,
-            settlementCreator: true,
-          },
+        const group = await prisma.group.findUnique({
+          where: { id: group_id },
+          select: { currentCycleId: true },
         });
 
-        await bService.updateBalanceForSettlement(tx, settlement);
-        return settlement;
-      });
-    }),
+        if (!group) throw new AppError(404, "NOT_FOUND", "Group not found");
+
+        const bService = balanceService(prisma);
+
+        return await prisma.$transaction(async (tx) => {
+          const settlement = await tx.settlement.create({
+            data: {
+              group_id,
+              payer_id,
+              receiver_id,
+              amount,
+              created_by: user.id,
+              cycleId: group.currentCycleId,
+            },
+            include: {
+              group: true,
+              payer: true,
+              receiver: true,
+              settlementCreator: true,
+            },
+          });
+
+          await bService.updateBalanceForSettlement(tx, settlement);
+          return settlement;
+        });
+      },
+    ),
   },
 
   Query: {
     getSettlementsByGroup: requireGroupMember(
-      async (_, { group_id }, { prisma }) => {
+      async (_, { group_id }, { prisma, user }) => {
+        group_id = validateUUID(group_id);
         return await prisma.settlement.findMany({
           where: { group_id },
 
@@ -63,39 +79,37 @@ export const settlementsResolvers = {
       },
     ),
 
-    groupSettlements: requireGroupMember(async (_, { groupId }, { prisma }) => {
-      const settlement = settlementService(prisma);
-      return settlement.computeSettlements(groupId);
-    }),
+    groupSettlements: requireGroupMember(
+      async (_, { groupId }, { prisma, user }) => {
+        groupId = validateUUID(groupId);
+        const settlement = settlementService(prisma);
+        return settlement.computeSettlements(groupId);
+      },
+    ),
 
     myGroupBalances: requireGroupMember(
-      async (_, { userId, groupId }, { prisma, user }) => {
-        const resolvedUserId = userId || user.id;
+      async (_, { groupId }, { prisma, user }) => {
+        groupId = validateUUID(groupId);
         const settlement = settlementService(prisma);
-        return settlement.calculateUserBalanceList(resolvedUserId, groupId);
+        return settlement.calculateUserBalanceList(user.id, groupId);
       },
     ),
 
-    myAllBalances: requireAuth(async (_, { userId }, { prisma, user }) => {
-      const resolvedUserId = userId || user.id;
+    myAllBalances: requireAuth(async (_, __, { prisma, user }) => {
       const settlement = settlementService(prisma);
-      return await settlement.userAllBalances(resolvedUserId);
+      return await settlement.userAllBalances(user.id);
     }),
 
-    myFriendBalance: requireAuth(
-      async (_, { userId, friendId }, { prisma, user }) => {
-        const resolvedUserId = userId || user.id;
-        const settlement = settlementService(prisma);
-        return settlement.userFriendBalance(resolvedUserId, friendId);
-      },
-    ),
+    myFriendBalance: requireAuth(async (_, { friendId }, { prisma, user }) => {
+      friendId = validateUUID(friendId);
+      const settlement = settlementService(prisma);
+      return settlement.userFriendBalance(user.id, friendId);
+    }),
 
-    myNetWithFriend: requireAuth(
-      async (_, { userId, friendId }, { prisma, user }) => {
-        const resolvedUserId = userId || user.id;
-        const settlement = settlementService(prisma);
-        return settlement.calculateNetWithFriend(resolvedUserId, friendId);
-      },
-    ),
+    myNetWithFriend: requireAuth(async (_, { friendId }, { prisma, user }) => {
+      friendId = validateUUID(friendId);
+      const settlement = settlementService(prisma);
+      return settlement.calculateNetWithFriend(user.id, friendId);
+    }),
   },
 };

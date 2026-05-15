@@ -46,5 +46,4 @@
 </template>
 
 <script src="./EditGroup.js" />
-
 <style src="./EditGroup.css" scoped />

@@ -15,14 +15,7 @@
       <!-- Body -->
       <div class="modal-body">
         <!-- Error Alert -->
-        <div
-          v-if="error"
-          class="alert alert-danger alert-dismissible fade show"
-          role="alert"
-        >
-          {{ error }}
-          <button type="button" class="btn-close" @click="error = ''"></button>
-        </div>
+        <ErrorWrapper :message="error" />
 
         <!-- Success Message -->
         <div
@@ -104,5 +97,5 @@
   </div>
 </template>
 
-<script src="./EditGroupModal.js"></script>
-<style scoped src="./EditGroupModal.css"></style>
+<script src="./EditGroupModal.js" />
+<style src="./EditGroupModal.css" scoped />

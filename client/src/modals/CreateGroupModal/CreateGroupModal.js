@@ -1,7 +1,15 @@
 import { mapActions, mapGetters } from "vuex";
+import { handleApolloError } from "@/utils/errorHandler";
+import ErrorWrapper from "@/components/ui/ErrorWrapper/ErrorWrapper.vue";
+import { useToast } from "vue-toastification";
+
+const toast = useToast();
 
 export default {
   name: "CreateGroupModal",
+  components: {
+    ErrorWrapper,
+  },
   data() {
     return {
       groupTitle: "",
@@ -10,7 +18,6 @@ export default {
       profilePhotoPreview: null,
       isUploading: false,
       error: "",
-      successMessage: "",
       searchQuery: "",
       emailInput: "",
       isAddingMembers: false,
@@ -42,7 +49,6 @@ export default {
       this.profilePhoto = null;
       this.profilePhotoPreview = null;
       this.error = "";
-      this.successMessage = "";
       this.$router.back();
     },
 
@@ -139,9 +145,7 @@ export default {
 
       this.memberSelectorSuccess = `${this.emailInput} will be invited to join`;
       this.emailInput = "";
-      setTimeout(() => {
-        this.memberSelectorSuccess = "";
-      }, 2000);
+      this.memberSelectorSuccess = "";
     },
 
     handleAddFriend(friend) {
@@ -188,12 +192,6 @@ export default {
           payload.profilePic = public_id;
           payload.profilePicVersion = version.toString();
         }
-        // const memberIds = this.selectedMembers
-        //   .filter((m) => !m.isPending)
-        //   .map((m) => m.id);
-        // const invitedEmails = this.selectedMembers
-        //   .filter((m) => m.isPending)
-        //   .map((m) => m.email);
 
         await this.createGroup({
           title: payload.title,
@@ -203,16 +201,26 @@ export default {
           members: payload.members,
         });
 
-        this.successMessage = "Group created successfully!";
-        setTimeout(() => {
-          this.closeModal();
-        }, 1500);
-      } catch (err) {
-        console.error("Failed to create group", err);
-        this.error = err.message || "Failed to create group. Please try again.";
+        toast.success("Group created successfully");
+        this.closeModal();
+      } catch (error) {
+        handleApolloError(error);
+
+        const gqlError = error.graphQLErrors?.[0];
+        if (gqlError?.extensions?.code === "VALIDATION_ERROR") {
+          this.error = gqlError.message;
+        }
       } finally {
         this.isUploading = false;
       }
+    },
+  },
+  watch: {
+    groupTitle() {
+      this.error = "";
+    },
+    emailInput() {
+      this.memberSelectorError = "";
     },
   },
   async created() {
@@ -231,6 +239,5 @@ export default {
     this.profilePhoto = null;
     this.profilePhotoPreview = null;
     this.error = "";
-    this.successMessage = "";
   },
 };

@@ -41,16 +41,11 @@
   flex: 1;
 }
 
-.split-error {
-  margin: 16px 24px 0;
-  padding: 10px;
-  background-color: var(--color-danger-light-bg);
-  border: 1px solid var(--color-danger-border);
-  border-radius: var(--radius-sm);
-  color: var(--color-danger);
-  font-size: 13px;
-  text-align: center;
+.error-padding {
+  padding: 16px 24px 0;
 }
+
+
 
 .disabled-overlay {
   position: absolute;

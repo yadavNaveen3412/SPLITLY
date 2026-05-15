@@ -1,5 +1,5 @@
 import gql from "graphql-tag";
-import apolloClient from "@/apollo";
+import apolloClient from "@/apollo/client";
 
 const REQUEST_UPLOAD_SIGNATURE = gql`
   mutation Mutation($dirName: String!, $groupId: ID, $fileName: String!) {
@@ -18,7 +18,6 @@ const REQUEST_UPLOAD_SIGNATURE = gql`
 `;
 
 const getCloudinarySignature = async (payload) => {
-  console.log(`Cloud service payload: `, payload);
   const { data } = await apolloClient.mutate({
     mutation: REQUEST_UPLOAD_SIGNATURE,
     variables: payload,
@@ -50,7 +49,7 @@ export const uploadImage = async (file, dirName, fileName, groupId = null) => {
   );
 
   if (!res.ok) {
-    throw new Error("Error Uploading Image to Cloudinary!!");
+    throw new Error("Failed to upload image");
   }
 
   const data = await res.json();

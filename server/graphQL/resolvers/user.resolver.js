@@ -8,11 +8,22 @@ import {
 import "dotenv/config";
 import { verifyGoogleIdToken } from "../../src/utils/googleAuth.js";
 import { requireAuth } from "../../src/middleware/guards.js";
-import { sanitizeString } from "../../src/middleware/sanitizeUserInput.js";
+import {
+  sanitizeString,
+  validateContact,
+  validateEmail,
+  validateName,
+  validatePassword,
+  validateProfilePic,
+  validateProfilePicVersion,
+  validateUUID,
+} from "../../src/utils/validation.js";
+import { AppError } from "../../src/utils/AppError.js";
 
 const BCRYPT_ROUNDS = 10;
 
 function issueJwtCookie(res, userId) {
+  userId = validateUUID(userId);
   const appToken = jwt.sign({ userId }, process.env.JWT_SECRET, {
     expiresIn: "30d",
   });
@@ -35,6 +46,7 @@ export const userResolvers = {
     },
 
     async getUserById(_, { userId }, __) {
+      userId = validateUUID(userId);
       const user = await prisma.user.findUnique({
         where: {
           id: userId,
@@ -44,31 +56,26 @@ export const userResolvers = {
       return user;
     },
 
-    async checkUserExists(_, { email }, { prisma }) {
-      const user = await prisma.user.findUnique({
-        where: {
-          email,
-        },
-      });
-
-      return user ? user.id : null;
-    },
-
     findUser: requireAuth(async (_, { input }, { prisma, user }) => {
       let { email, contact, shareCode } = input;
-
-      contact = sanitizeString(contact);
-      shareCode = sanitizeString(shareCode);
+      if (input.email) email = validateEmail(email);
+      if (input.contact) contact = validateContact(contact);
+      if (input.shareCode) shareCode = sanitizeString(shareCode);
 
       const provided = [email, contact, shareCode].filter(Boolean);
 
       if (provided.length < 1 || provided.length > 1) {
-        throw new Error("Only one identifier can be provided at a time");
+        throw new AppError(
+          400,
+          "VALIDATION_ERROR",
+          "Only one identifier can be provided at a time",
+        );
       }
 
       if (shareCode) {
         const isValid = verifyShareCode(shareCode);
-        if (!isValid) throw new Error("Invalid share code");
+        if (!isValid)
+          throw new AppError(400, "VALIDATION_ERROR", "Invalid share code");
       }
 
       let where = {};
@@ -87,25 +94,18 @@ export const userResolvers = {
 
   Mutation: {
     async register(_, { input }, { prisma, res }) {
-      let { name, email, password } = input;
-      name = sanitizeString(name);
-
-      if (!name || name.length < 3 || name.length > 50) {
-        throw new Error("Name must be between 3 and 50 characters.");
-      }
-
-      if (!name || !email || !password) {
-        throw new Error("Name, email, and password are required.");
-      }
-
-      if (password.length < 6) {
-        throw new Error("Password must be at least 6 characters.");
-      }
+      const name = validateName(input.name);
+      const email = validateEmail(input.email);
+      const password = validatePassword(input.password);
 
       const existing = await prisma.user.findUnique({ where: { email } });
 
       if (existing) {
-        throw new Error("A user with this email already exists.");
+        throw new AppError(
+          409,
+          "CONFLICT",
+          "A user with this email already exists.",
+        );
       }
 
       const passwordHash = await bcrypt.hash(password, BCRYPT_ROUNDS);
@@ -125,24 +125,35 @@ export const userResolvers = {
     },
 
     async loginWithEmail(_, { input }, { prisma, res }) {
-      const { email, password } = input;
+      const email = validateEmail(input.email);
+      const password = validatePassword(input.password);
 
       const user = await prisma.user.findUnique({ where: { email } });
 
       if (!user) {
-        throw new Error("Invalid email or password.");
+        throw new AppError(
+          401,
+          "INVALID_CREDENTIALS",
+          "Invalid email or password.",
+        );
       }
 
       if (!user.passwordHash) {
-        throw new Error(
-          "This account uses Google Sign-In. Please log in with Google.",
+        throw new AppError(
+          409,
+          "ACCOUNT_PROVIDER_MISMATCH",
+          "This account uses Google Sign-In.",
         );
       }
 
       const valid = await bcrypt.compare(password, user.passwordHash);
 
       if (!valid) {
-        throw new Error("Invalid email or password.");
+        throw new AppError(
+          401,
+          "INVALID_CREDENTIALS",
+          "Invalid email or password.",
+        );
       }
 
       issueJwtCookie(res, user.id);
@@ -151,7 +162,9 @@ export const userResolvers = {
 
     async loginWithGoogle(_, { idToken }, { prisma, res }) {
       const payload = await verifyGoogleIdToken(idToken);
-      const { sub, email, name } = payload;
+      const email = validateEmail(payload.email);
+      const name = validateName(payload.name);
+      const sub = payload.sub;
 
       // 1. Check if user already exists by googleSub
       let user = await prisma.user.findUnique({
@@ -202,38 +215,28 @@ export const userResolvers = {
       const data = {};
       let { name, contact, profilePic, profilePicVersion } = input;
       if (name) {
-        name = sanitizeString(name);
-        console.log(`Name: ${name.length}`);
-      }
-
-      if (name !== undefined && (name.length < 3 || name.length > 50)) {
-        throw new Error("Name must be between 3 and 50 characters.");
-      }
-
-      if (name !== undefined) {
-        if (name === null) {
-          throw new Error("Name cannot be null");
-        }
+        name = validateName(name);
         data.name = name;
       }
-
-      if (contact !== undefined) {
-        if (contact === null) {
-          throw new Error("Contact cannot be null");
-        }
+      if (contact) {
+        contact = validateContact(contact);
         data.contact = contact;
       }
-
-      if (profilePic !== undefined) {
+      if (profilePic) {
+        profilePic = validateProfilePic(profilePic);
         data.profilePic = profilePic;
       }
-
       if (profilePicVersion !== undefined) {
+        profilePicVersion = validateProfilePicVersion(profilePicVersion);
         data.profilePicVersion = profilePicVersion;
       }
 
       if (Object.keys(data).length === 0) {
-        throw new Error("No fields provided to update");
+        throw new AppError(
+          400,
+          "VALIDATION_ERROR",
+          "No fields provided to update",
+        );
       }
 
       const updatedUser = await prisma.user.update({

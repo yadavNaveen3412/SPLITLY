@@ -1,4 +1,5 @@
 import { mapActions, mapGetters } from "vuex";
+import { handleApolloError } from "@/utils/errorHandler";
 
 export default {
   name: "ConfirmSettlement",
@@ -32,63 +33,71 @@ export default {
       return user?.name || "";
     },
     async confirmSettlement() {
-      if (this.isOverall) {
-        await this.confirmOverallSettlement();
-        this.$emit("close");
-        return;
-      }
+      try {
+        if (this.isOverall) {
+          await this.confirmOverallSettlement();
+          this.$emit("close");
+          return;
+        }
 
-      let payerId = "";
-      let receiverId = "";
-      if (this.selectedUser.type === "owed") {
-        payerId = this.selectedUser.person;
-        receiverId = this.user.id;
-      } else {
-        payerId = this.user.id;
-        receiverId = this.selectedUser.person;
-      }
-
-      const input = {
-        group_id: this.group.id,
-        payer_id: payerId,
-        receiver_id: receiverId,
-        amount: Number(this.selectedUser.amount),
-      };
-
-      const createSettlement = await this.createSettlement(input);
-      this.$emit("settlement", createSettlement);
-      this.$emit("close");
-    },
-
-    async confirmOverallSettlement() {
-      const settlements = [];
-
-      for (const tx of this.selectedUser.transactions) {
         let payerId = "";
         let receiverId = "";
-
-        if (tx.type === "owed") {
-          payerId = tx.person;
+        if (this.selectedUser.type === "owed") {
+          payerId = this.selectedUser.person;
           receiverId = this.user.id;
         } else {
           payerId = this.user.id;
-          receiverId = tx.person;
+          receiverId = this.selectedUser.person;
         }
 
-        settlements.push(
-          this.createSettlement({
-            group_id: tx.groupId,
-            payer_id: payerId,
-            receiver_id: receiverId,
-            amount: Number(tx.amount),
-          }),
-        );
+        const input = {
+          group_id: this.group.id,
+          payer_id: payerId,
+          receiver_id: receiverId,
+          amount: Number(this.selectedUser.amount),
+        };
+
+        const createSettlement = await this.createSettlement(input);
+        this.$emit("settlement", createSettlement);
+        this.$emit("close");
+      } catch (error) {
+        handleApolloError(error);
       }
+    },
 
-      //  all settlements in parallel
-      await Promise.all(settlements);
+    async confirmOverallSettlement() {
+      try {
+        const settlements = [];
 
-      this.$emit("settlement", { overall: true });
+        for (const tx of this.selectedUser.transactions) {
+          let payerId = "";
+          let receiverId = "";
+
+          if (tx.type === "owed") {
+            payerId = tx.person;
+            receiverId = this.user.id;
+          } else {
+            payerId = this.user.id;
+            receiverId = tx.person;
+          }
+
+          settlements.push(
+            this.createSettlement({
+              group_id: tx.groupId,
+              payer_id: payerId,
+              receiver_id: receiverId,
+              amount: Number(tx.amount),
+            }),
+          );
+        }
+
+        //  all settlements in parallel
+        await Promise.all(settlements);
+
+        this.$emit("settlement", { overall: true });
+      } catch (error) {
+        handleApolloError(error);
+      }
     },
   },
   mounted() {},

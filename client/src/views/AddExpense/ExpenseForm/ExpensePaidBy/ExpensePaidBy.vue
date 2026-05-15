@@ -1,7 +1,7 @@
 <template>
   <div class="paid-by-section">
     <h3 class="section-title">Who Paid?</h3>
-    
+
     <!-- Disabled overlay if no amount -->
     <div v-if="!hasAmount" class="disabled-overlay">
       <div class="disabled-message">
@@ -9,15 +9,18 @@
         <p>Please enter an amount first</p>
       </div>
     </div>
-    
-    <div v-if="paidByError" class="paid-by-error">
-      {{ paidByError }}
+
+    <div class="error-padding">
+      <ErrorWrapper :message="paidByError" />
     </div>
-    
+
     <div class="paid-by-list">
       <!-- Current User -->
       <div
-        :class="['paid-by-item', { selected: isPaidBy(currentUser.id), disabled: !hasAmount }]"
+        :class="[
+          'paid-by-item',
+          { selected: isPaidBy(currentUser.id), disabled: !hasAmount },
+        ]"
         @click="hasAmount && togglePaidBy(currentUser.id)"
       >
         <div class="participant-info">
@@ -47,7 +50,10 @@
       <div
         v-for="participant in participants"
         :key="participant.id"
-        :class="['paid-by-item', { selected: isPaidBy(participant.id), disabled: !hasAmount }]"
+        :class="[
+          'paid-by-item',
+          { selected: isPaidBy(participant.id), disabled: !hasAmount },
+        ]"
         @click="hasAmount && togglePaidBy(participant.id)"
       >
         <div class="participant-info">
@@ -76,5 +82,5 @@
   </div>
 </template>
 
-<script src="./ExpensePaidBy.js"></script>
-<style src="./ExpensePaidBy.css" scoped></style>
+<script src="./ExpensePaidBy.js" />
+<style src="./ExpensePaidBy.css" scoped />

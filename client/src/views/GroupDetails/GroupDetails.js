@@ -3,10 +3,12 @@ import GroupSettlement from "../Settlements/GroupSettlement/GroupSettlement.vue"
 import { calculateUserBalanceList } from "@/utils/settlements";
 import { groupService } from "@/services/groups.service";
 import { getInitials } from "@/utils/stringHelpers";
+import { handleApolloError } from "@/utils/errorHandler";
+import ErrorWrapper from "@/components/ui/ErrorWrapper/ErrorWrapper.vue";
 
 export default {
   name: "GroupDetails",
-  components: { GroupSettlement },
+  components: { GroupSettlement, ErrorWrapper },
   props: ["id"],
   data() {
     return {
@@ -102,10 +104,7 @@ export default {
         this.getSettlementsByGroup(this.groupId),
       ]);
 
-      this.userBalances = await calculateUserBalanceList(
-        this.user.id,
-        this.groupId,
-      );
+      this.userBalances = await calculateUserBalanceList(this.groupId);
     },
 
     goBack() {
@@ -230,9 +229,13 @@ export default {
         setTimeout(() => {
           this.closeMemberSelector();
         }, 1500);
-      } catch (err) {
-        console.error("Error adding members:", err);
-        this.memberSelectorError = err.message || "Failed to add members";
+      } catch (error) {
+        handleApolloError(error);
+
+        const gqlError = error.graphQLErrors?.[0];
+        if (gqlError?.extensions?.code === "VALIDATION_ERROR") {
+          this.memberSelectorError = gqlError.message;
+        }
       } finally {
         this.isAddingMembers = false;
       }
@@ -296,6 +299,9 @@ export default {
   watch: {
     groupId(newId) {
       if (newId) this.fetchAll();
+    },
+    emailInput() {
+      this.memberSelectorError = "";
     },
   },
 };

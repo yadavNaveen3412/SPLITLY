@@ -11,7 +11,14 @@ import {
   requireGroupMember,
   requireExpenseAccess,
 } from "../../src/middleware/guards.js";
-import { sanitizeString } from "../../src/middleware/sanitizeUserInput.js";
+import {
+  sanitizeString,
+  validateAmount,
+  validateExpenseTitle,
+  validateSplitMethod,
+  validateUUID,
+} from "../../src/utils/validation.js";
+import { AppError } from "../../src/utils/AppError.js";
 
 const PARTICIPANT_INCLUDE = {
   participants: {
@@ -28,6 +35,7 @@ const prepareServerParticipants = (
   splitMethod,
   rawParticipants,
 ) => {
+  totalAmount = validateAmount(totalAmount);
   if (!rawParticipants || rawParticipants.length === 0) return [];
 
   // 1. Calculate the exact owed amounts using shared logic
@@ -42,7 +50,7 @@ const prepareServerParticipants = (
     const owed =
       owedAssignments.find((a) => a.userId === p.userId)?.owedAmount || 0;
     return {
-      userId: p.userId,
+      userId: validateUUID(p.userId),
       paidAmount: Number(p.paidAmount),
       owedAmount: owed,
     };
@@ -89,6 +97,7 @@ export const expensesResolvers = {
   Query: {
     getGroupExpenses: requireGroupMember(
       async (_, { groupId }, { prisma, user }) => {
+        groupId = validateUUID(groupId);
         return await prisma.expense.findMany({
           where: {
             groupId,
@@ -109,6 +118,7 @@ export const expensesResolvers = {
 
     getFriendExpenses: requireAuth(
       async (_, { friendId }, { prisma, user }) => {
+        friendId = validateUUID(friendId);
         // 1. Find groups shared between user and friend
         const sharedGroups = await prisma.group.findMany({
           where: {
@@ -176,100 +186,85 @@ export const expensesResolvers = {
   },
 
   Mutation: {
-    createExpense: requireAuth(async (_, { input }, { prisma, user }) => {
-      let {
-        title,
-        description,
-        groupId,
-        totalAmount,
-        categoryId,
-        splitMethod,
-        participants,
-      } = input;
+    createExpense: requireGroupMember(
+      async (_, { input }, { prisma, user }) => {
+        const title = validateExpenseTitle(input.title);
+        const description = sanitizeString(input.description);
+        const groupId = validateUUID(input.groupId);
+        const totalAmount = validateAmount(input.totalAmount);
+        const categoryId = validateUUID(input.categoryId);
+        const splitMethod = validateSplitMethod(input.splitMethod);
+        const participants = input.participants;
 
-      title = sanitizeString(title);
-      description = sanitizeString(description);
+        const serverParticipants = prepareServerParticipants(
+          totalAmount,
+          splitMethod,
+          participants,
+        );
 
-      if (!title || title.length < 3 || title.length > 50) {
-        throw new Error("Expense title must be between 3 and 50 characters.");
-      }
+        let cycleId = 1;
+        if (groupId) {
+          const group = await prisma.group.findUnique({
+            where: { id: groupId },
+            select: { currentCycleId: true },
+          });
+          cycleId = group?.currentCycleId ?? 1;
+        }
 
-      const serverParticipants = prepareServerParticipants(
-        totalAmount,
-        splitMethod,
-        participants,
-      );
+        const bService = balanceService(prisma);
 
-      let cycleId = 1;
-      if (groupId) {
-        const group = await prisma.group.findUnique({
-          where: { id: groupId },
-          select: { currentCycleId: true },
-        });
-        cycleId = group?.currentCycleId ?? 1;
-      }
-
-      const bService = balanceService(prisma);
-
-      return await prisma.$transaction(async (tx) => {
-        const createdExpense = await tx.expense.create({
-          data: {
-            title,
-            description: description || null,
-            groupId,
-            totalAmount: Number(totalAmount),
-            categoryId,
-            created_by: user.id,
-            cycleId,
-            participants: {
-              create: serverParticipants.map((p) => ({
-                userId: p.userId,
-                paidAmount: p.paidAmount,
-                owedAmount: p.owedAmount,
-                groupId,
-              })),
+        return await prisma.$transaction(async (tx) => {
+          const createdExpense = await tx.expense.create({
+            data: {
+              title,
+              description: description || null,
+              groupId,
+              totalAmount: Number(totalAmount),
+              categoryId,
+              created_by: user.id,
+              cycleId,
+              participants: {
+                create: serverParticipants.map((p) => ({
+                  userId: p.userId,
+                  paidAmount: p.paidAmount,
+                  owedAmount: p.owedAmount,
+                  groupId,
+                })),
+              },
             },
-          },
-          include: {
-            category: true,
-            group: true,
-            createdByUser: true,
-            ...PARTICIPANT_INCLUDE,
-          },
-        });
+            include: {
+              category: true,
+              group: true,
+              createdByUser: true,
+              ...PARTICIPANT_INCLUDE,
+            },
+          });
 
-        await bService.updateBalancesForExpense(tx, createdExpense, "CREATE");
-        return createdExpense;
-      });
-    }),
+          await bService.updateBalancesForExpense(tx, createdExpense, "CREATE");
+          return createdExpense;
+        });
+      },
+    ),
 
     updateExpense: requireExpenseAccess(
       async (_, { id, input }, { prisma, user }) => {
+        id = validateUUID(id);
         const existing = await prisma.expense.findUnique({
           where: { id },
           include: { participants: true },
         });
 
         if (!existing) {
-          throw new Error("Expense doesn't exist");
+          throw new AppError(404, "NOT_FOUND", "Expense not found");
         }
 
-        let {
-          title,
-          description,
-          totalAmount,
-          categoryId,
-          splitMethod,
-          participants,
-          is_settled,
-        } = input;
-
-        title = sanitizeString(title);
-        description = sanitizeString(description);
-
-        if (title !== undefined && (title.length < 3 || title.length > 50)) {
-          throw new Error("Expense title must be between 3 and 50 characters.");
-        }
+        const title = validateExpenseTitle(input.title);
+        const description = sanitizeString(input.description);
+        const totalAmount = validateAmount(input.totalAmount);
+        const categoryId = validateUUID(input.categoryId);
+        const splitMethod = validateSplitMethod(input.splitMethod);
+        const participants = input.participants;
+        const is_settled = input.is_settled;
 
         const bService = balanceService(prisma);
 
@@ -285,7 +280,11 @@ export const expensesResolvers = {
           // 2. Update participants if provided
           if (participants) {
             if (!splitMethod) {
-              throw new Error("splitMethod is required when updating splits.");
+              throw new AppError(
+                400,
+                "VALIDATION_ERROR",
+                "Split method is required when updating participants.",
+              );
             }
             const validationTotal = totalAmount ?? existing.totalAmount;
             const serverParticipants = prepareServerParticipants(
@@ -336,12 +335,13 @@ export const expensesResolvers = {
     ),
 
     deleteExpense: requireExpenseAccess(async (_, { id }, { prisma, user }) => {
+      id = validateUUID(id);
       const existing = await prisma.expense.findUnique({
         where: { id },
         include: { participants: true },
       });
 
-      if (!existing) throw new Error("Expense not found");
+      if (!existing) throw new AppError(404, "NOT_FOUND", "Expense not found");
 
       const bService = balanceService(prisma);
 
@@ -362,6 +362,7 @@ export const expensesResolvers = {
 
     settleGroup: requireGroupMember(
       async (_, { groupId }, { prisma, user }) => {
+        groupId = validateUUID(groupId);
         return settleGroupService(groupId, prisma);
       },
     ),

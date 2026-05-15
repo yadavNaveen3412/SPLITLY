@@ -25,9 +25,13 @@ export default {
       type: Object,
       required: true,
     },
+    backendError: {
+      type: String,
+      default: "",
+    },
   },
 
-  emits: ["submit", "cancel"],
+  emits: ["submit", "cancel", "clear-backend-error"],
 
   data() {
     return {
@@ -44,6 +48,7 @@ export default {
       selectedPaidBy: new Set(),
       paidByError: "",
       splitError: "",
+      generalError: "",
       manuallyEditedSplits: new Set(),
       manuallyEditedPaidBy: new Set(),
       excludedMembersFromSplit: new Set(),
@@ -451,24 +456,24 @@ export default {
     handleSubmit() {
       if (!this.isFormValid) return;
 
-      const title = this.formData.title?.trim();
-      const description = this.formData.description?.trim();
-      const amount = parseFloat(this.formData.amount);
+      // const title = this.formData.title?.trim();
+      // const description = this.formData.description?.trim();
+      // const amount = parseFloat(this.formData.amount);
 
-      if (!title || title.length < 3 || title.length > 50) {
-        alert("Expense title must be between 3 and 50 characters.");
-        return;
-      }
+      // if (!title || title.length < 3 || title.length > 50) {
+      //   this.generalError = "Expense title must be between 3 and 50 characters.";
+      //   return;
+      // }
 
-      if (description && description.length > 255) {
-        alert("Description must not exceed 255 characters.");
-        return;
-      }
+      // if (description && description.length > 255) {
+      //   this.generalError = "Description must not exceed 255 characters.";
+      //   return;
+      // }
 
-      if (isNaN(amount) || amount < 0.01 || amount > 1000000) {
-        alert("Total amount must be between 0.01 and 1,000,000.");
-        return;
-      }
+      // if (isNaN(amount) || amount < 0.01 || amount > 1000000) {
+      //   this.generalError = "Total amount must be between 0.01 and 1,000,000.";
+      //   return;
+      // }
 
       const participantsMap = new Map();
       this.allParticipants.forEach((p) => {
@@ -547,6 +552,31 @@ export default {
   watch: {
     "formData.amount"() {
       this.handleAmountChange();
+    },
+    formData: {
+      handler() {
+        this.generalError = "";
+        if (this.backendError) {
+          this.$emit("clear-backend-error");
+        }
+      },
+      deep: true,
+    },
+    splits: {
+      handler() {
+        if (this.backendError) {
+          this.$emit("clear-backend-error");
+        }
+      },
+      deep: true,
+    },
+    paidBy: {
+      handler() {
+        if (this.backendError) {
+          this.$emit("clear-backend-error");
+        }
+      },
+      deep: true,
     },
     participants: {
       handler() {

@@ -1,39 +1,33 @@
+import { handleApolloError } from "@/utils/errorHandler";
+import ErrorWrapper from "@/components/ui/ErrorWrapper/ErrorWrapper.vue";
+
 export default {
   name: "RegisterPage",
+  components: {
+    ErrorWrapper,
+  },
   data() {
     return {
       isRegisterMode: false,
       name: "",
       email: "",
       password: "",
+      generalError: "",
     };
   },
   computed: {
-    error() {
-      return this.$store.getters["auth/getError"];
-    },
     loading() {
       return this.$store.getters["auth/isLoading"];
-    },
-    errorMessage() {
-      if (!this.error) return "";
-      // GraphQL errors come wrapped
-      return (
-        this.error?.message ||
-        this.error?.graphQLErrors?.[0]?.message ||
-        "Something went wrong"
-      );
     },
   },
   methods: {
     async handleSubmit() {
       try {
+        this.generalError = "";
         let success;
         if (this.isRegisterMode) {
           if (this.name.length < 3 || this.name.length > 50) {
-            this.$store.commit("auth/SET_ERROR", {
-              message: "Name must be between 3 and 50 characters.",
-            });
+            this.generalError = "Name must be between 3 and 50 characters.";
             return;
           }
           success = await this.$store.dispatch("auth/register", {
@@ -50,13 +44,19 @@ export default {
         if (success) {
           this.$router.push("/home");
         }
-      } catch (err) {
-        console.error("Auth error:", err);
+      } catch (error) {
+        handleApolloError(error);
+
+        const gqlError = error.graphQLErrors?.[0];
+        if (gqlError?.extensions?.code === "VALIDATION_ERROR") {
+          this.generalError = gqlError.message;
+        }
       }
     },
 
     async handleGoogleLogin(response) {
       try {
+        this.generalError = "";
         if (response?.credential) {
           const data = await this.$store.dispatch("auth/login", {
             idToken: response.credential,
@@ -65,14 +65,30 @@ export default {
             this.$router.push("/home");
           }
         }
-      } catch (err) {
-        console.error("Google login error:", err);
+      } catch (error) {
+        handleApolloError(error);
+
+        const gqlError = error.graphQLErrors?.[0];
+        if (gqlError?.extensions?.code === "VALIDATION_ERROR") {
+          this.generalError = gqlError.message;
+        }
       }
     },
 
     toggleMode() {
       this.isRegisterMode = !this.isRegisterMode;
-      this.$store.commit("auth/SET_ERROR", null);
+      this.generalError = "";
+    },
+  },
+  watch: {
+    name() {
+      this.generalError = "";
+    },
+    email() {
+      this.generalError = "";
+    },
+    password() {
+      this.generalError = "";
     },
   },
 };

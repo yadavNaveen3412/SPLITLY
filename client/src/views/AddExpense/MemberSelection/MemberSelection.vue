@@ -55,5 +55,5 @@
   </div>
 </template>
 
-<script src="./MemberSelection.js"></script>
-<style src="./MemberSelection.css"></style>
+<script src="./MemberSelection.js" />
+<style src="./MemberSelection.css" scoped />

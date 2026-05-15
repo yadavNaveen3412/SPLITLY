@@ -1,11 +1,10 @@
 import ParticipantAmount from "../ParticipantAmount/ParticipantAmount.vue";
+import ErrorWrapper from "@/components/ui/ErrorWrapper/ErrorWrapper.vue";
 
 export default {
   name: "ExpenseSplit",
 
-  components: {
-    ParticipantAmount,
-  },
+  components: { ParticipantAmount, ErrorWrapper },
 
   props: {
     participants: {
@@ -60,7 +59,7 @@ export default {
   computed: {
     selectedMethodLabel() {
       const method = this.splitMethods.find(
-        (m) => m.value === this.splitMethod
+        (m) => m.value === this.splitMethod,
       );
       return method ? method.label : "";
     },

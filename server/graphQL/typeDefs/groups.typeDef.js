@@ -2,7 +2,7 @@ export const groupTypeDefs = `#graphql
     type Query {
       
         getGroupDetails(id: ID!): Group!
-        getGroups(type: String): [Group!]!
+        getGroups(type: String!): [Group!]!
         getPersonalGroupId(otherUserId: ID!): ID
         getCommonGroups(friendId: String!): [Group!]!
     }

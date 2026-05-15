@@ -8,23 +8,7 @@
 
       <div class="modal-content">
         <!-- Error Alert -->
-        <div
-          v-if="error"
-          class="alert alert-danger alert-dismissible fade show"
-          role="alert"
-        >
-          {{ error }}
-          <button type="button" class="btn-close" @click="error = ''"></button>
-        </div>
-
-        <!-- Success Message -->
-        <div
-          v-if="successMessage"
-          class="alert alert-success alert-dismissible fade show"
-          role="alert"
-        >
-          {{ successMessage }}
-        </div>
+        <ErrorWrapper :message="error" />
 
         <!-- Group Title Input -->
         <div class="mb-4">
@@ -163,5 +147,5 @@
   </div>
 </template>
 
-<script src="./CreateGroupModal.js"></script>
-<style src="./CreateGroupModal.css" scoped></style>
+<script src="./CreateGroupModal.js" />
+<style src="./CreateGroupModal.css" scoped />

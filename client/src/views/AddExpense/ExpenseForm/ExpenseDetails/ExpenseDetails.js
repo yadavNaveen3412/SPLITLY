@@ -1,19 +1,40 @@
+import ErrorWrapper from "@/components/ui/ErrorWrapper/ErrorWrapper.vue";
+
 export default {
   name: "ExpenseDetails",
-  
+  components: {
+    ErrorWrapper,
+  },
+
   props: {
     formData: {
       type: Object,
-      required: true
+      required: true,
     },
     categories: {
       type: Array,
-      required: true
+      required: true,
     },
     isFormValid: {
       type: Boolean,
-      required: true
-    }
+      required: true,
+    },
+    backendError: {
+      type: String,
+      default: "",
+    },
+    generalError: {
+      type: String,
+      default: "",
+    },
+  },
+
+  watch: {
+    backendError(newVal) {
+      if (newVal) {
+        console.log(`BERROR from Expense Details:`, newVal);
+      }
+    },
   },
 
   emits: ["update:formData", "cancel", "submit"],
@@ -25,6 +46,6 @@ export default {
 
     handleAmountChange(value) {
       this.updateField("amount", value);
-    }
-  }
+    },
+  },
 };

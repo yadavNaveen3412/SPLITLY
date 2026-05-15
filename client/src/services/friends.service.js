@@ -1,5 +1,5 @@
 import gql from "graphql-tag";
-import apolloClient from "@/apollo";
+import apolloClient from "@/apollo/client";
 
 const GET_ALL_FRIENDS = gql`
   query GetAllFriends {
@@ -38,6 +38,7 @@ export const fetchFriends = async () => {
     query: GET_ALL_FRIENDS,
     fetchPolicy: "cache-first",
   });
+
   return data.getAllFriends;
 };
 
@@ -46,5 +47,6 @@ export const createFriend = async (friendId) => {
     mutation: CREATE_FRIEND_MUTATION,
     variables: { friendId },
   });
+
   return data.createFriend;
 };

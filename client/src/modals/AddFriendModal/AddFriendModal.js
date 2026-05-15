@@ -1,8 +1,16 @@
 import { getInitials } from "@/utils/stringHelpers";
 import { mapActions, mapGetters } from "vuex";
+import { handleApolloError } from "@/utils/errorHandler";
+import ErrorWrapper from "@/components/ui/ErrorWrapper/ErrorWrapper.vue";
+import { useToast } from "vue-toastification";
+
+const toast = useToast();
 
 export default {
   name: "AddFriendModal",
+  components: {
+    ErrorWrapper,
+  },
 
   emits: ["close", "friend-added"],
 
@@ -81,7 +89,6 @@ export default {
       this.searchQuery = "";
       this.errorMessage = "";
       this.searchResult = null;
-      // console.log("SType:", this.searchType);
     },
     validateInput() {
       const query = this.searchQuery.trim();
@@ -148,9 +155,7 @@ export default {
       try {
         let response;
         if (this.searchType === "email") {
-          response = await this.findUser({
-            email: this.searchQuery.toLowerCase(),
-          });
+          response = await this.findUser({ email: this.searchQuery });
         } else if (this.searchType === "contact") {
           response = await this.findUser({ contact: this.searchQuery });
         } else if (this.searchType === "shareCode") {
@@ -161,15 +166,24 @@ export default {
 
         if (!response) {
           this.searchQuery = "";
-          alert("User not found!!");
+          this.errorMessage = "User not found";
+          setTimeout(() => {
+            // this.searchQuery = "";
+            this.errorMessage = "";
+          }, 3000);
           return;
         }
+
         this.isFriend = this.checkFriendById(response.id);
 
         this.searchResult = response;
       } catch (error) {
-        console.error("Search error:", error);
-        this.errorMessage = error.message;
+        handleApolloError(error);
+
+        const gqlError = error.graphQLErrors?.[0];
+        if (gqlError?.extensions?.code === "VALIDATION_ERROR") {
+          this.errorMessage = gqlError.message;
+        }
         this.searchResult = null;
       } finally {
         this.searching = false;
@@ -193,14 +207,20 @@ export default {
         const groupId = await this.createFriend(this.searchResult.id);
         if (groupId) {
           this.isFriend = true;
-          this.closeModal();
-          alert(`${this.searchResult.name} has been added to your friends!`);
+          toast.success("Friend added successfully");
+          setTimeout(() => {
+            this.closeModal();
+          }, 1500);
         } else {
           this.errorMessage = "Failed to add friend";
         }
       } catch (error) {
-        console.error("Add friend error:", error);
-        this.errorMessage = "An error occurred. Please try again.";
+        handleApolloError(error);
+
+        const gqlError = error.graphQLErrors?.[0];
+        if (gqlError?.extensions?.code === "VALIDATION_ERROR") {
+          this.errorMessage = gqlError.message;
+        }
       } finally {
         this.adding = false;
       }
@@ -225,6 +245,10 @@ export default {
       this.searchType = type;
       this.searchQuery = value;
       await this.handleSearch();
+    }
+
+    if (this.$store.state.friends.friends.length === 0) {
+      await this.loadFriends();
     }
   },
 };

@@ -5,7 +5,7 @@
         {{ isRegisterMode ? "Create Account" : "Welcome Back" }}
       </h3>
 
-      <div v-if="error" class="error-message">{{ errorMessage }}</div>
+      <ErrorWrapper :message="generalError" />
 
       <div v-if="isRegisterMode" class="form-group">
         <input

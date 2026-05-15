@@ -3,14 +3,7 @@
     <div class="container my-4">
       <div class="whole-section mt-4 pt-3 border-top">
         <!-- Error Message -->
-        <div
-          v-if="error"
-          class="alert alert-danger alert-dismissible fade show"
-          role="alert"
-        >
-          {{ error }}
-          <button type="button" class="btn-close" @click="error = ''"></button>
-        </div>
+        <ErrorWrapper :message="error" />
 
         <!-- Group Header -->
         <div class="group-header">
@@ -191,5 +184,5 @@
   </div>
 </template>
 
-<script src="./GroupDetails.js"></script>
-<style src="./GroupDetails.css" scoped></style>
+<script src="./GroupDetails.js" />
+<style src="./GroupDetails.css" scoped />

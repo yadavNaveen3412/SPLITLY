@@ -1,7 +1,12 @@
 import { mapActions, mapGetters } from "vuex";
+import { handleApolloError } from "@/utils/errorHandler";
+import ErrorWrapper from "@/components/ui/ErrorWrapper/ErrorWrapper.vue";
 
 export default {
   name: "EditGroupModal",
+  components: {
+    ErrorWrapper,
+  },
   props: {
     id: {
       type: String,
@@ -88,8 +93,8 @@ export default {
           });
           payload.profilePic = public_id;
           payload.profilePicVersion = version.toString();
-        } catch (err) {
-          console.error("Error uploading image:", err);
+        } catch (error) {
+          console.error("Error uploading image:", error);
           throw new Error("Failed to upload image. Please try again.");
         }
       }
@@ -118,9 +123,13 @@ export default {
         setTimeout(() => {
           this.closeModal();
         }, 1500);
-      } catch (err) {
-        console.error("Error updating group:", err);
-        this.error = err.message || "Failed to update group. Please try again.";
+      } catch (error) {
+        handleApolloError(error);
+
+        const gqlError = error.graphQLErrors?.[0];
+        if (gqlError?.extensions?.code === "VALIDATION_ERROR") {
+          this.error = gqlError.message;
+        }
       } finally {
         this.isUploading = false;
       }
@@ -128,6 +137,11 @@ export default {
 
     closeModal() {
       this.$router.back();
+    },
+  },
+  watch: {
+    groupTitle() {
+      this.error = "";
     },
   },
   mounted() {

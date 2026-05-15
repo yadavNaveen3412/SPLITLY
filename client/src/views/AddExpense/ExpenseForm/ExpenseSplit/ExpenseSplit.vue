@@ -5,7 +5,7 @@
       <div class="split-header">
         <h3 class="split-title">Select Split Method</h3>
       </div>
-      
+
       <!-- Disabled overlay if no amount -->
       <div v-if="!hasAmount" class="disabled-overlay">
         <div class="disabled-message">
@@ -31,20 +31,25 @@
     <!-- Participants Split View -->
     <div class="participation-split-view" v-else>
       <div class="split-header">
-        <button class="back-btn-split" @click="goBackToMethodSelection">←</button>
+        <button class="back-btn-split" @click="goBackToMethodSelection">
+          ←
+        </button>
         <h3 class="split-title">{{ selectedMethodLabel }}</h3>
       </div>
-      
+
       <!-- Split Error Message -->
-      <div v-if="splitError" class="split-error">
-        {{ splitError }}
+      <div class="error-padding">
+        <ErrorWrapper :message="splitError" />
       </div>
 
       <div class="participants-list">
         <!-- Current User -->
-        <div 
+        <div
           class="participant-item"
-          :class="{ excluded: splitMethod === 'equal' && isMemberExcluded(currentUser.id) }"
+          :class="{
+            excluded:
+              splitMethod === 'equal' && isMemberExcluded(currentUser.id),
+          }"
         >
           <label v-if="splitMethod === 'equal'" class="participant-checkbox">
             <input
@@ -79,7 +84,10 @@
           v-for="participant in participants"
           :key="participant.id"
           class="participant-item"
-          :class="{ excluded: splitMethod === 'equal' && isMemberExcluded(participant.id) }"
+          :class="{
+            excluded:
+              splitMethod === 'equal' && isMemberExcluded(participant.id),
+          }"
         >
           <label v-if="splitMethod === 'equal'" class="participant-checkbox">
             <input
@@ -113,5 +121,5 @@
   </div>
 </template>
 
-<script src="./ExpenseSplit.js"></script>
-<style src="./ExpenseSplit.css" scoped></style>
+<script src="./ExpenseSplit.js" />
+<style src="./ExpenseSplit.css" scoped />

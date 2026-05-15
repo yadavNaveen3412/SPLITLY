@@ -1,3 +1,5 @@
+import { AppError } from "../utils/AppError.js";
+
 export const settleGroupService = async (groupId, prisma) => {
   return prisma.$transaction(async (tx) => {
     const group = await tx.group.findUnique({
@@ -5,7 +7,7 @@ export const settleGroupService = async (groupId, prisma) => {
       select: { currentCycleId: true },
     });
 
-    if (!group) throw new Error("Group not found");
+    if (!group) throw new AppError(404, "NOT_FOUND", "Group not found");
 
     const cycleId = group.currentCycleId;
 
@@ -14,13 +16,18 @@ export const settleGroupService = async (groupId, prisma) => {
       where: { groupId },
     });
 
-    const nonZeroBalances = balances.filter(b => Math.abs(Number(b.netAmount)) > 0.001);
+    const nonZeroBalances = balances.filter(
+      (b) => Math.abs(Number(b.netAmount)) > 0.001,
+    );
 
     if (nonZeroBalances.length > 0) {
       return {
         message: "Group is not settled",
         // Map back to the expected payload format if needed
-        balanceArray: nonZeroBalances.map(b => ({ userId: b.user1Id, amount: b.netAmount })) 
+        balanceArray: nonZeroBalances.map((b) => ({
+          userId: b.user1Id,
+          amount: b.netAmount,
+        })),
       };
     }
 

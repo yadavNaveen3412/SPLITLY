@@ -1,5 +1,5 @@
 import gql from "graphql-tag";
-import apolloClient from "@/apollo";
+import apolloClient from "@/apollo/client";
 
 const CREATE_SETTLEMENT = gql`
   mutation CreateSettlement($input: CreateSettlementInput!) {
@@ -49,6 +49,7 @@ export const settlementService = {
       variables: { input },
       fetchPolicy: "no-cache",
     });
+
     return data.createSettlement;
   },
 
@@ -58,6 +59,7 @@ export const settlementService = {
       variables: { group_id },
       fetchPolicy: "cache-first",
     });
+
     return data.getSettlementsByGroup;
   },
 };

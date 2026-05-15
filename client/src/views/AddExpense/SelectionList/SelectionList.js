@@ -28,16 +28,10 @@ export default {
   computed: {
     ...mapGetters("group", ["getGroupsWithMemberCount"]),
     ...mapGetters("friends", ["getFriends"]),
-    groups() {
-      return this.getGroupsWithMemberCount;
-    },
-
-    friends() {
-      return this.getFriends;
-    },
-
     items() {
-      return this.type === "groups" ? this.groups : this.friends;
+      return this.type === "groups"
+        ? this.getGroupsWithMemberCount
+        : this.getFriends;
     },
 
     isDisabled() {

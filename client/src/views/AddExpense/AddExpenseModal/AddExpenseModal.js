@@ -2,6 +2,10 @@ import SelectionList from "../SelectionList/SelectionList.vue";
 import MemberSelection from "../MemberSelection/MemberSelection.vue";
 import ExpenseForm from "../ExpenseForm/ExpenseForm.vue";
 import { mapActions, mapGetters } from "vuex";
+import { handleApolloError } from "@/utils/errorHandler";
+import { useToast } from "vue-toastification";
+
+const toast = useToast();
 
 export default {
   name: "AddExpenseModal",
@@ -16,7 +20,6 @@ export default {
 
   data() {
     return {
-      isOpen: true,
       currentStep: 1,
       previousStep: 0,
       isBackward: false,
@@ -25,6 +28,7 @@ export default {
       selectedFriendIds: [],
       selectedMembers: [],
       expenseData: {},
+      backendError: "",
     };
   },
 
@@ -62,7 +66,7 @@ export default {
       if (this.currentStep === 1) {
         return this.activeTab === "groups"
           ? this.selectedGroupId !== null
-          : this.selectedFriendIds.length > 0;
+          : this.selectedFriendIds?.length > 0;
       } else if (this.currentStep === 2) {
         return this.selectedMembers.length > 0;
       }
@@ -84,18 +88,24 @@ export default {
     ]),
     ...mapActions("friends", ["loadFriends"]),
     ...mapActions("expenses", ["createExpense"]),
-    initialize() {
+    resetModalState() {
       this.currentStep = 1;
+      this.previousStep = 0;
+      this.isBackward = false;
+
       this.selectedGroupId = null;
       this.selectedFriendIds = [];
       this.selectedMembers = [];
-      this.activeTab = "groups";
+      this.expenseData = {};
 
+      this.activeTab = "groups";
+    },
+    async initialize() {
       if (this.$store.state.group.groups.length === 0) {
-        this.fetchGroupsWithBalances("GROUP");
+        await this.fetchGroupsWithBalances("GROUP");
       }
       if (this.$store.state.friends.friends.length === 0) {
-        this.loadFriends();
+        await this.loadFriends();
       }
     },
 
@@ -126,6 +136,7 @@ export default {
     handleTabChange(tab) {
       if (this.activeTab === tab) return;
       this.activeTab = tab;
+      this.currentStep = 1;
       this.selectedGroupId = null;
       this.selectedFriendIds = [];
       this.selectedMembers = [];
@@ -138,9 +149,6 @@ export default {
       if (this.activeTab === "groups") {
         this.$router.push({ name: "CreateGroup" });
       }
-      console.log(
-        `Add new ${this.activeTab === "groups" ? "group" : "friend"}`,
-      );
     },
 
     updateSelectedIds(value) {
@@ -159,44 +167,49 @@ export default {
 
     async handleSubmit(expenseData) {
       this.expenseData = { ...expenseData };
+      this.backendError = "";
       let source = "group";
 
-      if (this.selectedGroupId) {
-        this.expenseData.groupId = this.selectedGroupId;
-        source = "group";
-      } else if (
-        this.selectedFriendIds &&
-        this.selectedFriendIds.length === 1
-      ) {
-        this.expenseData.groupId = await this.getPersonalGroupId(
-          this.selectedFriendIds[0],
-        );
-        source = "friend";
-      } else {
-        this.expenseData.groupId = await this.getNonGroupId([
-          ...this.selectedFriendIds,
-          this.currentUser.id,
-        ]);
-        source = "friend";
+      try {
+        if (this.selectedGroupId) {
+          this.expenseData.groupId = this.selectedGroupId;
+          source = "group";
+        } else if (
+          this.selectedFriendIds &&
+          this.selectedFriendIds.length === 1
+        ) {
+          this.expenseData.groupId = await this.getPersonalGroupId(
+            this.selectedFriendIds[0],
+          );
+          source = "friend";
+        } else {
+          this.expenseData.groupId = await this.getNonGroupId([
+            ...this.selectedFriendIds,
+          ]);
+          source = "friend";
+        }
+
+        const payload = {
+          ...JSON.parse(JSON.stringify(this.expenseData)),
+          source,
+        };
+
+        await this.createExpense(payload);
+
+        toast.success("Expense added successfully");
+        this.closeModal();
+      } catch (error) {
+        handleApolloError(error);
+
+        const gqlError = error.graphQLErrors?.[0];
+        if (gqlError?.extensions?.code === "VALIDATION_ERROR") {
+          this.backendError = gqlError.message;
+        }
       }
-
-      const payload = {
-        ...JSON.parse(JSON.stringify(this.expenseData)),
-        source,
-      };
-
-      await this.createExpense(payload);
-      this.closeModal();
     },
   },
 
-  watch: {
-    isOpen(val) {
-      if (val) this.initialize();
-    },
-  },
-
-  created() {
+  async created() {
     const { source, groupId, friendId } = this.$route.query;
     if (source === "group" && groupId) {
       // Preselect group
@@ -218,11 +231,6 @@ export default {
       this.currentStep = 1;
     }
 
-    if (this.$store.state.group.groups.length === 0) {
-      this.fetchGroupsWithBalances("GROUP");
-    }
-    if (this.$store.state.friends.friends.length === 0) {
-      this.loadFriends();
-    }
+    await this.initialize();
   },
 };

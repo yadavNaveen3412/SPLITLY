@@ -1,4 +1,5 @@
 import { expenseService } from "@/services/expenses.service";
+import { handleApolloError } from "@/utils/errorHandler";
 
 const state = () => ({
   groupExpenses: [],
@@ -79,18 +80,20 @@ const actions = {
   async fetchGroupExpenses({ commit }, groupId) {
     try {
       const expenses = await expenseService.getGroupExpenses(groupId);
+
       commit("SET_GROUP_EXPENSES", expenses);
     } catch (error) {
-      console.error("fetchGroupExpenses error:", error);
+      handleApolloError(error);
     }
   },
 
   async fetchFriendExpenses({ commit }, friendId) {
     try {
       const expenses = await expenseService.getFriendExpenses(friendId);
+
       commit("SET_FRIEND_EXPENSES", expenses);
     } catch (error) {
-      console.error("fetchFriendExpenses error:", error);
+      handleApolloError(error);
     }
   },
 
@@ -98,7 +101,6 @@ const actions = {
     const clientId = `temp_${Date.now()}`;
     const userId = rootGetters["auth/getUserId"];
     const source = payload.source || (payload.groupId ? "group" : "friend");
-    console.log(`Payload:`, payload);
 
     // Create optimistic expense object
     const tempExpense = {
@@ -166,45 +168,48 @@ const actions = {
         });
 
         // Trigger global balance refresh
-        dispatch("friends/loadFriends", null, { root: true });
-        dispatch("group/fetchGroupsWithBalances", "GROUP", { root: true });
+        await Promise.all([
+          dispatch("friends/loadFriends", null, { root: true }),
+          dispatch("group/fetchGroupsWithBalances", "GROUP", { root: true }),
+        ]);
       }
       return result;
     } catch (error) {
-      console.error("createExpense error:", error);
       commit("REMOVE_EXPENSE", { expenseId: clientId, source });
+
       throw error;
     }
   },
 
   async updateExpense({ commit, dispatch }, { id, input, source }) {
-    try {
-      const result = await expenseService.updateExpense(id, input);
-      commit("ADD_OR_UPDATE_EXPENSE", { expense: result, source });
+    const result = await expenseService.updateExpense(id, input);
+    commit("ADD_OR_UPDATE_EXPENSE", { expense: result, source });
 
-      // Trigger global balance refresh
-      dispatch("friends/loadFriends", null, { root: true });
-      dispatch("group/fetchGroupsWithBalances", "GROUP", { root: true });
+    // Trigger global balance refresh
+    await Promise.all([
+      dispatch("friends/loadFriends", null, { root: true }),
+      dispatch("group/fetchGroupsWithBalances", "GROUP", { root: true }),
+    ]);
 
-      return result;
-    } catch (error) {
-      console.error("updateExpense error:", error);
-      throw error;
-    }
+    return result;
   },
 
-  async deleteExpenseById({ commit, dispatch }, { id, source }) {
+  async deleteExpenseById({ commit, dispatch, getters }, { id, source }) {
+    const expense = getters.getExpenseById(id);
     try {
       commit("REMOVE_EXPENSE", { expenseId: id, source });
       await expenseService.deleteExpense(id);
 
       // Trigger global balance refresh
-      dispatch("friends/loadFriends", null, { root: true });
-      dispatch("group/fetchGroupsWithBalances", "GROUP", { root: true });
+      await Promise.all([
+        dispatch("friends/loadFriends", null, { root: true }),
+        dispatch("group/fetchGroupsWithBalances", "GROUP", { root: true }),
+      ]);
 
       return true;
     } catch (error) {
-      console.error("deleteExpense error:", error);
+      if (expense) commit("ADD_OR_UPDATE_EXPENSE", { expense, source });
+
       throw error;
     }
   },

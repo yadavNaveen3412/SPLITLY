@@ -1,13 +1,18 @@
 import { getInitials } from "@/utils/stringHelpers";
 import { mapActions, mapGetters } from "vuex";
 import QRcodeVue from "qrcode.vue";
+import { handleApolloError } from "@/utils/errorHandler";
+import ErrorWrapper from "@/components/ui/ErrorWrapper/ErrorWrapper.vue";
+import { useToast } from "vue-toastification";
+
+const toast = useToast();
 
 const BASE_URL = process.env.VUE_APP_BASE_URL;
 
 export default {
   name: "ProfilePage",
 
-  components: { QRcodeVue },
+  components: { QRcodeVue, ErrorWrapper },
 
   data() {
     return {
@@ -31,6 +36,7 @@ export default {
         name: "",
         contact: "",
       },
+      generalError: "",
       saving: false,
       photoFile: null,
       codeCopied: false,
@@ -120,6 +126,7 @@ export default {
       this.previewProfileUrl = null;
       this.isEditing = { name: false, contact: false };
       this.errors = { name: "", contact: "" };
+      this.generalError = "";
       if (this.$refs.fileInput) this.$refs.fileInput.value = "";
     },
 
@@ -142,15 +149,18 @@ export default {
           return false;
         }
         if (value.length < 3 || value.length > 50) {
-          this.errors.name = "Name must be between 3 and 50 characters";
+          this.generalError = "Name must be between 3 and 50 characters";
           return false;
         }
       }
 
       if (field === "contact" && this.profileData.contact?.trim()) {
-        const regex = /^[6-9]\d{9}$/;
+        if (this.profileData.contact.length === 10) {
+          this.profileData.contact = "+91" + this.profileData.contact;
+        }
+        const regex = /^\+91[6-9]\d{9}$/;
         if (!regex.test(this.profileData.contact)) {
-          this.errors.contact = "Please enter a valid 10-digit contact number";
+          this.generalError = "Please enter a valid 10-digit contact number";
           return false;
         }
       }
@@ -172,13 +182,15 @@ export default {
       const file = e.target.files[0];
       if (!file) return;
 
+      this.generalError = "";
+
       if (!file.type.startsWith("image/")) {
-        alert("Please select an image file");
+        this.generalError = "Please select an image file";
         return;
       }
 
       if (file.size > 5 * 1024 * 1024) {
-        alert("File size should not exceed 5MB");
+        this.generalError = "File size should not exceed 5MB";
         return;
       }
 
@@ -212,8 +224,6 @@ export default {
         payload.profilePicVersion = version.toString();
       }
 
-      console.log(`Update Payload:`, payload);
-
       return payload;
     },
 
@@ -225,20 +235,27 @@ export default {
       }
 
       this.saving = true;
+      this.generalError = "";
 
       try {
         const payload = await this.buildUpdatePayload();
         if (!Object.keys(payload).length) return;
 
         this.loadingText = "Saving Changes...";
-        console.log(`Update User Profile`);
         await this.updateUserProfile(payload);
+
+        toast.success("Profile updated successfully");
+
         this.previewProfileUrl = null;
         this.loadProfileData();
         this.photoFile = null;
-      } catch (err) {
-        console.error(err);
-        alert("Failed to update profile. Please try again.");
+      } catch (error) {
+        handleApolloError(error);
+
+        const gqlError = error.graphQLErrors?.[0];
+        if (gqlError?.extensions?.code === "VALIDATION_ERROR") {
+          this.generalError = gqlError.message;
+        }
       } finally {
         this.saving = false;
       }
@@ -249,8 +266,8 @@ export default {
         await navigator.clipboard.writeText(this.profileData.shareCode);
         this.codeCopied = true;
         setTimeout(() => (this.codeCopied = false), 2000);
-      } catch (err) {
-        console.error("Failed to copy code:", err);
+      } catch (error) {
+        console.error("Failed to copy code:", error);
       }
     },
 
@@ -259,26 +276,21 @@ export default {
     },
 
     confirmDeleteAccount() {
-      if (
-        confirm(
-          "Are you sure you want to delete your account? This action cannot be undone.",
-        )
-      ) {
-        console.log("Account deleted!!");
-      }
+      // if (
+      //   confirm(
+      //     "Are you sure you want to delete your account? This action cannot be undone.",
+      //   )
+      // ) {
+      alert("Feature not available yet");
+      // }
     },
 
     openAddFriendModal() {
       const code = this.friendShareCode.trim();
+      this.generalError = "";
 
       if (!code) {
-        alert("Please enter a friend's share code");
-        return;
-      }
-
-      if (code === this.profileData.shareCode) {
-        alert("You cannot add yourself as a friend");
-        this.friendShareCode = "";
+        this.generalError = "Please enter a friend's share code";
         return;
       }
 
@@ -292,5 +304,16 @@ export default {
 
   async mounted() {
     this.loadProfileData();
+  },
+
+  watch: {
+    profileData: {
+      handler(newval, oldval) {
+        if (newval === oldval) {
+          this.generalError = "";
+        }
+      },
+      deep: true,
+    },
   },
 };

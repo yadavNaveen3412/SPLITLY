@@ -1,8 +1,19 @@
 import { getInitials } from "@/utils/stringHelpers";
 import { mapGetters, mapActions } from "vuex";
+import BaseHeader from "@/components/layout/BaseHeader/BaseHeader.vue";
+import BaseButton from "@/components/ui/BaseButton/BaseButton.vue";
+import BaseList from "@/components/layout/BaseList/BaseList.vue";
+import FriendListItem from "@/components/features/FriendListItem/FriendListItem.vue";
+import { handleApolloError } from "@/utils/errorHandler";
 
 export default {
   name: "FriendsPage",
+  components: {
+    BaseHeader,
+    BaseButton,
+    BaseList,
+    FriendListItem,
+  },
 
   data() {
     return {
@@ -52,8 +63,12 @@ export default {
   },
 
   async created() {
-    if (this.friends.length === 0) {
-      await this.loadFriends();
+    try {
+      if (this.friends.length === 0) {
+        await this.loadFriends();
+      }
+    } catch (error) {
+      handleApolloError(error);
     }
   },
 };

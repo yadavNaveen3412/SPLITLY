@@ -62,4 +62,4 @@ export default {
 };
 </script>
 
-<style scoped src="./NotFound.css"></style>
+<style src="./NotFound.css" scoped />

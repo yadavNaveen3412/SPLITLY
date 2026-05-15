@@ -1,5 +1,5 @@
 import gql from "graphql-tag";
-import apolloClient from "@/apollo";
+import apolloClient from "@/apollo/client";
 
 const GET_USER = gql`
   query GetUser {
@@ -14,11 +14,6 @@ const GET_USER = gql`
       updatedAt
       shareCode
     }
-  }
-`;
-const CHECK_USER_EXISTS = gql`
-  query Query($email: String!) {
-    checkUserExists(email: $email)
   }
 `;
 
@@ -73,61 +68,37 @@ export const userService = {
       query: GET_USER,
       fetchPolicy: "no-cache",
     });
-    return data.getUser;
-  },
 
-  async checkUserExists(email) {
-    const { data } = await apolloClient.query({
-      query: CHECK_USER_EXISTS,
-      variables: { email },
-      fetchPolicy: "network-only",
-    });
-    return data.checkUserExists;
+    return data.getUser;
   },
 };
 
 export const getUserById = async (userId) => {
-  try {
-    const { data } = await apolloClient.query({
-      query: GET_USER_BY_ID,
-      variables: { userId },
-      fetchPolicy: "network-only",
-    });
-    return data.getUserById;
-  } catch (error) {
-    console.log("Error getting User", error);
-  }
+  const { data } = await apolloClient.query({
+    query: GET_USER_BY_ID,
+    variables: { userId },
+    fetchPolicy: "network-only",
+  });
+
+  return data.getUserById;
 };
 
 export const updateUserDetails = async (input) => {
-  try {
-    // console.log("Service Input:", input);
+  const { data } = await apolloClient.mutate({
+    mutation: UPDATE_USER_DETAILS,
+    variables: { input },
+    fetchPolicy: "no-cache",
+  });
 
-    const { data } = await apolloClient.mutate({
-      mutation: UPDATE_USER_DETAILS,
-      variables: { input },
-      fetchPolicy: "no-cache",
-    });
-
-    console.log("Updated User:", data.updateUserDetails);
-
-    return data.updateUserDetails;
-  } catch (error) {
-    console.log("Error updating user:", error);
-    throw error;
-  }
+  return data.updateUserDetails;
 };
 
 export const findUser = async (input) => {
-  try {
-    const { data } = await apolloClient.query({
-      query: FIND_USER,
-      variables: { input },
-      fetchPolicy: "no-cache",
-    });
-    return data.findUser;
-  } catch (error) {
-    console.error("Error fetching user:\n", error);
-    throw error;
-  }
+  const { data } = await apolloClient.query({
+    query: FIND_USER,
+    variables: { input },
+    fetchPolicy: "no-cache",
+  });
+
+  return data.findUser;
 };

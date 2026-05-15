@@ -1,5 +1,6 @@
 import { fetchFriends, createFriend } from "@/services/friends.service";
 import { getUserById } from "@/services/user.service";
+import { handleApolloError } from "@/utils/errorHandler";
 
 const state = () => ({
   friends: [],
@@ -34,16 +35,15 @@ const mutations = {
 };
 
 const actions = {
-  async loadFriends({ commit, rootGetters }) {
+  async loadFriends({ commit }) {
     commit("SET_LOADING", true);
 
     try {
-      const userId = rootGetters["auth/getUserId"];
       const friends = await fetchFriends();
       const { userAllBalances } = await import("@/utils/settlements");
 
       // Single call to get all balances for the user across all groups
-      const allBalances = await userAllBalances(userId);
+      const allBalances = await userAllBalances();
 
       // Aggregate net balances by person (friendId)
       const friendBalanceMap = {};
@@ -63,7 +63,8 @@ const actions = {
       });
       commit("SET_FRIENDS", friendsWithNet);
     } catch (error) {
-      console.error("Error loading friends: ", error);
+      handleApolloError(error);
+
       commit("SET_FRIENDS", []);
     } finally {
       commit("SET_LOADING", false);
@@ -94,6 +95,7 @@ const actions = {
 
     try {
       commit("ADD_FRIEND", tempFriend);
+
       const friend = await createFriend(friendId);
 
       // Update the friend with the real group ID
@@ -102,10 +104,11 @@ const actions = {
         groupId: friend.groupId,
         clientId,
       });
+
       return friend.groupId;
     } catch (error) {
-      console.log("Error creating Friend", error);
       commit("REMOVE_FRIEND", friendId);
+
       throw error;
     }
   },

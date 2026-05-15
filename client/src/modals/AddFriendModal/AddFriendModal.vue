@@ -70,10 +70,7 @@
           </div>
 
           <!-- Error Message -->
-          <p v-if="errorMessage" class="error-message">
-            <i class="fa-solid fa-exclamation-circle"></i>
-            {{ errorMessage }}
-          </p>
+          <ErrorWrapper :message="errorMessage" />
         </div>
 
         <!-- Search Result Section -->
@@ -137,5 +134,5 @@
   </div>
 </template>
 
-<script src="./AddFriendModal.js"></script>
-<style src="./AddFriendModal.css" scoped></style>
+<script src="./AddFriendModal.js" />
+<style src="./AddFriendModal.css" scoped />

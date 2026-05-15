@@ -1,33 +1,38 @@
-import { sanitizeString } from "../middleware/sanitizeUserInput.js";
+import { AppError } from "../utils/AppError.js";
+import {
+  validateGroupTitle,
+  validateGroupType,
+  validateProfilePic,
+  validateProfilePicVersion,
+} from "../utils/validation.js";
 
 export const groupService = (prisma) => {
   const createGroup = async (input, user) => {
-    const groupType = input.type || "GROUP";
-    const sanitizedTitle = sanitizeString(input.title);
-
-    if (
-      !sanitizedTitle ||
-      sanitizedTitle.length < 3 ||
-      sanitizedTitle.length > 50
-    ) {
-      throw new Error("Group title must be between 3 and 50 characters.");
-    }
+    const groupType = validateGroupType(input.type);
+    const title = validateGroupTitle(input.title);
 
     // Ensure current user is included in members
     const allMemberIds = [...new Set([user.id, ...input.members])];
 
+    const data = {
+      title,
+      type: groupType,
+      createdById: user.id,
+      members: {
+        create: allMemberIds.map((userId) => ({ userId })),
+      },
+    };
+
+    if (input.profilePic) {
+      data.profilePic = validateProfilePic(input.profilePic);
+      data.profilePicVersion = validateProfilePicVersion(
+        input.profilePicVersion,
+      );
+    }
+
     return prisma.$transaction(async (tx) => {
       const group = await tx.group.create({
-        data: {
-          title: sanitizedTitle,
-          type: groupType,
-          createdById: user.id,
-          members: {
-            create: allMemberIds.map((userId) => ({ userId })),
-          },
-          profilePic: input.profilePic,
-          profilePicVersion: input.profilePicVersion,
-        },
+        data,
         include: {
           members: { include: { user: true } },
         },
@@ -44,10 +49,9 @@ export const groupService = (prisma) => {
     const added = [];
     const alreadyMembers = [];
     const invited = []; // Placeholder for future invite logic
-
     // We use the provided prismaContext (which might be a transaction) or default to the main prisma instance
     return prismaContext.$transaction(async (tx) => {
-      for (const id of userIds) {
+      for (let id of userIds) {
         const user = await tx.user.findUnique({ where: { id } });
         if (!user) {
           invited.push(id);
@@ -82,14 +86,18 @@ export const groupService = (prisma) => {
     return prisma.$transaction(async (tx) => {
       // 1. Get friend details for the title
       const friend = await tx.user.findUnique({ where: { id: friendId } });
-      if (!friend) throw new Error("User not found");
+      if (!friend) throw new AppError(404, "NOT_FOUND", "User not found");
+
+      const existingFriend = await checkExistingFriend(tx, user, friendId);
+      if (existingFriend)
+        throw new AppError(409, "CONFLICT", "Friend already exists");
 
       // 2. Generate title: UserFirst_FriendFirst
       const userName = user.name.split(" ")[0];
       const friendName = friend.name.split(" ")[0];
       const title = `${userName}_${friendName}`;
 
-      console.log(`Title: ${title}`);
+      // console.log(`Title: ${title}`);
 
       // 3. Create PERSONAL group
       return createGroup(
@@ -104,4 +112,45 @@ export const groupService = (prisma) => {
     addMembersToGroup,
     createFriend,
   };
+};
+
+const checkExistingFriend = async (prisma, user, friendId) => {
+  return await prisma.group.findFirst({
+    where: {
+      type: "PERSONAL",
+
+      members: {
+        every: {
+          userId: {
+            in: [user.id, friendId],
+          },
+        },
+      },
+
+      AND: [
+        {
+          members: {
+            some: {
+              userId: user.id,
+            },
+          },
+        },
+        {
+          members: {
+            some: {
+              userId: friendId,
+            },
+          },
+        },
+      ],
+    },
+
+    include: {
+      members: {
+        include: {
+          user: true,
+        },
+      },
+    },
+  });
 };

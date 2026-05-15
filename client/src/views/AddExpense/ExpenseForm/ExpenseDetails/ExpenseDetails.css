@@ -151,3 +151,7 @@
 .form-left::-webkit-scrollbar-thumb:hover {
   background: var(--color-text-muted);
 }
+
+.error-padding {
+  padding: 0;
+}

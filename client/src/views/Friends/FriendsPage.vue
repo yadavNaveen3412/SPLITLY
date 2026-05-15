@@ -33,22 +33,5 @@
   </div>
 </template>
 
-<script>
-import BaseHeader from "@/components/layout/BaseHeader/BaseHeader.vue";
-import BaseButton from "@/components/ui/BaseButton/BaseButton.vue";
-import BaseList from "@/components/layout/BaseList/BaseList.vue";
-import FriendListItem from "@/components/features/FriendListItem/FriendListItem.vue";
-import FriendsLogic from "./Friends.js";
-
-export default {
-  ...FriendsLogic,
-  components: {
-    BaseHeader,
-    BaseButton,
-    BaseList,
-    FriendListItem,
-  },
-};
-</script>
-
+<script src="./Friends.js" />
 <style src="./Friends.css" scoped />

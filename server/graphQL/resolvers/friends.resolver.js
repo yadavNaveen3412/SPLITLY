@@ -1,5 +1,7 @@
 import { requireAuth } from "../../src/middleware/guards.js";
 import { groupService } from "../../src/services/group.service.js";
+import { AppError } from "../../src/utils/AppError.js";
+import { validateUUID } from "../../src/utils/validation.js";
 
 export const friendsResolvers = {
   Query: {
@@ -64,6 +66,14 @@ export const friendsResolvers = {
   },
   Mutation: {
     createFriend: requireAuth(async (_, { friendId }, { prisma, user }) => {
+      friendId = validateUUID(friendId);
+      if (friendId === user.id) {
+        throw new AppError(
+          400,
+          "VALIDATION_ERROR",
+          "Cannot add yourself as a friend",
+        );
+      }
       const gService = groupService(prisma);
       const personalGroup = await gService.createFriend(friendId, user);
 
@@ -74,7 +84,11 @@ export const friendsResolvers = {
       )?.user;
 
       if (!friend) {
-        throw new Error("Friend not found after creating personal group");
+        throw new AppError(
+          500,
+          "INTERNAL_SERVER_ERROR",
+          "Failed to create friend relationship",
+        );
       }
 
       return {

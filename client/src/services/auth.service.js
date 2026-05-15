@@ -1,5 +1,5 @@
 import gql from "graphql-tag";
-import apolloClient from "@/apollo";
+import apolloClient from "@/apollo/client";
 
 const REGISTER = gql`
   mutation Register($input: RegisterInput!) {
@@ -68,6 +68,7 @@ export const authService = {
       variables: { input },
       fetchPolicy: "no-cache",
     });
+
     return data.register.user;
   },
 
@@ -77,6 +78,7 @@ export const authService = {
       variables: { input },
       fetchPolicy: "no-cache",
     });
+
     return data.loginWithEmail.user;
   },
 
@@ -86,6 +88,7 @@ export const authService = {
       variables: { idToken },
       fetchPolicy: "no-cache",
     });
+
     return data.loginWithGoogle.user;
   },
 
@@ -94,6 +97,7 @@ export const authService = {
       mutation: LOGOUT_MUTATION,
       fetchPolicy: "no-cache",
     });
+
     return data.logout;
   },
 };

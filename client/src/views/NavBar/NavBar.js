@@ -94,8 +94,8 @@ export default {
       try {
         await this.logout();
         this.$router.push({ name: "Register" });
-      } catch (err) {
-        console.error("Logout failed", err);
+      } catch (error) {
+        console.error("Logout failed", error);
       }
     },
     handleOutsideClick(e) {

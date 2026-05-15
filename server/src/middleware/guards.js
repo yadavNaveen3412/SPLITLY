@@ -2,6 +2,8 @@
  * Higher-order functions to wrap GraphQL resolvers with authentication and authorization logic.
  */
 
+import { AppError } from "../utils/AppError.js";
+
 /**
  * Ensures the user is authenticated.
  * @param {Function} resolver - The resolver function to wrap.
@@ -10,7 +12,7 @@
 export const requireAuth = (resolver) => {
   return (parent, args, context, info) => {
     if (!context.user) {
-      throw new Error("Authentication required");
+      throw new AppError(401, "UNAUTHENTICATED", "Authentication required");
     }
     return resolver(parent, args, context, info);
   };
@@ -25,12 +27,17 @@ export const requireGroupMember = (resolver) => {
   return async (parent, args, context, info) => {
     const { prisma, user } = context;
     if (!user) {
-      throw new Error("Authentication required");
+      throw new AppError(401, "UNAUTHENTICATED", "Authentication required");
     }
 
-    const groupId = args.groupId || args.group_id || args.id;
+    const groupId =
+      args.groupId ||
+      args.group_id ||
+      args.id ||
+      args.input?.groupId ||
+      args.input?.group_id;
     if (!groupId) {
-      throw new Error("GroupId is required for authorization check");
+      throw new AppError(400, "VALIDATION_ERROR", "Group ID is required");
     }
 
     const membership = await prisma.groupMember.findFirst({
@@ -41,7 +48,11 @@ export const requireGroupMember = (resolver) => {
     });
 
     if (!membership) {
-      throw new Error("Forbidden: You are not a member of this group");
+      throw new AppError(
+        403,
+        "FORBIDDEN",
+        "You are not a member of this group",
+      );
     }
 
     return resolver(parent, args, context, info);
@@ -57,12 +68,12 @@ export const requireExpenseAccess = (resolver) => {
   return async (parent, args, context, info) => {
     const { prisma, user } = context;
     if (!user) {
-      throw new Error("Authentication required");
+      throw new AppError(401, "UNAUTHENTICATED", "Authentication required");
     }
 
     const expenseId = args.id || args.expenseId;
     if (!expenseId) {
-      throw new Error("ExpenseId is required for authorization check");
+      throw new AppError(400, "VALIDATION_ERROR", "Expense ID is required");
     }
 
     const expense = await prisma.expense.findUnique({
@@ -71,7 +82,7 @@ export const requireExpenseAccess = (resolver) => {
     });
 
     if (!expense) {
-      throw new Error("Expense not found");
+      throw new AppError(404, "NOT_FOUND", "Expense not found");
     }
 
     // Reuse group membership check
@@ -83,7 +94,11 @@ export const requireExpenseAccess = (resolver) => {
     });
 
     if (!membership) {
-      throw new Error("Forbidden: You do not have access to this expense");
+      throw new AppError(
+        403,
+        "FORBIDDEN",
+        "You do not have access to this expense",
+      );
     }
 
     return resolver(parent, args, context, info);

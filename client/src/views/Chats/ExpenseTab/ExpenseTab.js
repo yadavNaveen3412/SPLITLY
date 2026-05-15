@@ -2,6 +2,7 @@ import PersonalSettlement from "@/views/Settlements/PersonalSettlement/PersonalS
 import ExpenseDetail from "@/views/ExpenseDetailModal/ExpenseDetail.vue";
 import { mapActions, mapGetters } from "vuex";
 import ExpenseImage from "@/assets/images/ExpenseImage.png";
+import { handleApolloError } from "@/utils/errorHandler";
 
 export default {
   name: "ExpenseTab",
@@ -86,22 +87,26 @@ export default {
       this.isShowSettleUpModal = false;
     },
     async goToAddExpense() {
-      if (this.page === "friends") {
-        await this.checkIfFriend();
+      try {
+        if (this.page === "friends") {
+          await this.checkIfFriend();
 
-        if (!this.isFriend) {
-          await this.createFriend(this.id);
+          if (!this.isFriend) {
+            await this.createFriend(this.id);
+          }
+
+          this.$router.push({
+            name: "AddExpense",
+            query: { source: "friend", friendId: this.id },
+          });
+        } else {
+          this.$router.push({
+            name: "AddExpense",
+            query: { source: "group", groupId: this.id },
+          });
         }
-
-        this.$router.push({
-          name: "AddExpense",
-          query: { source: "friend", friendId: this.id },
-        });
-      } else {
-        this.$router.push({
-          name: "AddExpense",
-          query: { source: "group", groupId: this.id },
-        });
+      } catch (error) {
+        handleApolloError(error);
       }
     },
 
@@ -109,7 +114,7 @@ export default {
       try {
         this.isFriend = this.checkFriendById(this.id);
       } catch (error) {
-        console.log("Error checking friend status:", error);
+        handleApolloError(error);
         this.isFriend = false;
       }
     },

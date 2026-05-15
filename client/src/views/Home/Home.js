@@ -3,6 +3,7 @@ import { mapActions, mapGetters } from "vuex";
 import FriendImage from "@/assets/images/FriendImage.jpeg";
 import GroupImage from "@/assets/images/GroupImage.png";
 import ExpenseImage from "@/assets/images/ExpenseImage.png";
+import { handleApolloError } from "@/utils/errorHandler";
 
 export default {
   name: "HomePage",
@@ -44,21 +45,25 @@ export default {
       this.$router.push("/analysis");
     },
     async calculateOverallBalance() {
-      let owed = 0;
-      let owe = 0;
+      try {
+        let owed = 0;
+        let owe = 0;
 
-      const transactions = await userAllBalances(this.user.id);
+        const transactions = await userAllBalances();
 
-      transactions.forEach((t) => {
-        if (t.type === "owed") {
-          owed += t.amount;
-        } else if (t.type === "owe") {
-          owe += t.amount;
-        }
-      });
+        transactions.forEach((t) => {
+          if (t.type === "owed") {
+            owed += t.amount;
+          } else if (t.type === "owe") {
+            owe += t.amount;
+          }
+        });
 
-      this.balances.owedToYou = Number(owed).toFixed(2);
-      this.balances.youOwe = Number(owe).toFixed(2);
+        this.balances.owedToYou = Number(owed).toFixed(2);
+        this.balances.youOwe = Number(owe).toFixed(2);
+      } catch (error) {
+        handleApolloError(error);
+      }
     },
   },
   async mounted() {

@@ -48,28 +48,12 @@ export const settlementsTypeDefs = `#graphql
     }
 
     type Query {
-         getSettlementsByGroup(group_id: String!): [Settlement!]!
-        
+        getSettlementsByGroup(group_id: String!): [Settlement!]!        
         groupSettlements(groupId: ID!): [SettlementTransaction!]!
-
-        myGroupBalances(
-            userId: ID
-            groupId: ID!
-        ): [UserBalance!]!
-
-        myAllBalances(
-            userId: ID
-        ): [UserBalance!]!
-
-        myFriendBalance(
-            userId: ID
-            friendId: ID!
-        ): [UserBalance!]!
-
-        myNetWithFriend(
-            userId: ID
-            friendId: ID!
-        ): Float!
+        myGroupBalances(groupId: ID!): [UserBalance!]!
+        myAllBalances: [UserBalance!]!
+        myFriendBalance(friendId: ID!): [UserBalance!]!
+        myNetWithFriend(friendId: ID!): Float!
     }
 
 `;
